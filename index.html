@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareNote — Clinical Documentation Assistant</title>
+    <meta name="theme-color" content="#0f2744">
+    <meta name="description" content="Record, transcribe, and generate clinical notes for home health care visits.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CareNote">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -927,6 +935,13 @@
         const listEl = document.getElementById('history-list');
         listEl.querySelectorAll('.day-group').forEach(g => { if (g.querySelectorAll('.history-item').length === 0) g.remove(); });
         if (listEl.querySelectorAll('.day-group').length === 0) listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet.</p></div>`;
+    }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(() => console.log('Service worker registered'))
+            .catch((err) => console.log('Service worker registration failed:', err));
     }
 </script>
 </body>

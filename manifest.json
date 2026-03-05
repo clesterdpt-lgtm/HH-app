@@ -1,0 +1,25 @@
+{
+  "name": "CareNote — Clinical Documentation Assistant",
+  "short_name": "CareNote",
+  "description": "Record, transcribe, and generate clinical notes for home health care visits.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0f2744",
+  "background_color": "#f8f6f1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
