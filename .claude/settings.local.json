@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase functions deploy transcribe --no-verify-jwt)",
+      "Bash(gh auth status)",
+      "Bash(git init)",
+      "Bash(git add -A)",
+      "Bash(git commit:*)",
+      "Bash(git add .claude/settings.local.json)"
+    ]
+  }
+}

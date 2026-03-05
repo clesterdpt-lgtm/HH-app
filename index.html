@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareNote — Clinical Documentation Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy: #0f2744;
+            --navy-mid: #1a3a5c;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --cream: #f8f6f1;
+            --white: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --red: #dc2626;
+            --red-light: #fee2e2;
+            --green: #059669;
+            --orange: #d97706;
+            --orange-light: #fef3c7;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
+        }
+
+        body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--gray-800); min-height: 100vh; }
+
+        header { background: var(--navy); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .logo-text { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); letter-spacing: -0.3px; }
+        .logo-tag { font-size: 11px; color: var(--teal-light); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-badge { background: rgba(13,148,136,0.18); color: var(--teal-light); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.3); }
+        .offline-badge { background: rgba(217,119,6,0.18); color: var(--orange); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(217,119,6,0.3); display: none; }
+        .user-email { color: var(--gray-400); font-size: 13px; }
+        .btn-signout { background: rgba(255,255,255,0.08); color: var(--gray-400); border: 1px solid rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+        .btn-signout:hover { background: rgba(255,255,255,0.15); color: var(--white); }
+
+        .nav-tabs { background: var(--navy-mid); padding: 0 40px; display: flex; gap: 4px; }
+        .nav-tab { padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--gray-400); border: none; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
+        .nav-tab:hover { color: var(--white); }
+        .nav-tab.active { color: var(--teal-light); border-bottom-color: var(--teal-light); }
+        .tab-badge { background: var(--orange); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: none; }
+
+        #auth-screen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; }
+        .auth-card { background: var(--white); border-radius: 20px; box-shadow: var(--shadow-lg); padding: 48px 40px; width: 100%; max-width: 420px; border: 1px solid var(--gray-200); }
+        .auth-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 6px; letter-spacing: -0.5px; }
+        .auth-subtitle { color: var(--gray-600); font-size: 14px; margin-bottom: 32px; }
+        .auth-tabs { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: 10px; margin-bottom: 28px; }
+        .auth-tab { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--gray-600); }
+        .auth-tab.active { background: var(--white); color: var(--navy); box-shadow: var(--shadow-sm); font-weight: 600; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; letter-spacing: 0.3px; }
+        .form-input { width: 100%; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--gray-800); background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; outline: none; transition: border-color 0.2s, background 0.2s; }
+        .form-input:focus { border-color: var(--teal); background: var(--white); }
+        .btn-auth { width: 100%; padding: 13px; background: var(--teal); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+        .btn-auth:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.35); }
+        .auth-error { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); color: var(--red); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; display: none; }
+        .auth-success { background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.2); color: var(--green); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; display: none; }
+
+        #app-screen { display: none; }
+        main { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--navy); margin-bottom: 6px; letter-spacing: -0.5px; }
+        .page-subtitle { color: var(--gray-600); font-size: 15px; margin-bottom: 36px; font-weight: 400; }
+
+        .card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-md); margin-bottom: 24px; overflow: hidden; border: 1px solid var(--gray-200); transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: var(--shadow-lg); }
+        .card-header { background: var(--navy); padding: 18px 28px; display: flex; align-items: center; gap: 12px; }
+        .card-header-icon { width: 32px; height: 32px; background: rgba(13,148,136,0.25); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .card-header-text h2 { font-size: 16px; font-weight: 600; color: var(--white); letter-spacing: -0.2px; }
+        .card-header-text p { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+        .card-body { padding: 28px; }
+
+        textarea { width: 100%; min-height: 160px; padding: 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--gray-800); background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; resize: vertical; transition: border-color 0.2s, background 0.2s; outline: none; }
+        textarea:focus { border-color: var(--teal); background: var(--white); }
+        textarea::placeholder { color: var(--gray-400); }
+
+        .controls-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+        .select-wrapper { position: relative; flex: 1; min-width: 200px; }
+        select { width: 100%; padding: 11px 36px 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--gray-800); background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; appearance: none; cursor: pointer; outline: none; transition: border-color 0.2s; }
+        select:focus { border-color: var(--teal); }
+        .select-wrapper::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none; font-size: 13px; }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.18s; white-space: nowrap; letter-spacing: 0.1px; }
+        .btn-primary { background: var(--teal); color: var(--white); }
+        .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.35); }
+        .btn-record { background: var(--green); color: var(--white); }
+        .btn-record:hover { background: #10b981; transform: translateY(-1px); }
+        .btn-stop { background: var(--red); color: var(--white); display: none; }
+        .btn-stop:hover { background: #ef4444; transform: translateY(-1px); }
+        .btn-copy { background: var(--navy); color: var(--white); display: none; }
+        .btn-copy:hover { background: var(--navy-mid); transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: var(--teal); border: 2px solid var(--teal); padding: 8px 16px; font-size: 13px; }
+        .btn-outline:hover { background: var(--teal); color: var(--white); }
+        .btn-danger { background: transparent; color: var(--red); border: 2px solid var(--red); padding: 8px 16px; font-size: 13px; }
+        .btn-danger:hover { background: var(--red); color: var(--white); }
+        .btn-danger-solid { background: var(--red); color: var(--white); }
+        .btn-danger-solid:hover { background: #b91c1c; transform: translateY(-1px); }
+        .btn-orange { background: var(--orange); color: var(--white); }
+        .btn-orange:hover { background: #b45309; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .recording-status { display: none; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--red); }
+        .recording-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: pulse 1.2s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+
+        #transcript-area { display: none; margin-top: 16px; }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; color: var(--gray-400); font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+
+        #result-card { display: none; }
+        .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .result-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); }
+        .result-content { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; }
+        .save-status { font-size: 13px; color: var(--green); display: none; align-items: center; gap: 6px; }
+
+        #loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 32px; color: var(--gray-600); font-size: 14px; font-weight: 500; }
+        .spinner { width: 20px; height: 20px; border: 2px solid var(--gray-200); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .offline-banner { background: var(--orange-light); border: 1px solid rgba(217,119,6,0.3); border-radius: 12px; padding: 14px 20px; margin-bottom: 24px; display: none; align-items: center; gap: 12px; }
+        .offline-banner-text { font-size: 14px; color: var(--orange); font-weight: 500; flex: 1; }
+
+        .pending-item { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .pending-item-info { flex: 1; min-width: 0; }
+        .pending-item-title { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
+        .pending-item-meta { font-size: 12px; color: var(--gray-400); }
+        .pending-item-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .pending-select { padding: 8px 28px 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--gray-800); background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 8px; appearance: none; cursor: pointer; outline: none; }
+        .pending-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .pending-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+        .transcribing-status { font-size: 13px; color: var(--orange); display: none; align-items: center; gap: 8px; margin-top: 12px; }
+        .transcribed-badge { background: #22c55e; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+
+        .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .history-toolbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .history-empty { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+        .history-empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .history-empty p { font-size: 15px; }
+
+        .day-group { margin-bottom: 28px; }
+        .day-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200); }
+        .day-group-title { font-weight: 600; font-size: 14px; color: var(--navy); letter-spacing: -0.2px; }
+        .day-group-count { font-size: 12px; color: var(--gray-400); }
+
+        .history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; background: var(--white); }
+        .history-item:hover { box-shadow: var(--shadow-md); }
+        .history-item-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; gap: 12px; }
+        .history-item-header:hover { background: var(--gray-100); }
+        .history-item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .history-type-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); white-space: nowrap; }
+        .history-preview { font-size: 13px; color: var(--gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .history-time { font-size: 12px; color: var(--gray-400); }
+        .history-chevron { color: var(--gray-400); font-size: 11px; transition: transform 0.2s; }
+        .history-chevron.open { transform: rotate(180deg); }
+        .btn-delete-single { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; }
+        .btn-delete-single:hover { background: var(--red-light); color: var(--red); }
+        .history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
+        .history-item-body.open { display: block; }
+        .history-note-text { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-top: 16px; }
+        .history-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+        #history-loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--gray-600); font-size: 14px; }
+
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+        .confirm-box { background: var(--white); border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; box-shadow: var(--shadow-lg); }
+        .confirm-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 10px; }
+        .confirm-message { color: var(--gray-600); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+        footer { text-align: center; padding: 24px; color: var(--gray-400); font-size: 12px; }
+
+        @media (max-width: 600px) {
+            /* Header */
+            header { padding: 0 14px; height: 56px; }
+            .logo-text { font-size: 19px; }
+            .logo-tag { display: none; }
+            .header-right { gap: 8px; }
+            .header-badge { font-size: 11px; padding: 4px 10px; }
+            .offline-badge { font-size: 11px; padding: 4px 10px; }
+            .user-email { display: none; }
+            .btn-signout { padding: 8px 14px; font-size: 13px; }
+
+            /* Nav tabs */
+            .nav-tabs { padding: 0 8px; gap: 0; }
+            .nav-tab { padding: 14px 12px; font-size: 15px; }
+
+            /* Main content */
+            main { padding: 20px 14px 60px; }
+            .page-title { font-size: 26px; }
+            .page-subtitle { font-size: 15px; margin-bottom: 24px; }
+
+            /* Cards */
+            .card-header { padding: 16px 18px; gap: 10px; }
+            .card-header-text h2 { font-size: 16px; }
+            .card-header-text p { font-size: 13px; }
+            .card-body { padding: 18px; }
+
+            /* Forms */
+            textarea { min-height: 130px; font-size: 16px; padding: 14px; }
+            .form-input { font-size: 16px; padding: 14px; }
+            .controls-row { flex-direction: column; align-items: stretch; }
+            .select-wrapper { min-width: 0; }
+            select { font-size: 16px; padding: 14px 36px 14px 14px; }
+            .btn { justify-content: center; min-height: 50px; font-size: 16px; padding: 14px 22px; }
+            .btn-sm { min-height: 44px; font-size: 14px; padding: 10px 16px; }
+            .btn-record { font-size: 16px; min-height: 50px; }
+            .btn-stop { font-size: 16px; min-height: 50px; }
+
+            /* Recording */
+            .recording-status { font-size: 15px; padding: 10px 16px; }
+            .offline-banner { padding: 14px 16px; gap: 10px; }
+            .offline-banner-text { font-size: 15px; }
+            .divider { font-size: 13px; }
+
+            /* Auth */
+            .auth-card { padding: 32px 22px; }
+            .auth-title { font-size: 26px; }
+            .auth-subtitle { font-size: 15px; margin-bottom: 24px; }
+            .form-label { font-size: 14px; }
+            .btn-auth { font-size: 16px; padding: 15px; min-height: 50px; }
+
+            /* Pending items */
+            .pending-item { flex-direction: column; align-items: stretch; padding: 16px 18px; }
+            .pending-item-title { font-size: 16px; }
+            .pending-item-meta { font-size: 14px; }
+            .pending-item-actions { justify-content: stretch; }
+            .pending-select { flex: 1; font-size: 15px; padding: 12px 28px 12px 12px; }
+            .transcribing-status { font-size: 15px; }
+            .btn-delete-single { font-size: 18px; padding: 8px 10px; }
+
+            /* History items */
+            .history-item-header { padding: 14px 16px; gap: 10px; }
+            .history-item-left { gap: 10px; }
+            .history-type-badge { font-size: 12px; padding: 4px 10px; }
+            .history-preview { font-size: 14px; }
+            .history-time { font-size: 13px; }
+            .history-item-body { padding: 0 16px 16px; }
+            .history-note-text { padding: 14px; font-size: 14px; line-height: 1.9; }
+            .history-actions { flex-wrap: wrap; }
+
+            /* Result */
+            .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .result-badge { font-size: 13px; }
+            .result-content { padding: 16px; font-size: 15px; line-height: 1.9; }
+            .save-status { font-size: 14px; }
+
+            /* Loading */
+            #loading { font-size: 16px; }
+
+            /* Confirm modal */
+            .confirm-box { padding: 28px 22px; }
+            .confirm-title { font-size: 22px; }
+            .confirm-message { font-size: 15px; }
+            .confirm-actions { flex-direction: column; }
+            .confirm-actions .btn { width: 100%; }
+
+            /* Footer */
+            footer { font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">🩺</div>
+        <div>
+            <div class="logo-text">CareNote</div>
+            <div class="logo-tag">Documentation Assistant</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="offline-badge" id="offline-badge">⚡ Offline</div>
+        <div class="header-badge">Personal Testing</div>
+        <span class="user-email" id="user-email"></span>
+        <button class="btn-signout" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+    </div>
+</header>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+    <div class="auth-card">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-subtitle">Sign in to access your documentation assistant</div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+            <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+        </div>
+        <div id="signin-form">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input class="form-input" type="email" id="signin-email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" id="signin-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') signIn()">
+            </div>
+            <button class="btn-auth" onclick="signIn()">Sign In →</button>
+            <div class="auth-error" id="signin-error"></div>
+        </div>
+        <div id="signup-form" style="display:none">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input class="form-input" type="email" id="signup-email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" id="signup-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter') signUp()">
+            </div>
+            <button class="btn-auth" onclick="signUp()">Create Account →</button>
+            <div class="auth-error" id="signup-error"></div>
+            <div class="auth-success" id="signup-success"></div>
+        </div>
+    </div>
+</div>
+
+<!-- App Screen -->
+<div id="app-screen">
+    <div class="nav-tabs">
+        <button class="nav-tab active" id="tab-new" onclick="showTab('new')">✏️ New Note</button>
+        <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">🎙️ Pending <span class="tab-badge" id="pending-badge">0</span></button>
+        <button class="nav-tab" id="tab-history" onclick="showTab('history')">📋 Past Notes</button>
+    </div>
+
+    <main>
+        <!-- New Note Tab -->
+        <div id="view-new">
+            <div class="page-title">Clinical Documentation</div>
+            <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
+
+            <div class="offline-banner" id="offline-banner">
+                <span style="font-size:20px;">⚡</span>
+                <div class="offline-banner-text">You're offline. You can still record audio — it will be saved locally and transcribed automatically when you're back online.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">🎙️</div>
+                    <div class="card-header-text">
+                        <h2>Record Audio</h2>
+                        <p>Works online and offline — Whisper AI transcription</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <button class="btn btn-record" id="record-btn" onclick="startRecording()">● Start Recording</button>
+                        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()">■ Stop Recording</button>
+                        <div class="recording-status" id="recording-status">
+                            <div class="recording-dot"></div>
+                            Recording in progress
+                        </div>
+                    </div>
+                    <div id="transcript-area">
+                        <div class="divider">Transcribed Text</div>
+                        <textarea id="transcript" placeholder="Your transcription will appear here..."></textarea>
+                        <div class="controls-row">
+                            <div class="select-wrapper">
+                                <select id="note-type-transcript">
+                                    <option value="initial evaluation">Initial Evaluation</option>
+                                    <option value="start of care">Start of Care</option>
+                                    <option value="discharge">Discharge</option>
+                                    <option value="reassessment">Reassessment</option>
+                                    <option value="recertification">Recertification</option>
+                                    <option value="routine visit">Routine Visit</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateNote('transcript')">Generate Note →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">📝</div>
+                    <div class="card-header-text">
+                        <h2>Type Notes Manually</h2>
+                        <p>Type or paste visit notes — useful when offline</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. She complained of knee pain, rated 6/10..."></textarea>
+                    <div class="controls-row">
+                        <div class="select-wrapper">
+                            <select id="note-type-manual">
+                                <option value="initial evaluation">Initial Evaluation</option>
+                                <option value="start of care">Start of Care</option>
+                                <option value="discharge">Discharge</option>
+                                <option value="reassessment">Reassessment</option>
+                                <option value="recertification">Recertification</option>
+                                <option value="routine visit">Routine Visit</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateNote('manual')">Generate Note →</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading">
+                <div class="spinner"></div>
+                <span id="loading-text">Generating your clinical note...</span>
+            </div>
+
+            <div class="card" id="result-card">
+                <div class="card-header">
+                    <div class="card-header-icon">📄</div>
+                    <div class="card-header-text">
+                        <h2>Generated Note</h2>
+                        <p>Review before copying to your EMR</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="result-meta">
+                        <span class="result-badge" id="result-badge">Note</span>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div class="save-status" id="save-status">✅ Saved to history</div>
+                            <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
+                        </div>
+                    </div>
+                    <div class="result-content" id="result"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Recordings Tab -->
+        <div id="view-pending" style="display:none">
+            <div class="page-title">Pending Recordings</div>
+            <div class="page-subtitle">Audio recorded offline — transcribe silently with Whisper when back online.</div>
+            <div id="pending-list"></div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="view-history" style="display:none">
+            <div class="history-toolbar">
+                <div>
+                    <div class="page-title">Past Notes</div>
+                    <div class="page-subtitle" style="margin-bottom:0">All your previously generated clinical notes.</div>
+                </div>
+                <div class="history-toolbar-actions">
+                    <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
+                </div>
+            </div>
+            <div id="history-loading">
+                <div class="spinner"></div>
+                Loading your notes...
+            </div>
+            <div id="history-list"></div>
+        </div>
+    </main>
+    <footer>CareNote · Personal Testing Version · Not for clinical use without HIPAA compliance</footer>
+</div>
+
+<script>
+    // ── PASTE YOUR KEYS HERE ──────────────────────────────
+    const SUPABASE_URL   = 'https://bctqzflbykwozbanyamp.supabase.co';
+    const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjdHF6ZmxieWt3b3piYW55YW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MTE4NzEsImV4cCI6MjA4Nzk4Nzg3MX0.ugtScANyQf9FXAwAzRtksn7Y90KWNi3j9Q9bDMaQ_dY';
+    // ─────────────────────────────────────────────────────
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser = null;
+    let historyNotes = [];
+    let isOnline = navigator.onLine;
+    let pendingRecordings = [];
+
+    // ── Online/Offline ────────────────────────────────────
+    function updateOnlineStatus() {
+        isOnline = navigator.onLine;
+        document.getElementById('offline-banner').style.display = isOnline ? 'none' : 'flex';
+        document.getElementById('offline-badge').style.display = isOnline ? 'none' : 'flex';
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    async function getFreshSession() {
+        const { data, error } = await sb.auth.refreshSession();
+        if (error || !data.session) throw new Error('Session expired. Please log in again.');
+        return data.session;
+    }
+
+    window.addEventListener('load', async () => {
+        updateOnlineStatus();
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) { currentUser = session.user; showApp(session.user.email); }
+        else showAuth();
+        loadPendingBadge();
+    });
+
+    function showAuth() {
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('signout-btn').style.display = 'none';
+        document.getElementById('user-email').innerText = '';
+    }
+
+    function showApp(email) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        document.getElementById('signout-btn').style.display = 'inline-block';
+        document.getElementById('user-email').innerText = email;
+    }
+
+    function switchTab(tab) {
+        document.getElementById('signin-form').style.display = tab === 'signin' ? 'block' : 'none';
+        document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+        document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+        document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    }
+
+    async function signIn() {
+        const email = document.getElementById('signin-email').value;
+        const password = document.getElementById('signin-password').value;
+        const errEl = document.getElementById('signin-error');
+        errEl.style.display = 'none';
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
+        else { currentUser = data.user; showApp(data.user.email); }
+    }
+
+    async function signUp() {
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const errEl = document.getElementById('signup-error');
+        const successEl = document.getElementById('signup-success');
+        errEl.style.display = 'none'; successEl.style.display = 'none';
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
+        else { successEl.innerText = 'Account created! You can now sign in.'; successEl.style.display = 'block'; setTimeout(() => switchTab('signin'), 2000); }
+    }
+
+    async function signOut() {
+        await sb.auth.signOut();
+        currentUser = null;
+        showAuth();
+    }
+
+    function showTab(tab) {
+        ['new', 'pending', 'history'].forEach(t => {
+            document.getElementById(`view-${t}`).style.display = t === tab ? 'block' : 'none';
+            document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+        });
+        if (tab === 'history') loadHistory();
+        if (tab === 'pending') renderPendingList();
+    }
+
+    // ── Pending recordings ────────────────────────────────
+    function loadPendingBadge() {
+        const count = pendingRecordings.length;
+        const badge = document.getElementById('pending-badge');
+        badge.innerText = count;
+        badge.style.display = count > 0 ? 'inline' : 'none';
+    }
+
+    function savePendingRecording(blob, durationSec) {
+        const id = Date.now();
+        const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        pendingRecordings.push({ id, blob, timestamp, durationSec });
+        loadPendingBadge();
+        if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+        alert(`Recording saved locally (${Math.round(durationSec)}s). Go to Pending Recordings when online to transcribe it silently with Whisper.`);
+    }
+
+    function renderPendingList() {
+        const listEl = document.getElementById('pending-list');
+        if (pendingRecordings.length === 0) {
+            listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎙️</div><p style="font-size:15px; color:var(--gray-400);">No pending recordings. Record audio offline and it will appear here.</p></div>`;
+            return;
+        }
+
+        listEl.innerHTML = '';
+        pendingRecordings.forEach(rec => {
+            const item = document.createElement('div');
+            item.className = 'pending-item';
+            item.id = `pending-${rec.id}`;
+            item.innerHTML = `
+                <div class="pending-item-info">
+                    <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
+                    <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
+                    <div class="transcribing-status" id="transcribing-${rec.id}">
+                        <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                        Transcribing with Whisper...
+                    </div>
+                </div>
+                <div class="pending-item-actions">
+                    <select class="pending-select" id="pending-type-${rec.id}">
+                        <option value="initial evaluation">Initial Evaluation</option>
+                        <option value="start of care">Start of Care</option>
+                        <option value="discharge">Discharge</option>
+                        <option value="reassessment">Reassessment</option>
+                        <option value="recertification">Recertification</option>
+                        <option value="routine visit">Routine Visit</option>
+                    </select>
+                    <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
+                    <button class="btn-delete-single" onclick="deletePending(${rec.id})" title="Remove recording">🗑️</button>
+                </div>`;
+            listEl.appendChild(item);
+        });
+    }
+
+    function deletePending(id) {
+        pendingRecordings = pendingRecordings.filter(r => r.id !== id);
+        document.getElementById(`pending-${id}`)?.remove();
+        loadPendingBadge();
+        if (pendingRecordings.length === 0) renderPendingList();
+    }
+
+    async function transcribePending(id) {
+        if (!isOnline) { alert('You need to be online to transcribe recordings.'); return; }
+
+        const rec = pendingRecordings.find(r => r.id === id);
+        if (!rec) return;
+
+        const noteType = document.getElementById(`pending-type-${id}`).value;
+        const btn = document.getElementById(`transcribe-btn-${id}`);
+        const statusEl = document.getElementById(`transcribing-${id}`);
+
+        btn.disabled = true;
+        btn.innerText = 'Transcribing...';
+        statusEl.style.display = 'flex';
+
+        try {
+            // Send audio file directly to Whisper via Edge Function — no playback needed
+            const formData = new FormData();
+            formData.append('audio', rec.blob, 'recording.webm');
+
+            const { data, error: fnError } = await sb.functions.invoke('transcribe', { body: formData });
+
+            if (fnError) {
+                let detail = fnError.message;
+                try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                throw new Error(detail);
+            }
+            if (!data?.text) throw new Error('No transcription returned');
+
+            // Mark as transcribed but keep the recording
+            rec.transcribed = true;
+            statusEl.style.display = 'none';
+            btn.disabled = false;
+            btn.innerText = 'Re-transcribe →';
+            const titleEl = document.querySelector(`#pending-${id} .pending-item-title`);
+            if (titleEl && !titleEl.querySelector('.transcribed-badge')) {
+                titleEl.insertAdjacentHTML('beforeend', ' <span class="transcribed-badge">Transcribed</span>');
+            }
+
+            // Move to New Note tab with transcription pre-filled
+            showTab('new');
+            document.getElementById('transcript-area').style.display = 'block';
+            document.getElementById('transcript').value = data.text;
+            document.getElementById('note-type-transcript').value = noteType;
+            document.getElementById('transcript').scrollIntoView({ behavior: 'smooth' });
+
+        } catch (err) {
+            statusEl.style.display = 'none';
+            btn.disabled = false;
+            btn.innerText = rec.transcribed ? 'Re-transcribe →' : 'Transcribe →';
+            alert('Transcription failed: ' + err.message + '. Please try again.');
+        }
+    }
+
+    // ── Recording ─────────────────────────────────────────
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingStartTime = null;
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                recordingStartTime = Date.now();
+
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.start();
+
+                document.getElementById('recording-status').style.display = 'flex';
+                document.getElementById('stop-btn').style.display = 'inline-flex';
+                document.getElementById('record-btn').style.display = 'none';
+                document.getElementById('transcript-area').style.display = 'none';
+            })
+            .catch(() => alert('Could not access microphone. Please check permissions.'));
+    }
+
+    async function stopRecording() {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+
+        mediaRecorder.onstop = async () => {
+            const durationSec = (Date.now() - recordingStartTime) / 1000;
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+            if (!isOnline) {
+                savePendingRecording(blob, durationSec);
+                return;
+            }
+
+            // Online — transcribe immediately with Whisper
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loading-text').innerText = 'Transcribing with Whisper...';
+            document.getElementById('transcript-area').style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', blob, 'recording.webm');
+
+                const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (error) {
+                    let detail = error.message;
+                    try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                    throw new Error(detail);
+                }
+                if (!data?.text) throw new Error('No transcription returned');
+
+                document.getElementById('transcript-area').style.display = 'block';
+                document.getElementById('transcript').value = data.text;
+
+            } catch (err) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loading-text').innerText = 'Generating your clinical note...';
+                alert('Transcription failed: ' + err.message);
+            }
+
+            document.getElementById('loading-text').innerText = 'Generating your clinical note...';
+        };
+
+        mediaRecorder.stop();
+        document.getElementById('recording-status').style.display = 'none';
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('record-btn').style.display = 'inline-flex';
+    }
+
+    // ── Note Generation ───────────────────────────────────
+    async function generateNote(source) {
+        const notes = source === 'transcript'
+            ? document.getElementById('transcript').value
+            : document.getElementById('manual-notes').value;
+        const noteType = source === 'transcript'
+            ? document.getElementById('note-type-transcript').value
+            : document.getElementById('note-type-manual').value;
+
+        if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
+        if (!isOnline) { alert('You need to be online to generate notes.'); return; }
+
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('save-status').style.display = 'none';
+
+        try {
+            const { data, error: fnError } = await sb.functions.invoke('generate-note', {
+                body: { notes, noteType }
+            });
+
+            if (fnError) {
+                let detail = fnError.message;
+                try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                throw new Error(detail);
+            }
+            if (!data?.text) throw new Error('No note generated');
+
+            const generatedNote = data.text;
+            const noteTypeTitled = noteType.replace(/\b\w/g, l => l.toUpperCase());
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('result-card').style.display = 'block';
+            document.getElementById('result-badge').innerText = noteTypeTitled;
+            document.getElementById('result').innerText = generatedNote;
+            document.getElementById('copy-btn').style.display = 'inline-flex';
+            document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            if (currentUser) {
+                const { error } = await sb.from('notes').insert({
+                    user_id: currentUser.id,
+                    note_type: noteType,
+                    raw_notes: notes,
+                    generated_note: generatedNote
+                });
+                if (!error) document.getElementById('save-status').style.display = 'flex';
+            }
+        } catch (err) {
+            document.getElementById('loading').style.display = 'none';
+            alert('Something went wrong. Please check your connection and try again.');
+        }
+    }
+
+    function copyNote() {
+        const text = document.getElementById('result').innerText;
+        navigator.clipboard.writeText(text);
+        const btn = document.getElementById('copy-btn');
+        btn.innerText = '✅ Copied!';
+        setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    // ── History ───────────────────────────────────────────
+    async function loadHistory() {
+        const listEl = document.getElementById('history-list');
+        const loadingEl = document.getElementById('history-loading');
+        listEl.innerHTML = '';
+        loadingEl.style.display = 'flex';
+
+        const { data, error } = await sb.from('notes').select('*').order('created_at', { ascending: false });
+        loadingEl.style.display = 'none';
+        historyNotes = data || [];
+
+        if (error || historyNotes.length === 0) {
+            listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet. Generate your first note to see it here.</p></div>`;
+            return;
+        }
+
+        const groups = {};
+        historyNotes.forEach(note => {
+            const dateKey = new Date(note.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(note);
+        });
+
+        Object.entries(groups).forEach(([dateLabel, notes]) => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'day-group';
+            groupEl.id = `group-${dateLabel.replace(/\s/g, '-')}`;
+            const count = notes.length;
+            groupEl.innerHTML = `
+                <div class="day-group-header">
+                    <div>
+                        <div class="day-group-title">${dateLabel}</div>
+                        <div class="day-group-count">${count} ${count === 1 ? 'note' : 'notes'}</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteDay('${dateLabel}')">🗑️ Delete Day</button>
+                </div>`;
+
+            notes.forEach(note => {
+                const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const noteTypeTitled = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+                const preview = note.generated_note.substring(0, 70) + '...';
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.id = `note-${note.id}`;
+                item.innerHTML = `
+                    <div class="history-item-header">
+                        <div class="history-item-left" onclick="toggleHistory('${note.id}')">
+                            <span class="history-type-badge">${noteTypeTitled}</span>
+                            <span class="history-preview">${preview}</span>
+                        </div>
+                        <div class="history-item-right">
+                            <span class="history-time">${time}</span>
+                            <span class="history-chevron" id="chevron-${note.id}">▼</span>
+                            <button class="btn-delete-single" onclick="confirmDeleteOne('${note.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="history-item-body" id="body-${note.id}">
+                        <div class="history-note-text">${note.generated_note}</div>
+                        <div class="history-actions">
+                            <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}')">📋 Copy Note</button>
+                        </div>
+                    </div>`;
+                groupEl.appendChild(item);
+            });
+            listEl.appendChild(groupEl);
+        });
+    }
+
+    function toggleHistory(id) {
+        document.getElementById(`body-${id}`).classList.toggle('open');
+        document.getElementById(`chevron-${id}`).classList.toggle('open');
+    }
+
+    function copyHistoryNote(id) {
+        const note = historyNotes.find(n => n.id === id);
+        if (!note) return;
+        navigator.clipboard.writeText(note.generated_note);
+        event.target.innerText = '✅ Copied!';
+        setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    // ── Delete ────────────────────────────────────────────
+    function showConfirm(title, message, onConfirm) {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-box">
+                <div class="confirm-title">${title}</div>
+                <div class="confirm-message">${message}</div>
+                <div class="confirm-actions">
+                    <button class="btn btn-outline" onclick="this.closest('.confirm-overlay').remove()">Cancel</button>
+                    <button class="btn btn-danger-solid" id="confirm-yes">Delete</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        document.getElementById('confirm-yes').onclick = () => { overlay.remove(); onConfirm(); };
+    }
+
+    function confirmDeleteOne(id) { showConfirm('Delete Note', 'Are you sure you want to delete this note? This cannot be undone.', () => deleteOne(id)); }
+    function confirmDeleteDay(dateLabel) { showConfirm('Delete Day', `Delete all notes from ${dateLabel}? This cannot be undone.`, () => deleteDay(dateLabel)); }
+    function confirmDeleteAll() { showConfirm('Delete All Notes', 'Delete ALL your notes? This cannot be undone.', () => deleteAll()); }
+
+    async function deleteOne(id) {
+        const { error } = await sb.from('notes').delete().eq('id', id);
+        if (!error) { document.getElementById(`note-${id}`)?.remove(); historyNotes = historyNotes.filter(n => n.id !== id); checkEmptyGroups(); }
+    }
+
+    async function deleteDay(dateLabel) {
+        const ids = historyNotes.filter(n => new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) === dateLabel).map(n => n.id);
+        const { error } = await sb.from('notes').delete().in('id', ids);
+        if (!error) { document.getElementById(`group-${dateLabel.replace(/\s/g, '-')}`)?.remove(); historyNotes = historyNotes.filter(n => !ids.includes(n.id)); checkEmptyGroups(); }
+    }
+
+    async function deleteAll() {
+        const { error } = await sb.from('notes').delete().eq('user_id', currentUser.id);
+        if (!error) { historyNotes = []; document.getElementById('history-list').innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet.</p></div>`; }
+    }
+
+    function checkEmptyGroups() {
+        const listEl = document.getElementById('history-list');
+        listEl.querySelectorAll('.day-group').forEach(g => { if (g.querySelectorAll('.history-item').length === 0) g.remove(); });
+        if (listEl.querySelectorAll('.day-group').length === 0) listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet.</p></div>`;
+    }
+</script>
+</body>
+</html>
