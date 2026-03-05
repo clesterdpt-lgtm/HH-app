@@ -581,6 +581,7 @@
         document.getElementById('app-screen').style.display = 'block';
         document.getElementById('signout-btn').style.display = 'inline-block';
         document.getElementById('user-email').innerText = email;
+        showInstallBanner();
     }
 
     function switchTab(tab) {
@@ -1008,14 +1009,21 @@
 
     // PWA install prompt
     let deferredPrompt = null;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || navigator.standalone === true;
+
+    function showInstallBanner() {
+        // Don't show if already installed, or user dismissed, or app-screen not visible
+        if (isStandalone) return;
+        if (localStorage.getItem('install-dismissed')) return;
+        if (document.getElementById('app-screen').style.display === 'none') return;
+        document.getElementById('install-banner').style.display = 'flex';
+    }
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // Show install banner if user hasn't dismissed it
-        if (!localStorage.getItem('install-dismissed')) {
-            document.getElementById('install-banner').style.display = 'flex';
-        }
+        showInstallBanner();
     });
 
     function installApp() {
@@ -1049,13 +1057,6 @@
         document.getElementById('install-banner').style.display = 'none';
         deferredPrompt = null;
     });
-
-    // Also show banner on iOS if not in standalone mode
-    if (('standalone' in navigator) && !navigator.standalone && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        if (!localStorage.getItem('install-dismissed')) {
-            document.getElementById('install-banner').style.display = 'flex';
-        }
-    }
 </script>
 </body>
 </html>
