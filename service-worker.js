@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carenote-v1';
+const CACHE_NAME = 'carenote-v2';
 
 // App shell files to pre-cache
 const APP_SHELL = [
@@ -6,6 +6,8 @@ const APP_SHELL = [
   '/index.html',
   '/manifest.json',
   '/icons/icon.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -32,11 +34,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch — cache-first for app shell, network-first for API calls
+// Fetch strategy
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first for Supabase API calls (functions, auth, database)
+  // Network-first for Supabase API calls
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -49,25 +51,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for everything else (app shell, fonts, SDK)
+  // Network-first for HTML pages (so updates deploy immediately)
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      }).catch(() => {
+        return caches.match(event.request) || caches.match('/index.html');
+      })
+    );
+    return;
+  }
+
+  // Cache-first for static assets (fonts, SDK, icons)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
 
       return fetch(event.request).then((response) => {
-        // Cache successful GET responses for fonts and static assets
         if (response.ok && event.request.method === 'GET') {
           const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
         return response;
-      }).catch(() => {
-        // Fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
       });
     })
   );
