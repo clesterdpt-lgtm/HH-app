@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carenote-v6';
+const CACHE_NAME = 'carenote-v7';
 
 // App shell files to pre-cache
 const APP_SHELL = [
