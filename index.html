@@ -330,6 +330,92 @@
         .install-dismiss:hover {
             color: var(--white);
         }
+
+        /* iOS install modal */
+        .ios-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .ios-modal {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px 24px 24px;
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .ios-modal-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .ios-modal-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+        .ios-modal-subtitle {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 24px;
+        }
+        .ios-modal-steps {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        .ios-modal-step {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .ios-modal-step:last-child {
+            border-bottom: none;
+        }
+        .ios-step-num {
+            width: 32px;
+            height: 32px;
+            background: var(--teal);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .ios-step-text {
+            font-size: 15px;
+            color: var(--gray-800);
+            line-height: 1.4;
+        }
+        .ios-step-text .ios-icon {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .btn-ios-close {
+            width: 100%;
+            padding: 14px;
+            background: var(--teal);
+            color: var(--white);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -1013,9 +1099,7 @@
         || navigator.standalone === true;
 
     function showInstallBanner() {
-        // Don't show if already installed, or user dismissed, or app-screen not visible
         if (isStandalone) return;
-        if (localStorage.getItem('install-dismissed')) return;
         if (document.getElementById('app-screen').style.display === 'none') return;
         document.getElementById('install-banner').style.display = 'flex';
     }
@@ -1028,7 +1112,6 @@
 
     function installApp() {
         if (deferredPrompt) {
-            // Android/Chrome — trigger the native install prompt
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((result) => {
                 if (result.outcome === 'accepted') {
@@ -1037,19 +1120,49 @@
                 deferredPrompt = null;
             });
         } else {
-            // iOS Safari — show instructions
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            if (isIOS) {
-                alert('To install CareNote:\n\n1. Tap the Share button (square with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
-            } else {
-                alert('To install CareNote, open this site in Chrome and look for the install option in the browser menu.');
-            }
+            showIOSInstallModal();
         }
+    }
+
+    function showIOSInstallModal() {
+        const existing = document.getElementById('ios-install-modal');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'ios-modal-overlay';
+        overlay.id = 'ios-install-modal';
+        overlay.innerHTML = `
+            <div class="ios-modal">
+                <div class="ios-modal-icon">🩺</div>
+                <div class="ios-modal-title">Install CareNote</div>
+                <div class="ios-modal-subtitle">Add to your home screen for the best experience</div>
+                <div class="ios-modal-steps">
+                    <div class="ios-modal-step">
+                        <div class="ios-step-num">1</div>
+                        <div class="ios-step-text">Tap the <span class="ios-icon">&#x2B06;&#xFE0F;</span> <strong>Share</strong> button in the toolbar</div>
+                    </div>
+                    <div class="ios-modal-step">
+                        <div class="ios-step-num">2</div>
+                        <div class="ios-step-text">Scroll down and tap <strong>Add to Home Screen</strong></div>
+                    </div>
+                    <div class="ios-modal-step">
+                        <div class="ios-step-num">3</div>
+                        <div class="ios-step-text">Tap <strong>Add</strong> in the top right corner</div>
+                    </div>
+                </div>
+                <button class="btn-ios-close" onclick="closeIOSModal()">Got it</button>
+            </div>`;
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeIOSModal(); });
+        document.body.appendChild(overlay);
+    }
+
+    function closeIOSModal() {
+        const modal = document.getElementById('ios-install-modal');
+        if (modal) modal.remove();
     }
 
     function dismissInstall() {
         document.getElementById('install-banner').style.display = 'none';
-        localStorage.setItem('install-dismissed', 'true');
     }
 
     // Hide banner if already installed as PWA
