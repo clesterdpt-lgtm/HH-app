@@ -132,8 +132,9 @@
         .patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
         .history-patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
         .result-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .patient-filter { margin-bottom: 16px; }
-        .patient-filter select { max-width: 260px; }
+        .history-filters { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .history-filters .select-wrapper { min-width: 180px; }
+        .history-search { flex: 1; max-width: 360px; }
         .result-content { background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; width: 100%; min-height: 300px; resize: vertical; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s, background 0.2s; }
         .result-content:focus { border-color: var(--teal); background: var(--white); }
         .save-status { font-size: 13px; color: var(--green); display: none; align-items: center; gap: 6px; }
@@ -270,7 +271,9 @@
             .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
             .result-badge { font-size: 13px; }
             .patient-badge { font-size: 13px; }
-            .patient-filter select { max-width: 100%; }
+            .history-filters { flex-direction: column; align-items: stretch; }
+            .history-search { max-width: 100%; font-size: 16px; }
+            .history-filters .select-wrapper { min-width: 0; }
             .result-content { padding: 16px; font-size: 15px; line-height: 1.9; }
             .save-status { font-size: 14px; }
 
@@ -626,9 +629,10 @@
                     <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
                 </div>
             </div>
-            <div class="patient-filter" id="patient-filter" style="display:none;">
+            <div class="history-filters" id="history-filters" style="display:none;">
+                <input type="text" class="form-input history-search" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()">
                 <div class="select-wrapper">
-                    <select id="patient-filter-select" onchange="filterByPatient()">
+                    <select id="patient-filter-select" onchange="applyHistoryFilters()">
                         <option value="">All Patients</option>
                     </select>
                 </div>
@@ -1105,10 +1109,14 @@
         historyNotes = data || [];
 
         if (error || historyNotes.length === 0) {
-            document.getElementById('patient-filter').style.display = 'none';
+            document.getElementById('history-filters').style.display = 'none';
             listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet. Generate your first note to see it here.</p></div>`;
             return;
         }
+
+        // Show filters bar
+        document.getElementById('history-filters').style.display = 'flex';
+        document.getElementById('history-search').value = '';
 
         // Build unique patient names for filter + datalist auto-suggest
         const patientNames = [...new Set(historyNotes.map(n => n.patient_name).filter(Boolean))].sort();
@@ -1122,7 +1130,6 @@
             filterSelect.appendChild(opt);
         });
         filterSelect.value = currentFilter;
-        document.getElementById('patient-filter').style.display = patientNames.length > 0 ? 'block' : 'none';
 
         // Populate datalist for auto-suggestions on generate forms
         const datalist = document.getElementById('patient-suggestions');
@@ -1133,19 +1140,30 @@
             datalist.appendChild(opt);
         });
 
-        renderHistory(currentFilter);
+        renderHistory(currentFilter, '');
     }
 
-    function renderHistory(filterPatient) {
+    function renderHistory(filterPatient, searchQuery) {
         const listEl = document.getElementById('history-list');
         listEl.innerHTML = '';
 
-        const filtered = filterPatient
-            ? historyNotes.filter(n => n.patient_name === filterPatient)
-            : historyNotes;
+        let filtered = historyNotes;
+        if (filterPatient) {
+            filtered = filtered.filter(n => n.patient_name === filterPatient);
+        }
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(n =>
+                (n.generated_note && n.generated_note.toLowerCase().includes(q)) ||
+                (n.raw_notes && n.raw_notes.toLowerCase().includes(q)) ||
+                (n.patient_name && n.patient_name.toLowerCase().includes(q)) ||
+                (n.note_type && n.note_type.toLowerCase().includes(q))
+            );
+        }
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes found for this patient.</p></div>`;
+            const msg = searchQuery ? 'No notes match your search.' : 'No notes found for this patient.';
+            listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>${msg}</p></div>`;
             return;
         }
 
@@ -1205,9 +1223,10 @@
         });
     }
 
-    function filterByPatient() {
-        const selected = document.getElementById('patient-filter-select').value;
-        renderHistory(selected);
+    function applyHistoryFilters() {
+        const patient = document.getElementById('patient-filter-select').value;
+        const search = document.getElementById('history-search').value.trim();
+        renderHistory(patient, search);
     }
 
     function toggleHistory(id) {
