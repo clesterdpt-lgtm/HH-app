@@ -129,7 +129,13 @@
         #result-card { display: none; }
         .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
         .result-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); }
-        .result-content { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; }
+        .patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
+        .history-patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
+        .result-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .patient-filter { margin-bottom: 16px; }
+        .patient-filter select { max-width: 260px; }
+        .result-content { background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; width: 100%; min-height: 300px; resize: vertical; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s, background 0.2s; }
+        .result-content:focus { border-color: var(--teal); background: var(--white); }
         .save-status { font-size: 13px; color: var(--green); display: none; align-items: center; gap: 6px; }
 
         #loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 32px; color: var(--gray-600); font-size: 14px; font-weight: 500; }
@@ -253,6 +259,7 @@
             .history-item-header { padding: 14px 16px; gap: 10px; }
             .history-item-left { gap: 10px; }
             .history-type-badge { font-size: 12px; padding: 4px 10px; }
+            .history-patient-badge { font-size: 12px; padding: 4px 10px; }
             .history-preview { font-size: 14px; }
             .history-time { font-size: 13px; }
             .history-item-body { padding: 0 16px 16px; }
@@ -262,6 +269,8 @@
             /* Result */
             .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
             .result-badge { font-size: 13px; }
+            .patient-badge { font-size: 13px; }
+            .patient-filter select { max-width: 100%; }
             .result-content { padding: 16px; font-size: 15px; line-height: 1.9; }
             .save-status { font-size: 14px; }
 
@@ -522,6 +531,7 @@
                         <div class="divider">Transcribed Text</div>
                         <textarea id="transcript" placeholder="Your transcription will appear here..."></textarea>
                         <div class="controls-row">
+                            <input type="text" class="form-input" id="patient-name-transcript" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                             <div class="select-wrapper">
                                 <select id="note-type-transcript">
                                     <option value="initial evaluation">Initial Evaluation</option>
@@ -549,6 +559,7 @@
                 <div class="card-body">
                     <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. She complained of knee pain, rated 6/10..."></textarea>
                     <div class="controls-row">
+                        <input type="text" class="form-input" id="patient-name-manual" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                         <div class="select-wrapper">
                             <select id="note-type-manual">
                                 <option value="initial evaluation">Initial Evaluation</option>
@@ -564,6 +575,9 @@
                 </div>
             </div>
 
+            <!-- Datalist for patient name auto-suggestions -->
+            <datalist id="patient-suggestions"></datalist>
+
             <div id="loading">
                 <div class="spinner"></div>
                 <span id="loading-text">Generating your clinical note...</span>
@@ -574,18 +588,22 @@
                     <div class="card-header-icon">📄</div>
                     <div class="card-header-text">
                         <h2>Generated Note</h2>
-                        <p>Review before copying to your EMR</p>
+                        <p>Edit below, then copy to your EMR</p>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="result-meta">
-                        <span class="result-badge" id="result-badge">Note</span>
+                        <div class="result-badges">
+                            <span class="result-badge" id="result-badge">Note</span>
+                            <span class="patient-badge" id="result-patient" style="display:none;"></span>
+                        </div>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div class="save-status" id="save-status">✅ Saved to history</div>
+                            <button class="btn btn-copy" id="save-edit-btn" onclick="saveEditedNote()" style="display:none;">💾 Save Changes</button>
                             <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
                         </div>
                     </div>
-                    <div class="result-content" id="result"></div>
+                    <textarea class="result-content" id="result" rows="12" placeholder="Your generated note will appear here..."></textarea>
                 </div>
             </div>
         </div>
@@ -606,6 +624,13 @@
                 </div>
                 <div class="history-toolbar-actions">
                     <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
+                </div>
+            </div>
+            <div class="patient-filter" id="patient-filter" style="display:none;">
+                <div class="select-wrapper">
+                    <select id="patient-filter-select" onchange="filterByPatient()">
+                        <option value="">All Patients</option>
+                    </select>
                 </div>
             </div>
             <div id="history-loading">
@@ -630,6 +655,7 @@
     let historyNotes = [];
     let isOnline = navigator.onLine;
     let pendingRecordings = [];
+    let currentNoteId = null;
 
     // ── Online/Offline ────────────────────────────────────
     function updateOnlineStatus() {
@@ -967,6 +993,9 @@
         const noteType = source === 'transcript'
             ? document.getElementById('note-type-transcript').value
             : document.getElementById('note-type-manual').value;
+        const patientName = (source === 'transcript'
+            ? document.getElementById('patient-name-transcript').value
+            : document.getElementById('patient-name-manual').value).trim();
 
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
         if (!isOnline) { alert('You need to be online to generate notes.'); return; }
@@ -993,18 +1022,41 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result-card').style.display = 'block';
             document.getElementById('result-badge').innerText = noteTypeTitled;
-            document.getElementById('result').innerText = generatedNote;
+            const patientBadge = document.getElementById('result-patient');
+            if (patientName) {
+                patientBadge.innerText = patientName;
+                patientBadge.style.display = 'inline-block';
+            } else {
+                patientBadge.style.display = 'none';
+            }
+            document.getElementById('result').value = generatedNote;
             document.getElementById('copy-btn').style.display = 'inline-flex';
+            document.getElementById('save-edit-btn').style.display = 'none';
+            currentNoteId = null;
             document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+            // Listen for edits so user can save changes
+            const textarea = document.getElementById('result');
+            textarea.oninput = () => {
+                if (currentNoteId) {
+                    document.getElementById('save-edit-btn').style.display = 'inline-flex';
+                    document.getElementById('save-status').style.display = 'none';
+                }
+            };
+
             if (currentUser) {
-                const { error } = await sb.from('notes').insert({
+                const insertData = {
                     user_id: currentUser.id,
                     note_type: noteType,
                     raw_notes: notes,
                     generated_note: generatedNote
-                });
-                if (!error) document.getElementById('save-status').style.display = 'flex';
+                };
+                if (patientName) insertData.patient_name = patientName;
+                const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
+                if (!error && inserted) {
+                    currentNoteId = inserted.id;
+                    document.getElementById('save-status').style.display = 'flex';
+                }
             }
         } catch (err) {
             document.getElementById('loading').style.display = 'none';
@@ -1013,11 +1065,32 @@
     }
 
     function copyNote() {
-        const text = document.getElementById('result').innerText;
+        const text = document.getElementById('result').value;
         navigator.clipboard.writeText(text);
         const btn = document.getElementById('copy-btn');
         btn.innerText = '✅ Copied!';
         setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    async function saveEditedNote() {
+        if (!currentNoteId || !currentUser) return;
+        const editedText = document.getElementById('result').value;
+        const btn = document.getElementById('save-edit-btn');
+        btn.innerText = '⏳ Saving...';
+        btn.disabled = true;
+        const { error } = await sb.from('notes').update({ generated_note: editedText }).eq('id', currentNoteId);
+        btn.disabled = false;
+        if (error) {
+            btn.innerText = '❌ Error';
+            setTimeout(() => { btn.innerText = '💾 Save Changes'; }, 2000);
+        } else {
+            btn.innerText = '✅ Saved!';
+            document.getElementById('save-status').style.display = 'flex';
+            setTimeout(() => {
+                btn.innerText = '💾 Save Changes';
+                btn.style.display = 'none';
+            }, 2000);
+        }
     }
 
     // ── History ───────────────────────────────────────────
@@ -1032,12 +1105,52 @@
         historyNotes = data || [];
 
         if (error || historyNotes.length === 0) {
+            document.getElementById('patient-filter').style.display = 'none';
             listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes yet. Generate your first note to see it here.</p></div>`;
             return;
         }
 
+        // Build unique patient names for filter + datalist auto-suggest
+        const patientNames = [...new Set(historyNotes.map(n => n.patient_name).filter(Boolean))].sort();
+        const filterSelect = document.getElementById('patient-filter-select');
+        const currentFilter = filterSelect.value;
+        filterSelect.innerHTML = '<option value="">All Patients</option>';
+        patientNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            filterSelect.appendChild(opt);
+        });
+        filterSelect.value = currentFilter;
+        document.getElementById('patient-filter').style.display = patientNames.length > 0 ? 'block' : 'none';
+
+        // Populate datalist for auto-suggestions on generate forms
+        const datalist = document.getElementById('patient-suggestions');
+        datalist.innerHTML = '';
+        patientNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            datalist.appendChild(opt);
+        });
+
+        renderHistory(currentFilter);
+    }
+
+    function renderHistory(filterPatient) {
+        const listEl = document.getElementById('history-list');
+        listEl.innerHTML = '';
+
+        const filtered = filterPatient
+            ? historyNotes.filter(n => n.patient_name === filterPatient)
+            : historyNotes;
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>No notes found for this patient.</p></div>`;
+            return;
+        }
+
         const groups = {};
-        historyNotes.forEach(note => {
+        filtered.forEach(note => {
             const dateKey = new Date(note.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             if (!groups[dateKey]) groups[dateKey] = [];
             groups[dateKey].push(note);
@@ -1061,6 +1174,9 @@
                 const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const noteTypeTitled = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
                 const preview = note.generated_note.substring(0, 70) + '...';
+                const patientTag = note.patient_name
+                    ? `<span class="history-patient-badge">${note.patient_name}</span>`
+                    : '';
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.id = `note-${note.id}`;
@@ -1068,6 +1184,7 @@
                     <div class="history-item-header">
                         <div class="history-item-left" onclick="toggleHistory('${note.id}')">
                             <span class="history-type-badge">${noteTypeTitled}</span>
+                            ${patientTag}
                             <span class="history-preview">${preview}</span>
                         </div>
                         <div class="history-item-right">
@@ -1086,6 +1203,11 @@
             });
             listEl.appendChild(groupEl);
         });
+    }
+
+    function filterByPatient() {
+        const selected = document.getElementById('patient-filter-select').value;
+        renderHistory(selected);
     }
 
     function toggleHistory(id) {
