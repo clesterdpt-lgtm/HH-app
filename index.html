@@ -158,6 +158,17 @@
         .transcribing-status { font-size: 13px; color: var(--orange); display: none; align-items: center; gap: 8px; margin-top: 12px; }
         .transcribed-badge { background: #22c55e; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
 
+        .bulk-toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px 16px; background: var(--gray-100); border-radius: 12px; flex-wrap: wrap; }
+        .bulk-select-all { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--gray-600); user-select: none; }
+        .bulk-select-all input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--teal); }
+        .pending-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--teal); flex-shrink: 0; }
+        .bulk-transcribe-btn { background: var(--orange); color: var(--white); border: none; padding: 8px 18px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .bulk-transcribe-btn:hover { background: #b45309; }
+        .bulk-transcribe-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .bulk-progress { font-size: 13px; color: var(--orange); font-weight: 500; display: none; align-items: center; gap: 8px; }
+        .btn-use-transcript { background: rgba(13,148,136,0.1); color: var(--teal); border: 1px solid rgba(13,148,136,0.2); padding: 6px 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-use-transcript:hover { background: rgba(13,148,136,0.2); }
+
         .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
         .history-toolbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .history-empty { text-align: center; padding: 60px 20px; color: var(--gray-400); }
@@ -255,6 +266,13 @@
             .pending-select { flex: 1; font-size: 15px; padding: 12px 28px 12px 12px; }
             .transcribing-status { font-size: 15px; }
             .btn-delete-single { font-size: 18px; padding: 8px 10px; }
+            .bulk-toolbar { padding: 14px 16px; gap: 12px; }
+            .bulk-select-all { font-size: 16px; }
+            .bulk-select-all input[type="checkbox"] { width: 22px; height: 22px; }
+            .pending-checkbox { width: 22px; height: 22px; }
+            .bulk-transcribe-btn { font-size: 15px; padding: 12px 20px; width: 100%; }
+            .bulk-progress { font-size: 15px; }
+            .btn-use-transcript { font-size: 14px; padding: 10px 16px; }
 
             /* History items */
             .history-item-header { padding: 14px 16px; gap: 10px; }
@@ -615,6 +633,17 @@
         <div id="view-pending" style="display:none">
             <div class="page-title">Pending Recordings</div>
             <div class="page-subtitle">Audio recorded offline — transcribe silently with Whisper when back online.</div>
+            <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
+                <label class="bulk-select-all">
+                    <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                    Select All
+                </label>
+                <button class="bulk-transcribe-btn" id="bulk-transcribe-btn" style="display:none;" onclick="bulkTranscribe()">Transcribe Selected</button>
+                <div class="bulk-progress" id="bulk-progress">
+                    <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                    <span id="bulk-progress-text">Transcribing 1 of 3...</span>
+                </div>
+            </div>
             <div id="pending-list"></div>
         </div>
 
@@ -818,17 +847,30 @@
 
     function renderPendingList() {
         const listEl = document.getElementById('pending-list');
+        const bulkToolbar = document.getElementById('bulk-toolbar');
+
         if (pendingRecordings.length === 0) {
+            bulkToolbar.style.display = 'none';
             listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎙️</div><p style="font-size:15px; color:var(--gray-400);">No pending recordings. Record audio offline and it will appear here.</p></div>`;
             return;
         }
 
+        // Show bulk toolbar when 2+ recordings
+        bulkToolbar.style.display = pendingRecordings.length >= 2 ? 'flex' : 'none';
+        document.getElementById('select-all-checkbox').checked = false;
+        document.getElementById('bulk-transcribe-btn').style.display = 'none';
+        document.getElementById('bulk-progress').style.display = 'none';
+
         listEl.innerHTML = '';
         pendingRecordings.forEach(rec => {
+            const useTranscriptBtn = rec.transcribed && rec.transcript
+                ? `<button class="btn-use-transcript" onclick="useTranscript(${rec.id})">Use Transcript →</button>`
+                : '';
             const item = document.createElement('div');
             item.className = 'pending-item';
             item.id = `pending-${rec.id}`;
             item.innerHTML = `
+                ${pendingRecordings.length >= 2 ? `<input type="checkbox" class="pending-checkbox" id="check-${rec.id}" onchange="updateBulkSelection()">` : ''}
                 <div class="pending-item-info">
                     <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
                     <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
@@ -838,6 +880,7 @@
                     </div>
                 </div>
                 <div class="pending-item-actions">
+                    ${useTranscriptBtn}
                     <select class="pending-select" id="pending-type-${rec.id}">
                         <option value="initial evaluation">Initial Evaluation</option>
                         <option value="start of care">Start of Care</option>
@@ -859,6 +902,129 @@
         document.getElementById(`pending-${id}`)?.remove();
         loadPendingBadge();
         if (pendingRecordings.length === 0) renderPendingList();
+        // Re-check bulk toolbar visibility after delete
+        if (pendingRecordings.length < 2) {
+            document.getElementById('bulk-toolbar').style.display = 'none';
+            document.querySelectorAll('.pending-checkbox').forEach(cb => cb.remove());
+        }
+    }
+
+    // ── Bulk Transcribe ──────────────────────────────────
+    function toggleSelectAll() {
+        const checked = document.getElementById('select-all-checkbox').checked;
+        document.querySelectorAll('.pending-checkbox').forEach(cb => { cb.checked = checked; });
+        updateBulkSelection();
+    }
+
+    function updateBulkSelection() {
+        const checkboxes = document.querySelectorAll('.pending-checkbox');
+        const checkedCount = [...checkboxes].filter(cb => cb.checked).length;
+        const btn = document.getElementById('bulk-transcribe-btn');
+        if (checkedCount > 0) {
+            btn.style.display = 'inline-block';
+            btn.innerText = `Transcribe Selected (${checkedCount})`;
+        } else {
+            btn.style.display = 'none';
+        }
+        // Sync select-all checkbox
+        const allCheckbox = document.getElementById('select-all-checkbox');
+        allCheckbox.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+    }
+
+    async function bulkTranscribe() {
+        if (!isOnline) { alert('You need to be online to transcribe recordings.'); return; }
+
+        const checkedIds = [...document.querySelectorAll('.pending-checkbox:checked')]
+            .map(cb => Number(cb.id.replace('check-', '')));
+        if (checkedIds.length === 0) return;
+
+        // Disable UI during bulk operation
+        const bulkBtn = document.getElementById('bulk-transcribe-btn');
+        const progressEl = document.getElementById('bulk-progress');
+        const progressText = document.getElementById('bulk-progress-text');
+        bulkBtn.disabled = true;
+        bulkBtn.style.display = 'none';
+        progressEl.style.display = 'flex';
+        document.querySelectorAll('.pending-checkbox').forEach(cb => { cb.disabled = true; });
+        document.getElementById('select-all-checkbox').disabled = true;
+
+        let success = 0;
+        let failed = 0;
+
+        for (let i = 0; i < checkedIds.length; i++) {
+            const id = checkedIds[i];
+            const rec = pendingRecordings.find(r => r.id === id);
+            if (!rec) { failed++; continue; }
+
+            progressText.innerText = `Transcribing ${i + 1} of ${checkedIds.length}...`;
+
+            const btn = document.getElementById(`transcribe-btn-${id}`);
+            const statusEl = document.getElementById(`transcribing-${id}`);
+            if (btn) { btn.disabled = true; btn.innerText = 'Transcribing...'; }
+            if (statusEl) statusEl.style.display = 'flex';
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', rec.blob, 'recording.webm');
+
+                const { data, error: fnError } = await sb.functions.invoke('transcribe', { body: formData });
+
+                if (fnError) {
+                    let detail = fnError.message;
+                    try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                    throw new Error(detail);
+                }
+                if (!data?.text) throw new Error('No transcription returned');
+
+                rec.transcribed = true;
+                rec.transcript = data.text;
+                updateRecordingInDB(rec);
+                success++;
+
+                if (statusEl) statusEl.style.display = 'none';
+                if (btn) { btn.disabled = false; btn.innerText = 'Re-transcribe →'; }
+                const titleEl = document.querySelector(`#pending-${id} .pending-item-title`);
+                if (titleEl && !titleEl.querySelector('.transcribed-badge')) {
+                    titleEl.insertAdjacentHTML('beforeend', ' <span class="transcribed-badge">Transcribed</span>');
+                }
+                // Add "Use Transcript" button if not already present
+                const actionsEl = document.querySelector(`#pending-${id} .pending-item-actions`);
+                if (actionsEl && !actionsEl.querySelector('.btn-use-transcript')) {
+                    actionsEl.insertAdjacentHTML('afterbegin', `<button class="btn-use-transcript" onclick="useTranscript(${id})">Use Transcript →</button>`);
+                }
+
+            } catch (err) {
+                failed++;
+                if (statusEl) statusEl.style.display = 'none';
+                if (btn) { btn.disabled = false; btn.innerText = rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'; }
+            }
+        }
+
+        // Re-enable UI
+        progressEl.style.display = 'none';
+        bulkBtn.disabled = false;
+        document.querySelectorAll('.pending-checkbox').forEach(cb => { cb.disabled = false; cb.checked = false; });
+        document.getElementById('select-all-checkbox').disabled = false;
+        document.getElementById('select-all-checkbox').checked = false;
+        updateBulkSelection();
+
+        // Show summary
+        if (failed > 0) {
+            alert(`Bulk transcription complete: ${success} succeeded, ${failed} failed.`);
+        } else {
+            alert(`All ${success} recordings transcribed successfully!`);
+        }
+    }
+
+    function useTranscript(id) {
+        const rec = pendingRecordings.find(r => r.id === id);
+        if (!rec || !rec.transcript) return;
+        const noteType = document.getElementById(`pending-type-${id}`)?.value || 'routine visit';
+        showTab('new');
+        document.getElementById('transcript-area').style.display = 'block';
+        document.getElementById('transcript').value = rec.transcript;
+        document.getElementById('note-type-transcript').value = noteType;
+        document.getElementById('transcript').scrollIntoView({ behavior: 'smooth' });
     }
 
     async function transcribePending(id) {
@@ -889,8 +1055,9 @@
             }
             if (!data?.text) throw new Error('No transcription returned');
 
-            // Mark as transcribed but keep the recording
+            // Mark as transcribed and store transcript text
             rec.transcribed = true;
+            rec.transcript = data.text;
             updateRecordingInDB(rec);
             statusEl.style.display = 'none';
             btn.disabled = false;
@@ -898,6 +1065,11 @@
             const titleEl = document.querySelector(`#pending-${id} .pending-item-title`);
             if (titleEl && !titleEl.querySelector('.transcribed-badge')) {
                 titleEl.insertAdjacentHTML('beforeend', ' <span class="transcribed-badge">Transcribed</span>');
+            }
+            // Add "Use Transcript" button if not already present
+            const actionsEl = document.querySelector(`#pending-${id} .pending-item-actions`);
+            if (actionsEl && !actionsEl.querySelector('.btn-use-transcript')) {
+                actionsEl.insertAdjacentHTML('afterbegin', `<button class="btn-use-transcript" onclick="useTranscript(${id})">Use Transcript →</button>`);
             }
 
             // Move to New Note tab with transcription pre-filled
