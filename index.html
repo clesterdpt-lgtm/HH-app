@@ -680,6 +680,7 @@
                         <div class="pending-section-subtitle">Transcribe with Whisper when online</div>
                     </div>
                     <span class="pending-section-count" id="recordings-count-badge"></span>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllRecordings()" style="margin-left:8px;">🗑️ Delete All</button>
                 </div>
                 <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
                     <label class="bulk-select-all">
@@ -704,6 +705,7 @@
                         <div class="pending-section-subtitle">Will generate automatically when online</div>
                     </div>
                     <span class="pending-section-count pending-section-count-notes" id="queued-notes-count-badge"></span>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllQueuedNotes()" style="margin-left:8px;">🗑️ Delete All</button>
                 </div>
                 <div id="pending-notes-list"></div>
             </div>
@@ -1043,11 +1045,15 @@
                     ${useTranscriptBtn}
                     <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
                     <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
-                    <button class="btn-delete-single" onclick="deletePending(${rec.id})" title="Remove recording">🗑️</button>
+                    <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
                 </div>`;
             listEl.appendChild(item);
         });
         populateNoteTypeDropdowns();
+    }
+
+    function confirmDeletePending(id) {
+        showConfirm('Delete Recording', 'Are you sure you want to delete this recording? This cannot be undone.', () => deletePending(id));
     }
 
     function deletePending(id) {
@@ -1061,6 +1067,15 @@
             document.getElementById('bulk-toolbar').style.display = 'none';
             document.querySelectorAll('.pending-checkbox').forEach(cb => cb.remove());
         }
+    }
+
+    function confirmDeleteAllRecordings() {
+        showConfirm('Delete All Recordings', `Delete all ${pendingRecordings.length} pending recordings? This cannot be undone.`, () => {
+            pendingRecordings.forEach(r => deleteRecordingFromDB(r.id));
+            pendingRecordings = [];
+            loadPendingBadge();
+            renderPendingList();
+        });
     }
 
     // ── Bulk Transcribe ──────────────────────────────────
@@ -1221,10 +1236,14 @@
                 </div>
                 <div class="pending-item-actions">
                     <button class="btn-generate-now" onclick="processQueuedNote(${item.id})" id="gen-btn-${item.id}" ${item.status === 'processing' ? 'disabled' : ''}>${item.status === 'processing' ? 'Generating...' : 'Generate Now'}</button>
-                    <button class="btn-delete-single" onclick="deleteQueuedNote(${item.id})" title="Remove from queue">🗑️</button>
+                    <button class="btn-delete-single" onclick="confirmDeleteQueuedNote(${item.id})" title="Remove from queue">🗑️</button>
                 </div>`;
             listEl.appendChild(el);
         });
+    }
+
+    function confirmDeleteQueuedNote(id) {
+        showConfirm('Delete Queued Note', 'Are you sure you want to delete this queued note? This cannot be undone.', () => deleteQueuedNote(id));
     }
 
     function deleteQueuedNote(id) {
@@ -1237,6 +1256,15 @@
         } else {
             document.getElementById('queued-notes-count-badge').innerText = pendingNoteQueue.length;
         }
+    }
+
+    function confirmDeleteAllQueuedNotes() {
+        showConfirm('Delete All Queued Notes', `Delete all ${pendingNoteQueue.length} queued notes? This cannot be undone.`, () => {
+            pendingNoteQueue.forEach(n => deleteNoteFromDB(n.id));
+            pendingNoteQueue = [];
+            loadPendingBadge();
+            renderPendingNotesList();
+        });
     }
 
     async function processQueuedNote(id) {
