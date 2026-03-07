@@ -146,6 +146,16 @@
         .offline-banner { background: var(--orange-light); border: 1px solid rgba(217,119,6,0.3); border-radius: 12px; padding: 14px 20px; margin-bottom: 24px; display: none; align-items: center; gap: 12px; }
         .offline-banner-text { font-size: 14px; color: var(--orange); font-weight: 500; flex: 1; }
 
+        .pending-section { border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+        .pending-section-recordings { background: rgba(217,119,6,0.04); border: 2px solid rgba(217,119,6,0.15); }
+        .pending-section-notes { background: rgba(13,148,136,0.04); border: 2px solid rgba(13,148,136,0.15); }
+        .pending-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .pending-section-icon { font-size: 28px; }
+        .pending-section-title { font-weight: 700; font-size: 16px; color: var(--navy); }
+        .pending-section-subtitle { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+        .pending-section-count { background: var(--orange); color: var(--white); font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-left: auto; }
+        .pending-section-count-notes { background: var(--teal); }
+
         .pending-item { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
         .pending-item-info { flex: 1; min-width: 0; }
         .pending-item-title { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
@@ -283,6 +293,10 @@
             .btn-auth { font-size: 16px; padding: 15px; min-height: 50px; }
 
             /* Pending items */
+            .pending-section { padding: 16px; margin-bottom: 20px; }
+            .pending-section-title { font-size: 17px; }
+            .pending-section-subtitle { font-size: 13px; }
+            .pending-section-icon { font-size: 24px; }
             .pending-item { flex-direction: column; align-items: stretch; padding: 16px 18px; }
             .pending-item-title { font-size: 16px; }
             .pending-item-meta { font-size: 14px; }
@@ -652,24 +666,45 @@
             </div>
         </div>
 
-        <!-- Pending Recordings Tab -->
+        <!-- Pending Tab -->
         <div id="view-pending" style="display:none">
-            <div class="page-title">Pending Recordings</div>
-            <div class="page-subtitle">Audio recorded offline — transcribe silently with Whisper when back online.</div>
-            <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
-                <label class="bulk-select-all">
-                    <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
-                    Select All
-                </label>
-                <button class="bulk-transcribe-btn" id="bulk-transcribe-btn" style="display:none;" onclick="bulkTranscribe()">Transcribe Selected</button>
-                <div class="bulk-progress" id="bulk-progress">
-                    <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
-                    <span id="bulk-progress-text">Transcribing 1 of 3...</span>
+            <div class="page-title">Pending</div>
+            <div class="page-subtitle">Recordings and notes waiting to be processed.</div>
+
+            <!-- Pending Recordings Section -->
+            <div class="pending-section pending-section-recordings" id="recordings-section">
+                <div class="pending-section-header">
+                    <div class="pending-section-icon">🎙️</div>
+                    <div>
+                        <div class="pending-section-title">Pending Recordings</div>
+                        <div class="pending-section-subtitle">Transcribe with Whisper when online</div>
+                    </div>
+                    <span class="pending-section-count" id="recordings-count-badge"></span>
                 </div>
+                <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
+                    <label class="bulk-select-all">
+                        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                        Select All
+                    </label>
+                    <button class="bulk-transcribe-btn" id="bulk-transcribe-btn" style="display:none;" onclick="bulkTranscribe()">Transcribe Selected</button>
+                    <div class="bulk-progress" id="bulk-progress">
+                        <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                        <span id="bulk-progress-text">Transcribing 1 of 3...</span>
+                    </div>
+                </div>
+                <div id="pending-list"></div>
             </div>
-            <div id="pending-list"></div>
-            <div id="pending-notes-section" style="display:none;">
-                <div class="divider" style="margin-top:24px;">Queued Notes · <span id="queued-notes-count">0</span> waiting</div>
+
+            <!-- Queued Notes Section -->
+            <div class="pending-section pending-section-notes" id="pending-notes-section" style="display:none;">
+                <div class="pending-section-header">
+                    <div class="pending-section-icon">📝</div>
+                    <div>
+                        <div class="pending-section-title">Queued Notes</div>
+                        <div class="pending-section-subtitle">Will generate automatically when online</div>
+                    </div>
+                    <span class="pending-section-count pending-section-count-notes" id="queued-notes-count-badge"></span>
+                </div>
                 <div id="pending-notes-list"></div>
             </div>
         </div>
@@ -965,12 +1000,17 @@
     function renderPendingList() {
         const listEl = document.getElementById('pending-list');
         const bulkToolbar = document.getElementById('bulk-toolbar');
+        const countBadge = document.getElementById('recordings-count-badge');
 
         if (pendingRecordings.length === 0) {
             bulkToolbar.style.display = 'none';
+            countBadge.style.display = 'none';
             listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎙️</div><p style="font-size:15px; color:var(--gray-400);">No pending recordings. Record audio offline and it will appear here.</p></div>`;
             return;
         }
+
+        countBadge.innerText = pendingRecordings.length;
+        countBadge.style.display = 'inline';
 
         // Show bulk toolbar when 2+ recordings
         bulkToolbar.style.display = pendingRecordings.length >= 2 ? 'flex' : 'none';
@@ -1149,7 +1189,9 @@
         }
 
         section.style.display = 'block';
-        document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+        const noteCountBadge = document.getElementById('queued-notes-count-badge');
+        noteCountBadge.innerText = pendingNoteQueue.length;
+        noteCountBadge.style.display = 'inline';
         listEl.innerHTML = '';
 
         pendingNoteQueue.forEach(item => {
@@ -1190,7 +1232,7 @@
         if (pendingNoteQueue.length === 0) {
             document.getElementById('pending-notes-section').style.display = 'none';
         } else {
-            document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+            document.getElementById('queued-notes-count-badge').innerText = pendingNoteQueue.length;
         }
     }
 
@@ -1253,7 +1295,7 @@
                 if (pendingNoteQueue.length === 0) {
                     document.getElementById('pending-notes-section').style.display = 'none';
                 } else {
-                    document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+                    document.getElementById('queued-notes-count-badge').innerText = pendingNoteQueue.length;
                 }
             }, 1500);
 
