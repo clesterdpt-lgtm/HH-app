@@ -169,6 +169,18 @@
         .btn-use-transcript { background: rgba(13,148,136,0.1); color: var(--teal); border: 1px solid rgba(13,148,136,0.2); padding: 6px 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-use-transcript:hover { background: rgba(13,148,136,0.2); }
 
+        .queued-note-preview { font-size: 13px; color: var(--gray-600); margin-top: 6px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .queued-note-badges { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+        .queued-note-type { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+        .queued-note-patient { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+        .queued-status { font-size: 12px; font-weight: 500; }
+        .queued-status.processing { color: var(--orange); }
+        .queued-status.done { color: var(--green); }
+        .queued-status.error { color: var(--red); }
+        .btn-generate-now { background: var(--teal); color: var(--white); border: none; padding: 6px 14px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-generate-now:hover { background: #0b7c72; }
+        .btn-generate-now:disabled { opacity: 0.6; cursor: not-allowed; }
+
         .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
         .history-toolbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .history-empty { text-align: center; padding: 60px 20px; color: var(--gray-400); }
@@ -205,6 +217,18 @@
         .confirm-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 10px; }
         .confirm-message { color: var(--gray-600); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
         .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+        .template-toggle-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--gray-200); }
+        .template-toggle-item:last-child { border-bottom: none; }
+        .template-toggle-name { font-weight: 500; font-size: 14px; color: var(--gray-800); }
+        .template-toggle-right { display: flex; align-items: center; gap: 8px; }
+        .template-toggle-label { font-size: 13px; color: var(--gray-400); }
+        .template-toggle-right input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; }
+        .template-list-item { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .template-list-info { flex: 1; min-width: 0; }
+        .template-list-name { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
+        .template-list-meta { font-size: 12px; color: var(--gray-400); }
+        .template-list-actions { display: flex; gap: 10px; align-items: center; }
 
         footer { text-align: center; padding: 24px; color: var(--gray-400); font-size: 12px; }
 
@@ -273,6 +297,9 @@
             .bulk-transcribe-btn { font-size: 15px; padding: 12px 20px; width: 100%; }
             .bulk-progress { font-size: 15px; }
             .btn-use-transcript { font-size: 14px; padding: 10px 16px; }
+            .queued-note-preview { font-size: 14px; -webkit-line-clamp: 3; }
+            .btn-generate-now { font-size: 14px; padding: 10px 16px; }
+            .queued-status { font-size: 14px; }
 
             /* History items */
             .history-item-header { padding: 14px 16px; gap: 10px; }
@@ -304,6 +331,15 @@
             .confirm-message { font-size: 15px; }
             .confirm-actions { flex-direction: column; }
             .confirm-actions .btn { width: 100%; }
+
+            /* Templates */
+            .template-toggle-name { font-size: 16px; }
+            .template-toggle-label { font-size: 14px; }
+            .template-toggle-right input[type="checkbox"] { width: 22px; height: 22px; }
+            .template-list-item { flex-direction: column; align-items: stretch; padding: 16px 18px; }
+            .template-list-name { font-size: 16px; }
+            .template-list-meta { font-size: 14px; }
+            .template-list-actions { justify-content: stretch; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -509,6 +545,7 @@
         <button class="nav-tab active" id="tab-new" onclick="showTab('new')">✏️ New Note</button>
         <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">🎙️ Pending <span class="tab-badge" id="pending-badge">0</span></button>
         <button class="nav-tab" id="tab-history" onclick="showTab('history')">📋 Past Notes</button>
+        <button class="nav-tab" id="tab-templates" onclick="showTab('templates')">⚙️ Templates</button>
     </div>
 
     <div class="install-banner" id="install-banner">
@@ -554,14 +591,7 @@
                         <div class="controls-row">
                             <input type="text" class="form-input" id="patient-name-transcript" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                             <div class="select-wrapper">
-                                <select id="note-type-transcript">
-                                    <option value="initial evaluation">Initial Evaluation</option>
-                                    <option value="start of care">Start of Care</option>
-                                    <option value="discharge">Discharge</option>
-                                    <option value="reassessment">Reassessment</option>
-                                    <option value="recertification">Recertification</option>
-                                    <option value="routine visit">Routine Visit</option>
-                                </select>
+                                <select id="note-type-transcript" class="note-type-select"></select>
                             </div>
                             <button class="btn btn-primary" onclick="generateNote('transcript')">Generate Note →</button>
                         </div>
@@ -582,14 +612,7 @@
                     <div class="controls-row">
                         <input type="text" class="form-input" id="patient-name-manual" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                         <div class="select-wrapper">
-                            <select id="note-type-manual">
-                                <option value="initial evaluation">Initial Evaluation</option>
-                                <option value="start of care">Start of Care</option>
-                                <option value="discharge">Discharge</option>
-                                <option value="reassessment">Reassessment</option>
-                                <option value="recertification">Recertification</option>
-                                <option value="routine visit">Routine Visit</option>
-                            </select>
+                            <select id="note-type-manual" class="note-type-select"></select>
                         </div>
                         <button class="btn btn-primary" onclick="generateNote('manual')">Generate Note →</button>
                     </div>
@@ -645,6 +668,10 @@
                 </div>
             </div>
             <div id="pending-list"></div>
+            <div id="pending-notes-section" style="display:none;">
+                <div class="divider" style="margin-top:24px;">Queued Notes · <span id="queued-notes-count">0</span> waiting</div>
+                <div id="pending-notes-list"></div>
+            </div>
         </div>
 
         <!-- History Tab -->
@@ -672,6 +699,37 @@
             </div>
             <div id="history-list"></div>
         </div>
+
+        <!-- Templates Tab -->
+        <div id="view-templates" style="display:none">
+            <div class="page-title">Note Templates</div>
+            <div class="page-subtitle">Customize which note types appear and create your own templates.</div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">📋</div>
+                    <div class="card-header-text">
+                        <h2>Built-in Note Types</h2>
+                        <p>Toggle which standard types appear in your dropdowns</p>
+                    </div>
+                </div>
+                <div class="card-body" id="builtin-types-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">✨</div>
+                    <div class="card-header-text">
+                        <h2>Custom Templates</h2>
+                        <p>Create templates with custom AI instructions and sections</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary" id="new-template-btn" onclick="openTemplateEditor()">+ New Template</button>
+                    <div id="custom-templates-list" style="margin-top:16px;"></div>
+                </div>
+            </div>
+        </div>
     </main>
     <footer>CareNote · Personal Testing Version · Not for clinical use without HIPAA compliance</footer>
 </div>
@@ -688,7 +746,21 @@
     let historyNotes = [];
     let isOnline = navigator.onLine;
     let pendingRecordings = [];
+    let pendingNoteQueue = [];
     let currentNoteId = null;
+
+    // Template system
+    const BUILTIN_TYPES = [
+        { value: 'initial evaluation', label: 'Initial Evaluation' },
+        { value: 'start of care', label: 'Start of Care' },
+        { value: 'discharge', label: 'Discharge' },
+        { value: 'reassessment', label: 'Reassessment' },
+        { value: 'recertification', label: 'Recertification' },
+        { value: 'routine visit', label: 'Routine Visit' }
+    ];
+    let userTemplates = [];
+    let hiddenBuiltinTypes = [];
+    let templatesLoaded = false;
 
     // ── Online/Offline ────────────────────────────────────
     function updateOnlineStatus() {
@@ -697,7 +769,13 @@
         document.getElementById('offline-badge').style.display = isOnline ? 'none' : 'flex';
     }
 
-    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('online', () => {
+        updateOnlineStatus();
+        // Auto-process queued notes when coming back online
+        if (pendingNoteQueue.length > 0) {
+            setTimeout(() => processAllQueuedNotes(), 1000);
+        }
+    });
     window.addEventListener('offline', updateOnlineStatus);
 
     async function getFreshSession() {
@@ -708,9 +786,11 @@
 
     window.addEventListener('load', async () => {
         updateOnlineStatus();
-        // Restore pending recordings from IndexedDB
+        // Restore pending recordings and queued notes from IndexedDB
         const saved = await loadRecordingsFromDB();
         if (saved.length > 0) pendingRecordings = saved;
+        const savedNotes = await loadNotesFromDB();
+        if (savedNotes.length > 0) pendingNoteQueue = savedNotes;
         const { data: { session } } = await sb.auth.getSession();
         if (session) { currentUser = session.user; showApp(session.user.email); }
         else showAuth();
@@ -730,6 +810,7 @@
         document.getElementById('signout-btn').style.display = 'inline-block';
         document.getElementById('user-email').innerText = email;
         showInstallBanner();
+        loadUserTemplatesAndPrefs();
     }
 
     function switchTab(tab) {
@@ -767,22 +848,29 @@
     }
 
     function showTab(tab) {
-        ['new', 'pending', 'history'].forEach(t => {
+        ['new', 'pending', 'history', 'templates'].forEach(t => {
             document.getElementById(`view-${t}`).style.display = t === tab ? 'block' : 'none';
             document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
         });
         if (tab === 'history') loadHistory();
-        if (tab === 'pending') renderPendingList();
+        if (tab === 'pending') { renderPendingList(); renderPendingNotesList(); }
+        if (tab === 'templates') loadTemplates();
     }
 
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 1);
+            const req = indexedDB.open('carenote', 3);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
                     db.createObjectStore('pendingRecordings', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('templateCache')) {
+                    db.createObjectStore('templateCache', { keyPath: 'key' });
+                }
+                if (!db.objectStoreNames.contains('pendingNotes')) {
+                    db.createObjectStore('pendingNotes', { keyPath: 'id' });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -826,9 +914,38 @@
         } catch (e) { console.log('IndexedDB load error:', e); return []; }
     }
 
+    // ── Pending notes queue (IndexedDB) ────────────────────
+    async function saveNoteToDB(note) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('pendingNotes', 'readwrite');
+            tx.objectStore('pendingNotes').put(note);
+        } catch (e) { console.log('IndexedDB note save error:', e); }
+    }
+
+    async function deleteNoteFromDB(id) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('pendingNotes', 'readwrite');
+            tx.objectStore('pendingNotes').delete(id);
+        } catch (e) { console.log('IndexedDB note delete error:', e); }
+    }
+
+    async function loadNotesFromDB() {
+        try {
+            const db = await openDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction('pendingNotes', 'readonly');
+                const req = tx.objectStore('pendingNotes').getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        } catch (e) { console.log('IndexedDB note load error:', e); return []; }
+    }
+
     // ── Pending recordings ────────────────────────────────
     function loadPendingBadge() {
-        const count = pendingRecordings.length;
+        const count = pendingRecordings.length + pendingNoteQueue.length;
         const badge = document.getElementById('pending-badge');
         badge.innerText = count;
         badge.style.display = count > 0 ? 'inline' : 'none';
@@ -881,19 +998,13 @@
                 </div>
                 <div class="pending-item-actions">
                     ${useTranscriptBtn}
-                    <select class="pending-select" id="pending-type-${rec.id}">
-                        <option value="initial evaluation">Initial Evaluation</option>
-                        <option value="start of care">Start of Care</option>
-                        <option value="discharge">Discharge</option>
-                        <option value="reassessment">Reassessment</option>
-                        <option value="recertification">Recertification</option>
-                        <option value="routine visit">Routine Visit</option>
-                    </select>
+                    <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
                     <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
                     <button class="btn-delete-single" onclick="deletePending(${rec.id})" title="Remove recording">🗑️</button>
                 </div>`;
             listEl.appendChild(item);
         });
+        populateNoteTypeDropdowns();
     }
 
     function deletePending(id) {
@@ -1025,6 +1136,155 @@
         document.getElementById('transcript').value = rec.transcript;
         document.getElementById('note-type-transcript').value = noteType;
         document.getElementById('transcript').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ── Queued Notes (offline note generation) ───────────
+    function renderPendingNotesList() {
+        const section = document.getElementById('pending-notes-section');
+        const listEl = document.getElementById('pending-notes-list');
+
+        if (pendingNoteQueue.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+        listEl.innerHTML = '';
+
+        pendingNoteQueue.forEach(item => {
+            const noteTypeTitled = item.noteType.replace(/\b\w/g, l => l.toUpperCase());
+            const preview = item.notes.length > 120 ? item.notes.substring(0, 120) + '...' : item.notes;
+            const patientTag = item.patientName
+                ? `<span class="queued-note-patient">${item.patientName}</span>`
+                : '';
+            const statusClass = item.status === 'processing' ? 'processing' : item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : '';
+            const statusText = item.status === 'processing' ? '⏳ Generating...' : item.status === 'done' ? '✅ Done' : item.status === 'error' ? '❌ Failed — tap to retry' : '';
+
+            const el = document.createElement('div');
+            el.className = 'pending-item';
+            el.id = `queued-note-${item.id}`;
+            el.innerHTML = `
+                <div class="pending-item-info">
+                    <div class="pending-item-title">📝 Queued Note — ${item.timestamp}</div>
+                    <div class="queued-note-badges">
+                        <span class="queued-note-type">${noteTypeTitled}</span>
+                        ${patientTag}
+                    </div>
+                    <div class="queued-note-preview">${preview}</div>
+                    ${statusText ? `<div class="queued-status ${statusClass}" id="queued-status-${item.id}">${statusText}</div>` : ''}
+                </div>
+                <div class="pending-item-actions">
+                    <button class="btn-generate-now" onclick="processQueuedNote(${item.id})" id="gen-btn-${item.id}" ${item.status === 'processing' ? 'disabled' : ''}>${item.status === 'processing' ? 'Generating...' : 'Generate Now'}</button>
+                    <button class="btn-delete-single" onclick="deleteQueuedNote(${item.id})" title="Remove from queue">🗑️</button>
+                </div>`;
+            listEl.appendChild(el);
+        });
+    }
+
+    function deleteQueuedNote(id) {
+        pendingNoteQueue = pendingNoteQueue.filter(n => n.id !== id);
+        deleteNoteFromDB(id);
+        document.getElementById(`queued-note-${id}`)?.remove();
+        loadPendingBadge();
+        if (pendingNoteQueue.length === 0) {
+            document.getElementById('pending-notes-section').style.display = 'none';
+        } else {
+            document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+        }
+    }
+
+    async function processQueuedNote(id) {
+        if (!isOnline) { alert('You need to be online to generate notes.'); return; }
+
+        const item = pendingNoteQueue.find(n => n.id === id);
+        if (!item) return;
+
+        item.status = 'processing';
+        const btn = document.getElementById(`gen-btn-${id}`);
+        let statusEl = document.getElementById(`queued-status-${id}`);
+        if (btn) { btn.disabled = true; btn.innerText = 'Generating...'; }
+        if (!statusEl) {
+            const info = document.querySelector(`#queued-note-${id} .pending-item-info`);
+            if (info) { info.insertAdjacentHTML('beforeend', `<div class="queued-status processing" id="queued-status-${id}">⏳ Generating...</div>`); }
+            statusEl = document.getElementById(`queued-status-${id}`);
+        } else {
+            statusEl.className = 'queued-status processing';
+            statusEl.innerText = '⏳ Generating...';
+        }
+
+        try {
+            const body = { notes: item.notes, noteType: item.noteType };
+            if (item.customPrompt) body.customPrompt = item.customPrompt;
+            if (item.sections && item.sections.length > 0) body.sections = item.sections;
+
+            const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
+
+            if (fnError) {
+                let detail = fnError.message;
+                try { const b = await fnError.context?.json(); detail = b?.error || b?.msg || b?.message || JSON.stringify(b); } catch {}
+                throw new Error(detail);
+            }
+            if (!data?.text) throw new Error('No note generated');
+
+            // Save to Supabase
+            if (currentUser) {
+                const insertData = {
+                    user_id: currentUser.id,
+                    note_type: item.noteType,
+                    raw_notes: item.notes,
+                    generated_note: data.text
+                };
+                if (item.patientName) insertData.patient_name = item.patientName;
+                if (item.templateId) insertData.template_id = item.templateId;
+                await sb.from('notes').insert(insertData);
+            }
+
+            // Remove from queue
+            pendingNoteQueue = pendingNoteQueue.filter(n => n.id !== id);
+            deleteNoteFromDB(id);
+            loadPendingBadge();
+
+            // Update UI
+            if (statusEl) { statusEl.className = 'queued-status done'; statusEl.innerText = '✅ Generated!'; }
+            if (btn) { btn.style.display = 'none'; }
+            setTimeout(() => {
+                document.getElementById(`queued-note-${id}`)?.remove();
+                if (pendingNoteQueue.length === 0) {
+                    document.getElementById('pending-notes-section').style.display = 'none';
+                } else {
+                    document.getElementById('queued-notes-count').innerText = pendingNoteQueue.length;
+                }
+            }, 1500);
+
+            return true;
+        } catch (err) {
+            item.status = 'error';
+            if (statusEl) { statusEl.className = 'queued-status error'; statusEl.innerText = '❌ Failed: ' + err.message; }
+            if (btn) { btn.disabled = false; btn.innerText = 'Retry'; }
+            return false;
+        }
+    }
+
+    async function processAllQueuedNotes() {
+        if (pendingNoteQueue.length === 0) return;
+        if (!isOnline) return;
+
+        const ids = pendingNoteQueue.map(n => n.id);
+        let success = 0;
+        let failed = 0;
+
+        for (const id of ids) {
+            const result = await processQueuedNote(id);
+            if (result) success++;
+            else failed++;
+        }
+
+        if (success > 0 && failed === 0) {
+            console.log(`Auto-processed ${success} queued notes successfully.`);
+        } else if (failed > 0) {
+            console.log(`Auto-processed queued notes: ${success} succeeded, ${failed} failed.`);
+        }
     }
 
     async function transcribePending(id) {
@@ -1166,7 +1426,7 @@
         const notes = source === 'transcript'
             ? document.getElementById('transcript').value
             : document.getElementById('manual-notes').value;
-        const noteType = source === 'transcript'
+        const rawNoteType = source === 'transcript'
             ? document.getElementById('note-type-transcript').value
             : document.getElementById('note-type-manual').value;
         const patientName = (source === 'transcript'
@@ -1174,20 +1434,56 @@
             : document.getElementById('patient-name-manual').value).trim();
 
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
-        if (!isOnline) { alert('You need to be online to generate notes.'); return; }
+
+        // Determine if custom template or built-in type
+        let noteType, customPrompt, sections, templateId;
+        if (rawNoteType.startsWith('custom:')) {
+            templateId = rawNoteType.replace('custom:', '');
+            const template = userTemplates.find(t => t.id === templateId);
+            if (!template) { alert('Template not found. It may have been deleted.'); return; }
+            noteType = template.name;
+            customPrompt = template.custom_prompt || undefined;
+            sections = template.sections || undefined;
+        } else {
+            noteType = rawNoteType;
+        }
+
+        // Queue for later if offline
+        if (!isOnline) {
+            const queueItem = {
+                id: Date.now(),
+                notes,
+                noteType,
+                rawNoteType,
+                patientName: patientName || null,
+                templateId: templateId || null,
+                customPrompt: customPrompt || null,
+                sections: sections || null,
+                timestamp: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                status: 'queued'
+            };
+            pendingNoteQueue.push(queueItem);
+            saveNoteToDB(queueItem);
+            loadPendingBadge();
+            if (document.getElementById('view-pending').style.display !== 'none') renderPendingNotesList();
+            alert('You\'re offline. Your note has been queued and will generate automatically when you\'re back online. Check the Pending tab to see it.');
+            return;
+        }
 
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('result-card').style.display = 'none';
         document.getElementById('save-status').style.display = 'none';
 
         try {
-            const { data, error: fnError } = await sb.functions.invoke('generate-note', {
-                body: { notes, noteType }
-            });
+            const body = { notes, noteType };
+            if (customPrompt) body.customPrompt = customPrompt;
+            if (sections && sections.length > 0) body.sections = sections;
+
+            const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
 
             if (fnError) {
                 let detail = fnError.message;
-                try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                try { const b = await fnError.context?.json(); detail = b?.error || b?.msg || b?.message || JSON.stringify(b); } catch {}
                 throw new Error(detail);
             }
             if (!data?.text) throw new Error('No note generated');
@@ -1228,6 +1524,7 @@
                     generated_note: generatedNote
                 };
                 if (patientName) insertData.patient_name = patientName;
+                if (templateId) insertData.template_id = templateId;
                 const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
                 if (!error && inserted) {
                     currentNoteId = inserted.id;
@@ -1412,6 +1709,288 @@
         navigator.clipboard.writeText(note.generated_note);
         event.target.innerText = '✅ Copied!';
         setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    // ── Template System ──────────────────────────────────
+
+    function populateNoteTypeDropdowns() {
+        const selects = document.querySelectorAll('.note-type-select');
+        selects.forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '';
+
+            // Add visible built-in types
+            const visibleBuiltins = BUILTIN_TYPES.filter(t => !hiddenBuiltinTypes.includes(t.value));
+            if (visibleBuiltins.length > 0) {
+                const group = document.createElement('optgroup');
+                group.label = 'Standard Types';
+                visibleBuiltins.forEach(type => {
+                    const opt = document.createElement('option');
+                    opt.value = type.value;
+                    opt.textContent = type.label;
+                    group.appendChild(opt);
+                });
+                select.appendChild(group);
+            }
+
+            // Add custom templates
+            if (userTemplates.length > 0) {
+                const group = document.createElement('optgroup');
+                group.label = 'Custom Templates';
+                userTemplates.forEach(tmpl => {
+                    const opt = document.createElement('option');
+                    opt.value = 'custom:' + tmpl.id;
+                    opt.textContent = tmpl.name;
+                    group.appendChild(opt);
+                });
+                select.appendChild(group);
+            }
+
+            // Restore previous selection if still valid
+            if (currentValue && select.querySelector('option[value="' + CSS.escape(currentValue) + '"]')) {
+                select.value = currentValue;
+            }
+        });
+    }
+
+    async function cacheTemplatesToIDB(templates, hiddenTypes) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('templateCache', 'readwrite');
+            const store = tx.objectStore('templateCache');
+            store.put({ key: 'templates', data: templates });
+            store.put({ key: 'hiddenBuiltinTypes', data: hiddenTypes });
+        } catch (e) { console.log('IDB template cache error:', e); }
+    }
+
+    async function loadTemplatesFromIDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('templateCache', 'readonly');
+            const store = tx.objectStore('templateCache');
+            return new Promise(resolve => {
+                const templatesReq = store.get('templates');
+                const hiddenReq = store.get('hiddenBuiltinTypes');
+                tx.oncomplete = () => {
+                    resolve({
+                        templates: templatesReq.result?.data || [],
+                        hiddenTypes: hiddenReq.result?.data || []
+                    });
+                };
+                tx.onerror = () => resolve({ templates: [], hiddenTypes: [] });
+            });
+        } catch (e) {
+            return { templates: [], hiddenTypes: [] };
+        }
+    }
+
+    async function loadUserTemplatesAndPrefs() {
+        if (!currentUser) return;
+
+        if (isOnline) {
+            const { data: templates } = await sb.from('note_templates')
+                .select('*').order('sort_order', { ascending: true });
+            userTemplates = templates || [];
+
+            const { data: prefs } = await sb.from('user_preferences')
+                .select('hidden_builtin_types')
+                .eq('user_id', currentUser.id)
+                .single();
+            hiddenBuiltinTypes = prefs?.hidden_builtin_types || [];
+
+            await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+        } else {
+            const cached = await loadTemplatesFromIDB();
+            userTemplates = cached.templates;
+            hiddenBuiltinTypes = cached.hiddenTypes;
+        }
+
+        templatesLoaded = true;
+        populateNoteTypeDropdowns();
+    }
+
+    async function loadTemplates() {
+        if (!currentUser) return;
+        if (!templatesLoaded) await loadUserTemplatesAndPrefs();
+        renderBuiltinTypesList();
+        renderCustomTemplatesList();
+    }
+
+    function renderBuiltinTypesList() {
+        const container = document.getElementById('builtin-types-list');
+        container.innerHTML = '';
+        BUILTIN_TYPES.forEach(type => {
+            const isHidden = hiddenBuiltinTypes.includes(type.value);
+            const item = document.createElement('div');
+            item.className = 'template-toggle-item';
+            item.innerHTML = `
+                <span class="template-toggle-name">${type.label}</span>
+                <div class="template-toggle-right">
+                    <span class="template-toggle-label">${isHidden ? 'Hidden' : 'Visible'}</span>
+                    <input type="checkbox" ${isHidden ? '' : 'checked'}
+                           onchange="toggleBuiltinType('${type.value}', this.checked)">
+                </div>`;
+            container.appendChild(item);
+        });
+    }
+
+    async function toggleBuiltinType(typeValue, show) {
+        if (show) {
+            hiddenBuiltinTypes = hiddenBuiltinTypes.filter(t => t !== typeValue);
+        } else {
+            const visibleCount = BUILTIN_TYPES.length - hiddenBuiltinTypes.length - 1 + userTemplates.length;
+            if (visibleCount < 1) {
+                alert('You must have at least one visible note type.');
+                renderBuiltinTypesList();
+                return;
+            }
+            hiddenBuiltinTypes.push(typeValue);
+        }
+
+        if (isOnline) {
+            await sb.from('user_preferences').upsert({
+                user_id: currentUser.id,
+                hidden_builtin_types: hiddenBuiltinTypes,
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+        populateNoteTypeDropdowns();
+        renderBuiltinTypesList();
+    }
+
+    function renderCustomTemplatesList() {
+        const container = document.getElementById('custom-templates-list');
+        if (userTemplates.length === 0) {
+            container.innerHTML = '<p style="color:var(--gray-400);font-size:14px;">No custom templates yet.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        userTemplates.forEach(tmpl => {
+            const item = document.createElement('div');
+            item.className = 'template-list-item';
+            item.innerHTML = `
+                <div class="template-list-info">
+                    <div class="template-list-name">${tmpl.name}</div>
+                    <div class="template-list-meta">
+                        ${tmpl.custom_prompt ? 'Custom instructions' : 'No custom instructions'}
+                        · ${tmpl.sections && tmpl.sections.length ? tmpl.sections.length + ' sections' : 'Default sections'}
+                    </div>
+                </div>
+                <div class="template-list-actions">
+                    <button class="btn btn-outline btn-sm" onclick="openTemplateEditor('${tmpl.id}')">Edit</button>
+                    <button class="btn-delete-single" onclick="confirmDeleteTemplate('${tmpl.id}', '${tmpl.name.replace(/'/g, "\\'")}')" title="Delete template">🗑️</button>
+                </div>`;
+            container.appendChild(item);
+        });
+    }
+
+    function openTemplateEditor(templateId) {
+        const isEdit = !!templateId;
+        const template = isEdit ? userTemplates.find(t => t.id === templateId) : null;
+
+        if (!isOnline) { alert('You need to be online to manage templates.'); return; }
+
+        const existing = document.getElementById('template-editor-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.id = 'template-editor-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-box" style="max-width:500px;">
+                <div class="confirm-title">${isEdit ? 'Edit Template' : 'New Template'}</div>
+                <div class="form-group">
+                    <label class="form-label">Template Name *</label>
+                    <input class="form-input" type="text" id="tmpl-name" value="${template?.name || ''}" placeholder="e.g., Wound Care Visit">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Custom AI Instructions</label>
+                    <textarea id="tmpl-prompt" class="form-input" style="min-height:80px;resize:vertical;" placeholder="e.g., Focus on wound care assessment, include wound measurements and healing progress...">${template?.custom_prompt || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Section Headings (one per line)</label>
+                    <textarea id="tmpl-sections" class="form-input" style="min-height:100px;resize:vertical;" placeholder="Subjective&#10;Objective&#10;Assessment&#10;Plan">${template?.sections?.join('\n') || ''}</textarea>
+                </div>
+                <div class="confirm-actions">
+                    <button class="btn btn-outline" onclick="document.getElementById('template-editor-overlay').remove()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveTemplate('${templateId || ''}')">
+                        ${isEdit ? 'Save Changes' : 'Create Template'}
+                    </button>
+                </div>
+                <div class="auth-error" id="tmpl-error" style="display:none;margin-top:12px;"></div>
+            </div>`;
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+    }
+
+    async function saveTemplate(templateId) {
+        const name = document.getElementById('tmpl-name').value.trim();
+        const customPrompt = document.getElementById('tmpl-prompt').value.trim();
+        const sectionsRaw = document.getElementById('tmpl-sections').value.trim();
+        const errEl = document.getElementById('tmpl-error');
+
+        if (!name) {
+            errEl.innerText = 'Template name is required.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const sections = sectionsRaw
+            ? sectionsRaw.split('\n').map(s => s.trim()).filter(Boolean)
+            : [];
+
+        const record = {
+            user_id: currentUser.id,
+            name,
+            custom_prompt: customPrompt || null,
+            sections: sections.length > 0 ? sections : null,
+            updated_at: new Date().toISOString()
+        };
+
+        let error;
+        if (templateId) {
+            ({ error } = await sb.from('note_templates').update(record).eq('id', templateId));
+        } else {
+            ({ error } = await sb.from('note_templates').insert(record));
+        }
+
+        if (error) {
+            errEl.innerText = error.message.includes('unique')
+                ? 'A template with this name already exists.'
+                : 'Failed to save template: ' + error.message;
+            errEl.style.display = 'block';
+            return;
+        }
+
+        document.getElementById('template-editor-overlay').remove();
+
+        // Reload templates
+        const { data: templates } = await sb.from('note_templates')
+            .select('*').order('sort_order', { ascending: true });
+        userTemplates = templates || [];
+        await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+        populateNoteTypeDropdowns();
+        renderCustomTemplatesList();
+    }
+
+    function confirmDeleteTemplate(id, name) {
+        showConfirm(
+            'Delete Template',
+            'Delete the template "' + name + '"? Past notes created with this template will be preserved.',
+            () => deleteTemplate(id)
+        );
+    }
+
+    async function deleteTemplate(id) {
+        const { error } = await sb.from('note_templates').delete().eq('id', id);
+        if (!error) {
+            userTemplates = userTemplates.filter(t => t.id !== id);
+            await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+            populateNoteTypeDropdowns();
+            renderCustomTemplatesList();
+        }
     }
 
     // ── Delete ────────────────────────────────────────────

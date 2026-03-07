@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { notes, noteType } = await req.json();
+    const { notes, noteType, customPrompt, sections } = await req.json();
 
     if (!notes || !notes.trim()) {
       return new Response(JSON.stringify({ error: "No notes provided" }), {
@@ -28,6 +28,19 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
+    // Build prompt — append custom instructions and sections when provided
+    let prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.`;
+
+    if (sections && sections.length > 0) {
+      prompt += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
+    }
+
+    if (customPrompt) {
+      prompt += `\n\nAdditional instructions: ${customPrompt}`;
+    }
+
+    prompt += `\n\nVisit notes: ${notes}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -38,10 +51,10 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [{
           role: "user",
-          content: `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.\n\nVisit notes: ${notes}`
+          content: prompt
         }]
       })
     });
