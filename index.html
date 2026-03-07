@@ -607,7 +607,7 @@
                             <div class="select-wrapper">
                                 <select id="note-type-transcript" class="note-type-select"></select>
                             </div>
-                            <button class="btn btn-primary" onclick="generateNote('transcript')">Generate Note →</button>
+                            <button class="btn btn-primary generate-btn" id="gen-btn-transcript" onclick="generateNote('transcript')">Generate Note →</button>
                         </div>
                     </div>
                 </div>
@@ -628,7 +628,7 @@
                         <div class="select-wrapper">
                             <select id="note-type-manual" class="note-type-select"></select>
                         </div>
-                        <button class="btn btn-primary" onclick="generateNote('manual')">Generate Note →</button>
+                        <button class="btn btn-primary generate-btn" id="gen-btn-manual" onclick="generateNote('manual')">Generate Note →</button>
                     </div>
                 </div>
             </div>
@@ -802,6 +802,9 @@
         isOnline = navigator.onLine;
         document.getElementById('offline-banner').style.display = isOnline ? 'none' : 'flex';
         document.getElementById('offline-badge').style.display = isOnline ? 'none' : 'flex';
+        document.querySelectorAll('.generate-btn').forEach(btn => {
+            btn.innerText = isOnline ? 'Generate Note →' : 'Queue Note 📥';
+        });
     }
 
     window.addEventListener('online', () => {
@@ -1508,7 +1511,8 @@
             saveNoteToDB(queueItem);
             loadPendingBadge();
             if (document.getElementById('view-pending').style.display !== 'none') renderPendingNotesList();
-            alert('You\'re offline. Your note has been queued and will generate automatically when you\'re back online. Check the Pending tab to see it.');
+            // Switch to pending tab to show the queued note
+            showTab('pending');
             return;
         }
 
