@@ -158,6 +158,8 @@
         .history-search { flex: 1; max-width: 360px; }
         .result-content { background: var(--gray-100); border: 2px solid var(--gray-200); border-radius: 10px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; width: 100%; min-height: 300px; resize: vertical; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s, background 0.2s; }
         .result-content:focus { border-color: var(--teal); background: var(--white); }
+        .result-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .result-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
         .save-status { font-size: 13px; color: var(--green); display: none; align-items: center; gap: 6px; }
 
         #loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 32px; color: var(--gray-600); font-size: 14px; font-weight: 500; }
@@ -349,6 +351,8 @@
 
             /* Result */
             .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .result-actions { flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
+            .result-buttons { width: 100%; }
             .result-badge { font-size: 13px; }
             .history-filters { flex-direction: column; align-items: stretch; }
             .history-search { max-width: 100%; font-size: 16px; }
@@ -684,11 +688,13 @@
                             <span class="result-badge" id="result-badge">Note</span>
                             <span id="result-labels"></span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="result-actions">
                             <div class="save-status" id="save-status">✅ Saved to history</div>
-                            <button class="btn btn-copy" id="save-edit-btn" onclick="saveEditedNote()" style="display:none;">💾 Save Changes</button>
-                            <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
-                            <button class="btn btn-copy" id="email-btn" onclick="emailNote()">✉️ Email Note</button>
+                            <div class="result-buttons">
+                                <button class="btn btn-copy" id="save-edit-btn" onclick="saveEditedNote()" style="display:none;">💾 Save Changes</button>
+                                <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
+                                <button class="btn btn-copy" id="email-btn" onclick="emailNote()">✉️ Email Note</button>
+                            </div>
                         </div>
                     </div>
                     <textarea class="result-content" id="result" rows="12" placeholder="Your generated note will appear here..."></textarea>
