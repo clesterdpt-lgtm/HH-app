@@ -1549,6 +1549,10 @@
         });
 
         input.addEventListener('input', () => {
+            if (input.value.includes(',')) {
+                addLabelFromInput(containerId);
+                return;
+            }
             const val = input.value.trim().toLowerCase();
             if (!val) { suggestionsEl.style.display = 'none'; return; }
             const currentLabels = getLabels(containerId);
