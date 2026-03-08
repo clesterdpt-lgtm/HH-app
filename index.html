@@ -1464,7 +1464,6 @@
                 document.getElementById('recording-status').style.display = 'flex';
                 document.getElementById('stop-btn').style.display = 'inline-flex';
                 document.getElementById('record-btn').style.display = 'none';
-                document.getElementById('transcript-area').style.display = 'none';
             })
             .catch(() => alert('Could not access microphone. Please check permissions.'));
     }
@@ -1503,7 +1502,8 @@
                 if (!data?.text) throw new Error('No transcription returned');
 
                 document.getElementById('transcript-area').style.display = 'block';
-                document.getElementById('transcript').value = data.text;
+                const existing = document.getElementById('transcript').value.trim();
+                document.getElementById('transcript').value = existing ? existing + ' ' + data.text : data.text;
 
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
