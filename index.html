@@ -129,8 +129,6 @@
         #result-card { display: none; }
         .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
         .result-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); }
-        .patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
-        .history-patient-badge { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(15,39,68,0.15); white-space: nowrap; }
         .result-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .history-filters { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .history-filters .select-wrapper { min-width: 180px; }
@@ -182,7 +180,6 @@
         .queued-note-preview { font-size: 13px; color: var(--gray-600); margin-top: 6px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .queued-note-badges { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
         .queued-note-type { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
-        .queued-note-patient { background: rgba(15,39,68,0.08); color: var(--navy); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
         .queued-status { font-size: 12px; font-weight: 500; }
         .queued-status.processing { color: var(--orange); }
         .queued-status.done { color: var(--green); }
@@ -319,7 +316,6 @@
             .history-item-header { padding: 14px 16px; gap: 10px; }
             .history-item-left { gap: 6px; flex-wrap: wrap; }
             .history-type-badge { font-size: 12px; padding: 4px 10px; }
-            .history-patient-badge { font-size: 12px; padding: 4px 10px; }
             .history-preview { font-size: 14px; width: 100%; }
             .history-time { font-size: 13px; }
             .history-item-body { padding: 0 16px 16px; }
@@ -329,7 +325,6 @@
             /* Result */
             .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
             .result-badge { font-size: 13px; }
-            .patient-badge { font-size: 13px; }
             .history-filters { flex-direction: column; align-items: stretch; }
             .history-search { max-width: 100%; font-size: 16px; }
             .history-filters .select-wrapper { min-width: 0; }
@@ -603,7 +598,6 @@
                         <div class="divider">Transcribed Text</div>
                         <textarea id="transcript" placeholder="Your transcription will appear here..."></textarea>
                         <div class="controls-row">
-                            <input type="text" class="form-input" id="patient-name-transcript" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                             <div class="select-wrapper">
                                 <select id="note-type-transcript" class="note-type-select"></select>
                             </div>
@@ -624,7 +618,6 @@
                 <div class="card-body">
                     <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. She complained of knee pain, rated 6/10..."></textarea>
                     <div class="controls-row">
-                        <input type="text" class="form-input" id="patient-name-manual" placeholder="Patient name (optional)" list="patient-suggestions" autocomplete="off" style="max-width:200px;">
                         <div class="select-wrapper">
                             <select id="note-type-manual" class="note-type-select"></select>
                         </div>
@@ -632,9 +625,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Datalist for patient name auto-suggestions -->
-            <datalist id="patient-suggestions"></datalist>
 
             <div id="loading">
                 <div class="spinner"></div>
@@ -653,7 +643,6 @@
                     <div class="result-meta">
                         <div class="result-badges">
                             <span class="result-badge" id="result-badge">Note</span>
-                            <span class="patient-badge" id="result-patient" style="display:none;"></span>
                         </div>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div class="save-status" id="save-status">✅ Saved to history</div>
@@ -724,11 +713,6 @@
             </div>
             <div class="history-filters" id="history-filters" style="display:none;">
                 <input type="text" class="form-input history-search" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()">
-                <div class="select-wrapper">
-                    <select id="patient-filter-select" onchange="applyHistoryFilters()">
-                        <option value="">All Patients</option>
-                    </select>
-                </div>
             </div>
             <div id="history-loading">
                 <div class="spinner"></div>
@@ -1215,9 +1199,6 @@
         pendingNoteQueue.forEach(item => {
             const noteTypeTitled = item.noteType.replace(/\b\w/g, l => l.toUpperCase());
             const preview = item.notes.length > 120 ? item.notes.substring(0, 120) + '...' : item.notes;
-            const patientTag = item.patientName
-                ? `<span class="queued-note-patient">${item.patientName}</span>`
-                : '';
             const statusClass = item.status === 'processing' ? 'processing' : item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : '';
             const statusText = item.status === 'processing' ? '⏳ Generating...' : item.status === 'done' ? '✅ Done' : item.status === 'error' ? '❌ Failed — tap to retry' : '';
 
@@ -1229,7 +1210,6 @@
                     <div class="pending-item-title">📝 Queued Note — ${item.timestamp}</div>
                     <div class="queued-note-badges">
                         <span class="queued-note-type">${noteTypeTitled}</span>
-                        ${patientTag}
                     </div>
                     <div class="queued-note-preview">${preview}</div>
                     ${statusText ? `<div class="queued-status ${statusClass}" id="queued-status-${item.id}">${statusText}</div>` : ''}
@@ -1308,7 +1288,6 @@
                     raw_notes: item.notes,
                     generated_note: data.text
                 };
-                if (item.patientName) insertData.patient_name = item.patientName;
                 if (item.templateId) insertData.template_id = item.templateId;
                 await sb.from('notes').insert(insertData);
             }
@@ -1502,10 +1481,6 @@
         const rawNoteType = source === 'transcript'
             ? document.getElementById('note-type-transcript').value
             : document.getElementById('note-type-manual').value;
-        const patientName = (source === 'transcript'
-            ? document.getElementById('patient-name-transcript').value
-            : document.getElementById('patient-name-manual').value).trim();
-
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
 
         // Determine if custom template or built-in type
@@ -1528,7 +1503,6 @@
                 notes,
                 noteType,
                 rawNoteType,
-                patientName: patientName || null,
                 templateId: templateId || null,
                 customPrompt: customPrompt || null,
                 sections: sections || null,
@@ -1568,13 +1542,6 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result-card').style.display = 'block';
             document.getElementById('result-badge').innerText = noteTypeTitled;
-            const patientBadge = document.getElementById('result-patient');
-            if (patientName) {
-                patientBadge.innerText = patientName;
-                patientBadge.style.display = 'inline-block';
-            } else {
-                patientBadge.style.display = 'none';
-            }
             document.getElementById('result').value = generatedNote;
             document.getElementById('copy-btn').style.display = 'inline-flex';
             document.getElementById('save-edit-btn').style.display = 'none';
@@ -1597,7 +1564,6 @@
                     raw_notes: notes,
                     generated_note: generatedNote
                 };
-                if (patientName) insertData.patient_name = patientName;
                 if (templateId) insertData.template_id = templateId;
                 const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
                 if (!error && inserted) {
@@ -1661,51 +1627,25 @@
         document.getElementById('history-filters').style.display = 'flex';
         document.getElementById('history-search').value = '';
 
-        // Build unique patient names for filter + datalist auto-suggest
-        const patientNames = [...new Set(historyNotes.map(n => n.patient_name).filter(Boolean))].sort();
-        const filterSelect = document.getElementById('patient-filter-select');
-        const currentFilter = filterSelect.value;
-        filterSelect.innerHTML = '<option value="">All Patients</option>';
-        patientNames.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            filterSelect.appendChild(opt);
-        });
-        filterSelect.value = currentFilter;
-
-        // Populate datalist for auto-suggestions on generate forms
-        const datalist = document.getElementById('patient-suggestions');
-        datalist.innerHTML = '';
-        patientNames.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            datalist.appendChild(opt);
-        });
-
-        renderHistory(currentFilter, '');
+        renderHistory('');
     }
 
-    function renderHistory(filterPatient, searchQuery) {
+    function renderHistory(searchQuery) {
         const listEl = document.getElementById('history-list');
         listEl.innerHTML = '';
 
         let filtered = historyNotes;
-        if (filterPatient) {
-            filtered = filtered.filter(n => n.patient_name === filterPatient);
-        }
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             filtered = filtered.filter(n =>
                 (n.generated_note && n.generated_note.toLowerCase().includes(q)) ||
                 (n.raw_notes && n.raw_notes.toLowerCase().includes(q)) ||
-                (n.patient_name && n.patient_name.toLowerCase().includes(q)) ||
                 (n.note_type && n.note_type.toLowerCase().includes(q))
             );
         }
 
         if (filtered.length === 0) {
-            const msg = searchQuery ? 'No notes match your search.' : 'No notes found for this patient.';
+            const msg = 'No notes match your search.';
             listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>${msg}</p></div>`;
             return;
         }
@@ -1735,9 +1675,6 @@
                 const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const noteTypeTitled = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
                 const preview = note.generated_note.substring(0, 70) + '...';
-                const patientTag = note.patient_name
-                    ? `<span class="history-patient-badge">${note.patient_name}</span>`
-                    : '';
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.id = `note-${note.id}`;
@@ -1745,7 +1682,6 @@
                     <div class="history-item-header">
                         <div class="history-item-left" onclick="toggleHistory('${note.id}')">
                             <span class="history-type-badge">${noteTypeTitled}</span>
-                            ${patientTag}
                             <span class="history-preview">${preview}</span>
                         </div>
                         <div class="history-item-right">
@@ -1767,9 +1703,8 @@
     }
 
     function applyHistoryFilters() {
-        const patient = document.getElementById('patient-filter-select').value;
         const search = document.getElementById('history-search').value.trim();
-        renderHistory(patient, search);
+        renderHistory(search);
     }
 
     function toggleHistory(id) {
