@@ -688,6 +688,7 @@
                             <div class="save-status" id="save-status">✅ Saved to history</div>
                             <button class="btn btn-copy" id="save-edit-btn" onclick="saveEditedNote()" style="display:none;">💾 Save Changes</button>
                             <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
+                            <button class="btn btn-copy" id="email-btn" onclick="emailNote()">✉️ Email Note</button>
                         </div>
                     </div>
                     <textarea class="result-content" id="result" rows="12" placeholder="Your generated note will appear here..."></textarea>
@@ -1681,6 +1682,7 @@
             document.getElementById('result').value = generatedNote;
             clearLabels(labelsContainerId);
             document.getElementById('copy-btn').style.display = 'inline-flex';
+            document.getElementById('email-btn').style.display = 'inline-flex';
             document.getElementById('save-edit-btn').style.display = 'none';
             currentNoteId = null;
             document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1721,6 +1723,15 @@
         const btn = document.getElementById('copy-btn');
         btn.innerText = '✅ Copied!';
         setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    function emailNote() {
+        const text = document.getElementById('result').value;
+        if (!text.trim()) return;
+        const noteType = document.getElementById('result-badge').innerText || 'Note';
+        const subject = encodeURIComponent(`CareNote - ${noteType}`);
+        const body = encodeURIComponent(text);
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
     }
 
     async function saveEditedNote() {
@@ -1850,6 +1861,7 @@
                         <div class="history-note-text">${note.generated_note}</div>
                         <div class="history-actions">
                             <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}')">📋 Copy Note</button>
+                            <button class="btn btn-outline" onclick="emailHistoryNote('${note.id}')">✉️ Email Note</button>
                         </div>
                     </div>`;
                 groupEl.appendChild(item);
@@ -1875,6 +1887,16 @@
         navigator.clipboard.writeText(note.generated_note);
         event.target.innerText = '✅ Copied!';
         setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
+    }
+
+    function emailHistoryNote(id) {
+        const note = historyNotes.find(n => n.id === id);
+        if (!note) return;
+        const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+        const date = new Date(note.created_at).toLocaleDateString();
+        const subject = encodeURIComponent(`CareNote - ${noteType} (${date})`);
+        const body = encodeURIComponent(note.generated_note);
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
     }
 
     // ── Template System ──────────────────────────────────
