@@ -54,10 +54,10 @@
         .btn-signout { background: rgba(255,255,255,0.08); color: var(--gray-400); border: 1px solid rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
         .btn-signout:hover { background: rgba(255,255,255,0.15); color: var(--white); }
 
-        .nav-tabs { background: var(--navy-mid); padding: 0 40px; display: flex; gap: 4px; }
-        .nav-tab { padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--gray-400); border: none; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
-        .nav-tab:hover { color: var(--white); }
-        .nav-tab.active { color: var(--teal-light); border-bottom-color: var(--teal-light); }
+        .nav-tabs { background: var(--white); padding: 0 40px; display: flex; gap: 8px; border-bottom: 1px solid var(--gray-200); }
+        .nav-tab { padding: 16px 20px 14px; font-size: 14px; font-weight: 500; color: var(--gray-500); border: none; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; position: relative; letter-spacing: 0.2px; }
+        .nav-tab:hover { color: var(--navy); }
+        .nav-tab.active { color: var(--teal); font-weight: 600; border-bottom-color: var(--teal); }
         .tab-badge { background: var(--orange); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: none; }
 
         #auth-screen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; }
@@ -274,8 +274,9 @@
             .btn-signout { padding: 8px 14px; font-size: 13px; }
 
             /* Nav tabs */
-            .nav-tabs { padding: 0 8px; gap: 0; }
-            .nav-tab { padding: 14px 12px; font-size: 15px; }
+            .nav-tabs { padding: 0; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+            .nav-tabs::-webkit-scrollbar { display: none; }
+            .nav-tab { flex: 1; text-align: center; padding: 14px 6px 12px; font-size: 13px; white-space: nowrap; }
 
             /* Main content */
             main { padding: 20px 14px 60px; }
@@ -575,10 +576,10 @@
 <!-- App Screen -->
 <div id="app-screen">
     <div class="nav-tabs">
-        <button class="nav-tab active" id="tab-new" onclick="showTab('new')">✏️ New Note</button>
-        <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">🎙️ Pending <span class="tab-badge" id="pending-badge">0</span></button>
-        <button class="nav-tab" id="tab-history" onclick="showTab('history')">📋 Past Notes</button>
-        <button class="nav-tab" id="tab-templates" onclick="showTab('templates')">⚙️ Templates</button>
+        <button class="nav-tab active" id="tab-new" onclick="showTab('new')">New Note</button>
+        <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">Pending <span class="tab-badge" id="pending-badge">0</span></button>
+        <button class="nav-tab" id="tab-history" onclick="showTab('history')">History</button>
+        <button class="nav-tab" id="tab-templates" onclick="showTab('templates')">Templates</button>
     </div>
 
     <div class="install-banner" id="install-banner">
