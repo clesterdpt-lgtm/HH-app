@@ -1845,8 +1845,8 @@
                 item.className = 'history-item';
                 item.id = `note-${note.id}`;
                 item.innerHTML = `
-                    <div class="history-item-header">
-                        <div class="history-item-left" onclick="toggleHistory('${note.id}')">
+                    <div class="history-item-header" onclick="toggleHistory('${note.id}')">
+                        <div class="history-item-left">
                             <span class="history-type-badge">${noteTypeTitled}</span>
                             ${renderLabelBadges(note.labels, 'history-label-badge')}
                             <span class="history-preview">${preview}</span>
@@ -1854,7 +1854,7 @@
                         <div class="history-item-right">
                             <span class="history-time">${time}</span>
                             <span class="history-chevron" id="chevron-${note.id}">▼</span>
-                            <button class="btn-delete-single" onclick="confirmDeleteOne('${note.id}')">🗑️</button>
+                            <button class="btn-delete-single" onclick="event.stopPropagation(); confirmDeleteOne('${note.id}')">🗑️</button>
                         </div>
                     </div>
                     <div class="history-item-body" id="body-${note.id}">
