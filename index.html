@@ -1930,10 +1930,11 @@
     }
 
     function formatEmailNote(note) {
+        const timestamp = new Date(note.created_at).toLocaleString();
         const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const type = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
         const labels = note.labels || [];
-        const header = formatNoteHeader(type, time, labels);
+        const header = formatNoteHeader(type, timestamp, labels);
         return `--- ${type} (${time}) ---\n${header}\n\n${note.generated_note}`;
     }
 
