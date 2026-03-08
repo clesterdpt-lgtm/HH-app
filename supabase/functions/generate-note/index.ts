@@ -30,7 +30,9 @@ serve(async (req) => {
     }
 
     // Build prompt — append custom instructions and sections when provided
-    let prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.`;
+    let prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.
+
+IMPORTANT: Never include any patient-identifying information in the generated note. This includes patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of any names. If the visit notes contain patient identifiers, omit them from the output.`;
 
     if (sections && sections.length > 0) {
       prompt += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
