@@ -1882,7 +1882,7 @@
     }
 
     function copyHistoryNote(id) {
-        const note = historyNotes.find(n => n.id === id);
+        const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         navigator.clipboard.writeText(note.generated_note);
         event.target.innerText = '✅ Copied!';
@@ -1890,7 +1890,7 @@
     }
 
     function emailHistoryNote(id) {
-        const note = historyNotes.find(n => n.id === id);
+        const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
         const date = new Date(note.created_at).toLocaleDateString();
