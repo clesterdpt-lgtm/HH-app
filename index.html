@@ -749,6 +749,7 @@
                     <div class="page-subtitle" style="margin-bottom:0">All your previously generated clinical notes.</div>
                 </div>
                 <div class="history-toolbar-actions">
+                    <button class="btn btn-outline" onclick="emailAllNotes()">✉️ Email All Notes</button>
                     <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
                 </div>
             </div>
@@ -1834,7 +1835,10 @@
                         <div class="day-group-title">${dateLabel}</div>
                         <div class="day-group-count">${count} ${count === 1 ? 'note' : 'notes'}</div>
                     </div>
-                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteDay('${dateLabel}')">🗑️ Delete Day</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-outline btn-sm" onclick="emailDay('${dateLabel}')">✉️ Email Day</button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDeleteDay('${dateLabel}')">🗑️ Delete Day</button>
+                    </div>
                 </div>`;
 
             notes.forEach(note => {
@@ -1900,6 +1904,43 @@
         tmp.innerHTML = note.generated_note;
         const plainText = tmp.textContent || tmp.innerText || '';
         const body = encodeURIComponent(plainText);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+    function emailDay(dateLabel) {
+        const notes = historyNotes.filter(n => {
+            const d = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            return d === dateLabel;
+        });
+        if (notes.length === 0) return;
+        const lines = notes.map(n => {
+            const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const type = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
+            return `--- ${type} (${time}) ---\n\n${n.generated_note}`;
+        }).join('\n\n\n');
+        const subject = encodeURIComponent(`CareNote - Notes for ${dateLabel}`);
+        const body = encodeURIComponent(lines);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+    function emailAllNotes() {
+        if (historyNotes.length === 0) return;
+        const groups = {};
+        historyNotes.forEach(n => {
+            const dateKey = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(n);
+        });
+        const lines = Object.entries(groups).map(([dateLabel, notes]) => {
+            const noteLines = notes.map(n => {
+                const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const type = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
+                return `--- ${type} (${time}) ---\n\n${n.generated_note}`;
+            }).join('\n\n\n');
+            return `=== ${dateLabel} ===\n\n${noteLines}`;
+        }).join('\n\n\n\n');
+        const subject = encodeURIComponent('CareNote - All Notes');
+        const body = encodeURIComponent(lines);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
