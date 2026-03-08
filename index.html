@@ -1736,12 +1736,23 @@
         setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
     }
 
+    function formatNoteHeader(type, timestamp, labels) {
+        let header = `Type: ${type}`;
+        if (timestamp) header += `\nDate: ${timestamp}`;
+        if (labels && labels.length > 0) header += `\nLabels: ${labels.join(', ')}`;
+        return header;
+    }
+
     function emailNote() {
         const text = document.getElementById('result').value;
         if (!text.trim()) return;
         const noteType = document.getElementById('result-badge').innerText || 'Note';
+        const labelEls = document.querySelectorAll('#result-labels .label-badge');
+        const labels = [...labelEls].map(el => el.textContent.trim());
+        const now = new Date().toLocaleString();
+        const header = formatNoteHeader(noteType, now, labels);
         const subject = encodeURIComponent(`CareNote - ${noteType}`);
-        const body = encodeURIComponent(text);
+        const body = encodeURIComponent(`${header}\n\n${text}`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
@@ -1907,14 +1918,23 @@
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
-        const date = new Date(note.created_at).toLocaleDateString();
-        const subject = encodeURIComponent(`CareNote - ${noteType} (${date})`);
-        // Strip any HTML tags and decode entities to get plain text
+        const timestamp = new Date(note.created_at).toLocaleString();
+        const labels = note.labels || [];
+        const header = formatNoteHeader(noteType, timestamp, labels);
+        const subject = encodeURIComponent(`CareNote - ${noteType} (${new Date(note.created_at).toLocaleDateString()})`);
         const tmp = document.createElement('div');
         tmp.innerHTML = note.generated_note;
         const plainText = tmp.textContent || tmp.innerText || '';
-        const body = encodeURIComponent(plainText);
+        const body = encodeURIComponent(`${header}\n\n${plainText}`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+    function formatEmailNote(note) {
+        const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const type = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+        const labels = note.labels || [];
+        const header = formatNoteHeader(type, time, labels);
+        return `--- ${type} (${time}) ---\n${header}\n\n${note.generated_note}`;
     }
 
     function emailDay(dateLabel) {
@@ -1923,11 +1943,7 @@
             return d === dateLabel;
         });
         if (notes.length === 0) return;
-        const lines = notes.map(n => {
-            const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const type = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
-            return `--- ${type} (${time}) ---\n\n${n.generated_note}`;
-        }).join('\n\n\n');
+        const lines = notes.map(formatEmailNote).join('\n\n\n');
         const subject = encodeURIComponent(`CareNote - Notes for ${dateLabel}`);
         const body = encodeURIComponent(lines);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
@@ -1942,11 +1958,7 @@
             groups[dateKey].push(n);
         });
         const lines = Object.entries(groups).map(([dateLabel, notes]) => {
-            const noteLines = notes.map(n => {
-                const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                const type = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
-                return `--- ${type} (${time}) ---\n\n${n.generated_note}`;
-            }).join('\n\n\n');
+            const noteLines = notes.map(formatEmailNote).join('\n\n\n');
             return `=== ${dateLabel} ===\n\n${noteLines}`;
         }).join('\n\n\n\n');
         const subject = encodeURIComponent('CareNote - All Notes');
