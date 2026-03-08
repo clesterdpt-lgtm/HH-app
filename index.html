@@ -130,6 +130,19 @@
         .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
         .result-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); }
         .result-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .label-badge { background: rgba(99,102,241,0.1); color: #6366f1; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(99,102,241,0.2); white-space: nowrap; }
+        .history-label-badge { background: rgba(99,102,241,0.1); color: #6366f1; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(99,102,241,0.2); white-space: nowrap; }
+        .queued-note-label { background: rgba(99,102,241,0.1); color: #6366f1; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+        .label-input-wrapper { position: relative; flex: 1; min-width: 180px; max-width: 300px; }
+        .label-input-container { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; background: var(--white); border: 2px solid var(--gray-200); border-radius: 10px; min-height: 36px; cursor: text; transition: border-color 0.2s; }
+        .label-input-container:focus-within { border-color: var(--teal); }
+        .label-input-container .label-tag { display: inline-flex; align-items: center; gap: 4px; background: rgba(99,102,241,0.1); color: #6366f1; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+        .label-input-container .label-tag .remove-tag { cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.6; margin-left: 2px; }
+        .label-input-container .label-tag .remove-tag:hover { opacity: 1; }
+        .label-input-container .label-input { border: none; outline: none; background: transparent; font-size: 13px; font-family: 'DM Sans', sans-serif; flex: 1; min-width: 80px; padding: 0; }
+        .label-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; max-height: 150px; overflow-y: auto; z-index: 100; display: none; }
+        .label-suggestions .suggestion-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--gray-700); }
+        .label-suggestions .suggestion-item:hover { background: var(--gray-100); }
         .history-filters { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
         .history-filters .select-wrapper { min-width: 180px; }
         .history-search { flex: 1; max-width: 360px; }
@@ -311,6 +324,7 @@
             .queued-note-preview { font-size: 14px; -webkit-line-clamp: 3; }
             .btn-generate-now { font-size: 14px; padding: 10px 16px; }
             .queued-status { font-size: 14px; }
+            .label-input-wrapper { max-width: 100%; }
 
             /* History items */
             .history-item-header { padding: 14px 16px; gap: 10px; }
@@ -598,6 +612,12 @@
                         <div class="divider">Transcribed Text</div>
                         <textarea id="transcript" placeholder="Your transcription will appear here..."></textarea>
                         <div class="controls-row">
+                            <div class="label-input-wrapper">
+                                <div class="label-input-container" id="labels-transcript" onclick="this.querySelector('.label-input').focus()">
+                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                </div>
+                                <div class="label-suggestions" id="suggestions-transcript"></div>
+                            </div>
                             <div class="select-wrapper">
                                 <select id="note-type-transcript" class="note-type-select"></select>
                             </div>
@@ -618,6 +638,12 @@
                 <div class="card-body">
                     <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. She complained of knee pain, rated 6/10..."></textarea>
                     <div class="controls-row">
+                        <div class="label-input-wrapper">
+                            <div class="label-input-container" id="labels-manual" onclick="this.querySelector('.label-input').focus()">
+                                <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                            </div>
+                            <div class="label-suggestions" id="suggestions-manual"></div>
+                        </div>
                         <div class="select-wrapper">
                             <select id="note-type-manual" class="note-type-select"></select>
                         </div>
@@ -643,6 +669,7 @@
                     <div class="result-meta">
                         <div class="result-badges">
                             <span class="result-badge" id="result-badge">Note</span>
+                            <span id="result-labels"></span>
                         </div>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div class="save-status" id="save-status">✅ Saved to history</div>
@@ -713,6 +740,11 @@
             </div>
             <div class="history-filters" id="history-filters" style="display:none;">
                 <input type="text" class="form-input history-search" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()">
+                <div class="select-wrapper">
+                    <select id="label-filter-select" onchange="applyHistoryFilters()">
+                        <option value="">All Labels</option>
+                    </select>
+                </div>
             </div>
             <div id="history-loading">
                 <div class="spinner"></div>
@@ -1210,6 +1242,7 @@
                     <div class="pending-item-title">📝 Queued Note — ${item.timestamp}</div>
                     <div class="queued-note-badges">
                         <span class="queued-note-type">${noteTypeTitled}</span>
+                        ${renderLabelBadges(item.labels, 'queued-note-label')}
                     </div>
                     <div class="queued-note-preview">${preview}</div>
                     ${statusText ? `<div class="queued-status ${statusClass}" id="queued-status-${item.id}">${statusText}</div>` : ''}
@@ -1288,6 +1321,7 @@
                     raw_notes: item.notes,
                     generated_note: data.text
                 };
+                if (item.labels && item.labels.length > 0) insertData.labels = item.labels;
                 if (item.templateId) insertData.template_id = item.templateId;
                 await sb.from('notes').insert(insertData);
             }
@@ -1473,6 +1507,90 @@
         document.getElementById('record-btn').style.display = 'inline-flex';
     }
 
+    // ── Label Input Component ─────────────────────────────
+    let allLabels = [];
+
+    function initLabelInput(containerId) {
+        const container = document.getElementById(containerId);
+        const input = container.querySelector('.label-input');
+        const suggestionsId = containerId.replace('labels-', 'suggestions-');
+        const suggestionsEl = document.getElementById(suggestionsId);
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+                e.preventDefault();
+                addLabelFromInput(containerId);
+            }
+            if (e.key === 'Backspace' && input.value === '') {
+                const tags = container.querySelectorAll('.label-tag');
+                if (tags.length > 0) tags[tags.length - 1].remove();
+            }
+        });
+
+        input.addEventListener('input', () => {
+            const val = input.value.trim().toLowerCase();
+            if (!val) { suggestionsEl.style.display = 'none'; return; }
+            const currentLabels = getLabels(containerId);
+            const matches = allLabels.filter(l => l.toLowerCase().includes(val) && !currentLabels.includes(l));
+            if (matches.length === 0) { suggestionsEl.style.display = 'none'; return; }
+            suggestionsEl.innerHTML = matches.map(m => `<div class="suggestion-item">${m}</div>`).join('');
+            suggestionsEl.style.display = 'block';
+            suggestionsEl.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    addLabel(containerId, item.textContent);
+                    input.value = '';
+                    suggestionsEl.style.display = 'none';
+                });
+            });
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => { suggestionsEl.style.display = 'none'; }, 150);
+            if (input.value.trim()) addLabelFromInput(containerId);
+        });
+    }
+
+    function addLabelFromInput(containerId) {
+        const input = document.getElementById(containerId).querySelector('.label-input');
+        const val = input.value.replace(/,/g, '').trim();
+        if (val) addLabel(containerId, val);
+        input.value = '';
+        const suggestionsId = containerId.replace('labels-', 'suggestions-');
+        document.getElementById(suggestionsId).style.display = 'none';
+    }
+
+    function addLabel(containerId, label) {
+        const container = document.getElementById(containerId);
+        const input = container.querySelector('.label-input');
+        const currentLabels = getLabels(containerId);
+        if (currentLabels.includes(label)) return;
+        const tag = document.createElement('span');
+        tag.className = 'label-tag';
+        tag.innerHTML = `${label}<span class="remove-tag" onclick="this.parentElement.remove()">×</span>`;
+        container.insertBefore(tag, input);
+    }
+
+    function getLabels(containerId) {
+        const container = document.getElementById(containerId);
+        return [...container.querySelectorAll('.label-tag')].map(t => t.firstChild.textContent);
+    }
+
+    function clearLabels(containerId) {
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('.label-tag').forEach(t => t.remove());
+        container.querySelector('.label-input').value = '';
+    }
+
+    function renderLabelBadges(labels, cssClass) {
+        if (!labels || labels.length === 0) return '';
+        return labels.map(l => `<span class="${cssClass}">${l}</span>`).join('');
+    }
+
+    // Initialize label inputs on page load
+    initLabelInput('labels-transcript');
+    initLabelInput('labels-manual');
+
     // ── Note Generation ───────────────────────────────────
     async function generateNote(source) {
         const notes = source === 'transcript'
@@ -1481,6 +1599,8 @@
         const rawNoteType = source === 'transcript'
             ? document.getElementById('note-type-transcript').value
             : document.getElementById('note-type-manual').value;
+        const labelsContainerId = source === 'transcript' ? 'labels-transcript' : 'labels-manual';
+        const labels = getLabels(labelsContainerId);
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
 
         // Determine if custom template or built-in type
@@ -1503,6 +1623,7 @@
                 notes,
                 noteType,
                 rawNoteType,
+                labels: labels.length > 0 ? labels : null,
                 templateId: templateId || null,
                 customPrompt: customPrompt || null,
                 sections: sections || null,
@@ -1511,6 +1632,7 @@
             };
             pendingNoteQueue.push(queueItem);
             saveNoteToDB(queueItem);
+            clearLabels(labelsContainerId);
             loadPendingBadge();
             if (document.getElementById('view-pending').style.display !== 'none') renderPendingNotesList();
             // Switch to pending tab to show the queued note
@@ -1542,7 +1664,9 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result-card').style.display = 'block';
             document.getElementById('result-badge').innerText = noteTypeTitled;
+            document.getElementById('result-labels').innerHTML = renderLabelBadges(labels, 'label-badge');
             document.getElementById('result').value = generatedNote;
+            clearLabels(labelsContainerId);
             document.getElementById('copy-btn').style.display = 'inline-flex';
             document.getElementById('save-edit-btn').style.display = 'none';
             currentNoteId = null;
@@ -1564,6 +1688,7 @@
                     raw_notes: notes,
                     generated_note: generatedNote
                 };
+                if (labels.length > 0) insertData.labels = labels;
                 if (templateId) insertData.template_id = templateId;
                 const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
                 if (!error && inserted) {
@@ -1627,20 +1752,37 @@
         document.getElementById('history-filters').style.display = 'flex';
         document.getElementById('history-search').value = '';
 
-        renderHistory('');
+        // Build unique labels for filter dropdown and auto-suggest
+        const labelSet = new Set();
+        historyNotes.forEach(n => (n.labels || []).forEach(l => labelSet.add(l)));
+        allLabels = [...labelSet].sort();
+        const filterSelect = document.getElementById('label-filter-select');
+        filterSelect.innerHTML = '<option value="">All Labels</option>';
+        allLabels.forEach(label => {
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            filterSelect.appendChild(opt);
+        });
+
+        renderHistory('', '');
     }
 
-    function renderHistory(searchQuery) {
+    function renderHistory(searchQuery, filterLabel) {
         const listEl = document.getElementById('history-list');
         listEl.innerHTML = '';
 
         let filtered = historyNotes;
+        if (filterLabel) {
+            filtered = filtered.filter(n => (n.labels || []).includes(filterLabel));
+        }
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             filtered = filtered.filter(n =>
                 (n.generated_note && n.generated_note.toLowerCase().includes(q)) ||
                 (n.raw_notes && n.raw_notes.toLowerCase().includes(q)) ||
-                (n.note_type && n.note_type.toLowerCase().includes(q))
+                (n.note_type && n.note_type.toLowerCase().includes(q)) ||
+                ((n.labels || []).some(l => l.toLowerCase().includes(q)))
             );
         }
 
@@ -1682,6 +1824,7 @@
                     <div class="history-item-header">
                         <div class="history-item-left" onclick="toggleHistory('${note.id}')">
                             <span class="history-type-badge">${noteTypeTitled}</span>
+                            ${renderLabelBadges(note.labels, 'history-label-badge')}
                             <span class="history-preview">${preview}</span>
                         </div>
                         <div class="history-item-right">
@@ -1704,7 +1847,8 @@
 
     function applyHistoryFilters() {
         const search = document.getElementById('history-search').value.trim();
-        renderHistory(search);
+        const label = document.getElementById('label-filter-select').value;
+        renderHistory(search, label);
     }
 
     function toggleHistory(id) {
