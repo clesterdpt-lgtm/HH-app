@@ -1,13 +1,13 @@
-const CACHE_NAME = 'carenote-v13';
+const CACHE_NAME = 'carenote-v14';
 
 // App shell files to pre-cache
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon.svg',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/HH-app/',
+  '/HH-app/index.html',
+  '/HH-app/manifest.json',
+  '/HH-app/icons/icon.svg',
+  '/HH-app/icons/icon-192.png',
+  '/HH-app/icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -59,7 +59,7 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         return response;
       }).catch(() => {
-        return caches.match(event.request) || caches.match('/index.html');
+        return caches.match(event.request) || caches.match('/HH-app/index.html');
       })
     );
     return;
