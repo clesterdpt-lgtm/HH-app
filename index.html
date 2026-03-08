@@ -610,11 +610,11 @@
                     </div>
                     <div id="transcript-area">
                         <div class="divider">Transcribed Text</div>
-                        <textarea id="transcript" placeholder="Your transcription will appear here..."></textarea>
+                        <textarea id="transcript" placeholder="Your transcription will appear here. Avoid including patient names or identifiers."></textarea>
                         <div class="controls-row">
                             <div class="label-input-wrapper">
                                 <div class="label-input-container" id="labels-transcript" onclick="this.querySelector('.label-input').focus()">
-                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                    <input type="text" class="label-input" placeholder="Labels (e.g. CHF, wound care — no patient names)" autocomplete="off">
                                 </div>
                                 <div class="label-suggestions" id="suggestions-transcript"></div>
                             </div>
@@ -636,11 +636,11 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. She complained of knee pain, rated 6/10..."></textarea>
+                    <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. Knee pain rated 6/10... (avoid patient names or identifiers)"></textarea>
                     <div class="controls-row">
                         <div class="label-input-wrapper">
                             <div class="label-input-container" id="labels-manual" onclick="this.querySelector('.label-input').focus()">
-                                <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                <input type="text" class="label-input" placeholder="Labels (e.g. CHF, wound care — no patient names)" autocomplete="off">
                             </div>
                             <div class="label-suggestions" id="suggestions-manual"></div>
                         </div>
