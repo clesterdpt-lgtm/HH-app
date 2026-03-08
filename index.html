@@ -1731,7 +1731,7 @@
         const noteType = document.getElementById('result-badge').innerText || 'Note';
         const subject = encodeURIComponent(`CareNote - ${noteType}`);
         const body = encodeURIComponent(text);
-        window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
     async function saveEditedNote() {
@@ -1895,8 +1895,12 @@
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
         const date = new Date(note.created_at).toLocaleDateString();
         const subject = encodeURIComponent(`CareNote - ${noteType} (${date})`);
-        const body = encodeURIComponent(note.generated_note);
-        window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+        // Strip any HTML tags and decode entities to get plain text
+        const tmp = document.createElement('div');
+        tmp.innerHTML = note.generated_note;
+        const plainText = tmp.textContent || tmp.innerText || '';
+        const body = encodeURIComponent(plainText);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
     // ── Template System ──────────────────────────────────
