@@ -143,8 +143,8 @@
         .label-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; max-height: 150px; overflow-y: auto; z-index: 100; display: none; }
         .label-suggestions .suggestion-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--gray-700); }
         .label-suggestions .suggestion-item:hover { background: var(--gray-100); }
-        .btn-label-info { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--gray-300); background: var(--white); color: var(--gray-500); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; font-family: 'DM Sans', sans-serif; padding: 0; }
-        .btn-label-info:hover { border-color: #6366f1; color: #6366f1; }
+        .btn-label-info { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--gray-300); background: var(--gray-100); color: var(--gray-400); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s, background 0.2s; font-family: 'DM Sans', sans-serif; padding: 0; margin-left: auto; }
+        .btn-label-info:hover { border-color: #6366f1; color: #6366f1; background: rgba(99,102,241,0.08); }
         .label-guide-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .label-guide { background: var(--white); border-radius: 16px; padding: 28px; max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
         .label-guide h3 { margin: 0 0 16px; font-size: 17px; color: var(--navy); }
@@ -625,10 +625,10 @@
                             <div class="label-input-wrapper">
                                 <div class="label-input-container" id="labels-transcript" onclick="this.querySelector('.label-input').focus()">
                                     <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                    <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
                                 </div>
                                 <div class="label-suggestions" id="suggestions-transcript"></div>
                             </div>
-                            <button type="button" class="btn-label-info" onclick="showLabelGuide()" title="Label tips">?</button>
                             <div class="select-wrapper">
                                 <select id="note-type-transcript" class="note-type-select"></select>
                             </div>
@@ -652,10 +652,10 @@
                         <div class="label-input-wrapper">
                             <div class="label-input-container" id="labels-manual" onclick="this.querySelector('.label-input').focus()">
                                 <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
                             </div>
                             <div class="label-suggestions" id="suggestions-manual"></div>
                         </div>
-                        <button type="button" class="btn-label-info" onclick="showLabelGuide()" title="Label tips">?</button>
                         <div class="select-wrapper">
                             <select id="note-type-manual" class="note-type-select"></select>
                         </div>
