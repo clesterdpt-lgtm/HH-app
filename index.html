@@ -929,8 +929,13 @@
     <main>
         <!-- New Note Tab -->
         <div id="view-new">
-            <div class="page-title">Clinical Documentation</div>
-            <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div class="page-title">Clinical Documentation</div>
+                    <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="confirmClearAll()" title="Clear all notes and start fresh">🗑️ Clear All</button>
+            </div>
 
             <div class="offline-banner" id="offline-banner">
                 <span style="font-size:20px;">⚡</span>
@@ -3178,6 +3183,40 @@
         document.getElementById(undoId).style.display = 'none';
         assistOriginalNote = null;
         updateAssistButtonVisibility();
+    }
+
+    // ── Clear All ────────────────────────────────────────────────────
+    function confirmClearAll() {
+        showConfirm(
+            'Clear All Notes?',
+            'This will clear both note fields, all labels, and the generated note. This cannot be undone.',
+            clearAllNotes
+        );
+    }
+
+    function clearAllNotes() {
+        // Clear textareas
+        document.getElementById('transcript').value = '';
+        document.getElementById('manual-notes').value = '';
+        // Hide transcript area
+        document.getElementById('transcript-area').style.display = 'none';
+        // Clear labels
+        clearLabels('labels-transcript');
+        clearLabels('labels-manual');
+        // Reset note type dropdowns to first option
+        document.querySelectorAll('.note-type-select').forEach(sel => { sel.selectedIndex = 0; });
+        // Hide result card
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
+        // Hide assist/undo buttons
+        document.getElementById('assist-btn-transcript').style.display = 'none';
+        document.getElementById('assist-btn-manual').style.display = 'none';
+        document.getElementById('assist-undo-transcript').style.display = 'none';
+        document.getElementById('assist-undo-manual').style.display = 'none';
+        assistOriginalNote = null;
+        currentNoteId = null;
+        // Clear saved draft
+        clearDraft();
     }
 
     // ── Auto-Save Drafts ────────────────────────────────────────────
