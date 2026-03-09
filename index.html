@@ -805,6 +805,18 @@
             transform: translateY(-1px);
         }
 
+        .draft-status {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-400);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .draft-status.show {
+            opacity: 1;
+        }
+
         @media (min-width: 769px) {
             body.assist-open main {
                 margin-right: 420px;
@@ -959,6 +971,7 @@
                             <button class="btn btn-primary generate-btn" id="gen-btn-transcript" onclick="generateNote('transcript')">Generate Note →</button>
                             <button class="assist-btn" id="assist-btn-transcript" onclick="openAssist('transcript')">🤖 Assist</button>
                             <button class="assist-undo-btn" id="assist-undo-transcript" onclick="undoAssistUpdate('transcript')">↩ Undo Assist</button>
+                            <span class="draft-status" id="draft-status-transcript"></span>
                         </div>
                     </div>
                 </div>
@@ -988,6 +1001,7 @@
                         <button class="btn btn-primary generate-btn" id="gen-btn-manual" onclick="generateNote('manual')">Generate Note →</button>
                         <button class="assist-btn" id="assist-btn-manual" onclick="openAssist('manual')">🤖 Assist</button>
                         <button class="assist-undo-btn" id="assist-undo-manual" onclick="undoAssistUpdate('manual')">↩ Undo Assist</button>
+                        <span class="draft-status" id="draft-status-manual"></span>
                     </div>
                 </div>
             </div>
@@ -1229,13 +1243,15 @@
         document.getElementById('user-email').innerText = '';
     }
 
-    function showApp(email) {
+    async function showApp(email) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'block';
         document.getElementById('signout-btn').style.display = 'inline-block';
         document.getElementById('user-email').innerText = email;
         showInstallBanner();
-        loadUserTemplatesAndPrefs();
+        await loadUserTemplatesAndPrefs();
+        // Restore draft after templates are loaded (so dropdown values are available)
+        await loadDraft();
     }
 
     function switchTab(tab) {
@@ -1285,7 +1301,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 3);
+            const req = indexedDB.open('carenote', 4);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -1296,6 +1312,9 @@
                 }
                 if (!db.objectStoreNames.contains('pendingNotes')) {
                     db.createObjectStore('pendingNotes', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('drafts')) {
+                    db.createObjectStore('drafts', { keyPath: 'key' });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -2036,6 +2055,7 @@
             pendingNoteQueue.push(queueItem);
             saveNoteToDB(queueItem);
             clearLabels(labelsContainerId);
+            clearDraft();
             loadPendingBadge();
             if (document.getElementById('view-pending').style.display !== 'none') renderPendingNotesList();
             // Switch to pending tab to show the queued note
@@ -2098,6 +2118,7 @@
                 if (!error && inserted) {
                     currentNoteId = inserted.id;
                     document.getElementById('save-status').style.display = 'flex';
+                    clearDraft();
                 }
             }
         } catch (err) {
@@ -3158,6 +3179,148 @@
         assistOriginalNote = null;
         updateAssistButtonVisibility();
     }
+
+    // ── Auto-Save Drafts ────────────────────────────────────────────
+    let draftSaveTimer = null;
+
+    async function saveDraft() {
+        try {
+            const draft = {
+                key: 'currentDraft',
+                transcriptText: document.getElementById('transcript').value,
+                transcriptAreaVisible: document.getElementById('transcript-area').style.display !== 'none',
+                manualText: document.getElementById('manual-notes').value,
+                noteTypeTranscript: document.getElementById('note-type-transcript').value,
+                noteTypeManual: document.getElementById('note-type-manual').value,
+                labelsTranscript: getLabels('labels-transcript'),
+                labelsManual: getLabels('labels-manual'),
+                savedAt: Date.now()
+            };
+
+            // Only save if there's actual content
+            const hasContent = draft.transcriptText.trim() || draft.manualText.trim()
+                || draft.labelsTranscript.length > 0 || draft.labelsManual.length > 0;
+            if (!hasContent) {
+                clearDraft();
+                return;
+            }
+
+            const db = await openDB();
+            const tx = db.transaction('drafts', 'readwrite');
+            tx.objectStore('drafts').put(draft);
+
+            // Show "Draft saved" indicator
+            showDraftStatus('transcript');
+            showDraftStatus('manual');
+        } catch (e) { /* silently fail — draft save is best-effort */ }
+    }
+
+    async function loadDraft() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('drafts', 'readonly');
+            const store = tx.objectStore('drafts');
+            const req = store.get('currentDraft');
+
+            return new Promise((resolve) => {
+                req.onsuccess = () => {
+                    const draft = req.result;
+                    if (!draft) { resolve(false); return; }
+
+                    let restored = false;
+
+                    // Restore transcript
+                    if (draft.transcriptText && draft.transcriptText.trim()) {
+                        document.getElementById('transcript').value = draft.transcriptText;
+                        if (draft.transcriptAreaVisible) {
+                            document.getElementById('transcript-area').style.display = 'block';
+                        }
+                        restored = true;
+                    }
+
+                    // Restore manual notes
+                    if (draft.manualText && draft.manualText.trim()) {
+                        document.getElementById('manual-notes').value = draft.manualText;
+                        restored = true;
+                    }
+
+                    // Restore note type selections
+                    if (draft.noteTypeTranscript) {
+                        const sel = document.getElementById('note-type-transcript');
+                        // Check the option exists before setting
+                        for (const opt of sel.options) {
+                            if (opt.value === draft.noteTypeTranscript) { sel.value = draft.noteTypeTranscript; break; }
+                        }
+                    }
+                    if (draft.noteTypeManual) {
+                        const sel = document.getElementById('note-type-manual');
+                        for (const opt of sel.options) {
+                            if (opt.value === draft.noteTypeManual) { sel.value = draft.noteTypeManual; break; }
+                        }
+                    }
+
+                    // Restore labels
+                    if (draft.labelsTranscript && draft.labelsTranscript.length > 0) {
+                        draft.labelsTranscript.forEach(l => addLabel('labels-transcript', l));
+                        restored = true;
+                    }
+                    if (draft.labelsManual && draft.labelsManual.length > 0) {
+                        draft.labelsManual.forEach(l => addLabel('labels-manual', l));
+                        restored = true;
+                    }
+
+                    if (restored) {
+                        updateAssistButtonVisibility();
+                        showDraftStatus('transcript', 'Draft restored');
+                        showDraftStatus('manual', 'Draft restored');
+                    }
+
+                    resolve(restored);
+                };
+                req.onerror = () => resolve(false);
+            });
+        } catch (e) { return false; }
+    }
+
+    async function clearDraft() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('drafts', 'readwrite');
+            tx.objectStore('drafts').delete('currentDraft');
+        } catch (e) { /* silently fail */ }
+    }
+
+    function showDraftStatus(source, text) {
+        const el = document.getElementById('draft-status-' + source);
+        if (!el) return;
+        el.textContent = text || '✓ Draft saved';
+        el.classList.add('show');
+        setTimeout(() => { el.classList.remove('show'); }, 2000);
+    }
+
+    // Debounced auto-save: triggers 2 seconds after last change
+    function scheduleDraftSave() {
+        if (draftSaveTimer) clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(saveDraft, 2000);
+    }
+
+    // Attach listeners to textareas
+    document.getElementById('transcript').addEventListener('input', scheduleDraftSave);
+    document.getElementById('manual-notes').addEventListener('input', scheduleDraftSave);
+
+    // Attach listeners to note type dropdowns
+    document.querySelectorAll('.note-type-select').forEach(sel => {
+        sel.addEventListener('change', scheduleDraftSave);
+    });
+
+    // Watch for label changes using MutationObserver on both label containers
+    ['labels-transcript', 'labels-manual'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+            const observer = new MutationObserver(scheduleDraftSave);
+            observer.observe(container, { childList: true, subtree: true });
+        }
+    });
 </script>
 </body>
 </html>
