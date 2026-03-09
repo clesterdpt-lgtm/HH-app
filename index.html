@@ -1806,6 +1806,33 @@
     let mediaRecorder = null;
     let audioChunks = [];
     let recordingStartTime = null;
+    let wakeLock = null;
+
+    // Keep screen awake during recording so the browser doesn't suspend MediaRecorder
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            }
+        } catch (e) { /* Wake lock not supported or denied — recording still works, just not screen-off safe */ }
+    }
+
+    async function releaseWakeLock() {
+        if (wakeLock) {
+            try { await wakeLock.release(); } catch (e) {}
+            wakeLock = null;
+        }
+    }
+
+    // Re-acquire wake lock if tab becomes visible again while still recording
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            const mainRecording = mediaRecorder && mediaRecorder.state === 'recording';
+            const assistRecording = assistMediaRecorder && assistMediaRecorder.state === 'recording';
+            if ((mainRecording || assistRecording) && !wakeLock) requestWakeLock();
+        }
+    });
 
     function startRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -1816,6 +1843,7 @@
 
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.start();
+                requestWakeLock();
 
                 document.getElementById('recording-status').style.display = 'flex';
                 document.getElementById('stop-btn').style.display = 'inline-flex';
@@ -1826,6 +1854,7 @@
 
     async function stopRecording() {
         if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+        releaseWakeLock();
 
         mediaRecorder.onstop = async () => {
             const durationSec = (Date.now() - recordingStartTime) / 1000;
@@ -2982,6 +3011,7 @@
 
         if (assistMediaRecorder && assistMediaRecorder.state === 'recording') {
             assistMediaRecorder.stop();
+            releaseWakeLock();
             micBtn.classList.remove('recording');
             micBtn.textContent = '🎙️';
             return;
@@ -3053,6 +3083,7 @@
             };
 
             assistMediaRecorder.start();
+            requestWakeLock();
             micBtn.classList.add('recording');
             micBtn.textContent = '⏹️';
         } catch (err) {
