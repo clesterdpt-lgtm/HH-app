@@ -15,6 +15,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -817,6 +818,105 @@
             opacity: 1;
         }
 
+        /* ── Export Dropdown / Popup ──────────────── */
+        .export-wrapper {
+            position: relative;
+            display: inline-flex;
+        }
+        .export-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+            min-width: 140px;
+            overflow: hidden;
+        }
+        .export-dropdown.open {
+            display: block;
+        }
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 11px 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-800);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .export-option:hover {
+            background: var(--gray-100);
+        }
+        .export-option + .export-option {
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .export-popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .export-popup-overlay.open {
+            display: flex;
+        }
+        .export-popup {
+            background: var(--white);
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        .export-popup-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .export-popup .export-option {
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 16px;
+        }
+        .export-popup .export-option:hover {
+            background: var(--gray-100);
+        }
+        .export-popup .export-option + .export-option {
+            border-top: none;
+            margin-top: 4px;
+        }
+        .export-popup-cancel {
+            display: block;
+            width: 100%;
+            margin-top: 8px;
+            padding: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-400);
+            background: var(--gray-100);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
         @media (min-width: 769px) {
             body.assist-open main {
                 margin-right: 420px;
@@ -1035,7 +1135,13 @@
                             <div class="result-buttons">
                                 <button class="btn btn-copy" id="save-edit-btn" onclick="saveEditedNote()" style="display:none;">💾 Save Changes</button>
                                 <button class="btn btn-copy" id="copy-btn" onclick="copyNote()">📋 Copy Note</button>
-                                <button class="btn btn-copy" id="email-btn" onclick="emailNote()">✉️ Email Note</button>
+                                <div class="export-wrapper">
+                                    <button class="btn btn-copy" id="email-btn" onclick="toggleExport(this)">📤 Export</button>
+                                    <div class="export-dropdown">
+                                        <button class="export-option" onclick="emailNote(); closeExport()">✉️ Email</button>
+                                        <button class="export-option" onclick="downloadResultPdf(); closeExport()">📥 Download PDF</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1097,7 +1203,13 @@
                     <div class="page-subtitle" style="margin-bottom:0">All your previously generated clinical notes.</div>
                 </div>
                 <div class="history-toolbar-actions">
-                    <button class="btn btn-outline" onclick="emailAllNotes()">✉️ Email All Notes</button>
+                    <div class="export-wrapper">
+                        <button class="btn btn-outline" onclick="toggleExport(this)">📤 Export All</button>
+                        <div class="export-dropdown">
+                            <button class="export-option" onclick="emailAllNotes(); closeExport()">✉️ Email All</button>
+                            <button class="export-option" onclick="downloadAllPdf(); closeExport()">📥 PDF All Notes</button>
+                        </div>
+                    </div>
                     <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
                 </div>
             </div>
@@ -2261,7 +2373,13 @@
                         <div class="day-group-count">${count} ${count === 1 ? 'note' : 'notes'}</div>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-outline btn-sm" onclick="emailDay('${dateLabel}')">✉️ Email Day</button>
+                        <div class="export-wrapper">
+                            <button class="btn btn-outline btn-sm" onclick="toggleExport(this)">📤 Export Day</button>
+                            <div class="export-dropdown">
+                                <button class="export-option" onclick="emailDay('${dateLabel}'); closeExport()">✉️ Email</button>
+                                <button class="export-option" onclick="downloadDayPdf('${dateLabel}'); closeExport()">📥 PDF</button>
+                            </div>
+                        </div>
                         <button class="btn btn-danger btn-sm" onclick="confirmDeleteDay('${dateLabel}')">🗑️ Delete Day</button>
                     </div>
                 </div>`;
@@ -2290,7 +2408,13 @@
                         <div class="history-note-text">${note.generated_note}</div>
                         <div class="history-actions">
                             <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}')">📋 Copy Note</button>
-                            <button class="btn btn-outline" onclick="emailHistoryNote('${note.id}')">✉️ Email Note</button>
+                            <div class="export-wrapper">
+                                <button class="btn btn-outline" onclick="toggleExport(this)">📤 Export</button>
+                                <div class="export-dropdown">
+                                    <button class="export-option" onclick="emailHistoryNote('${note.id}'); closeExport()">✉️ Email</button>
+                                    <button class="export-option" onclick="downloadHistoryNotePdf('${note.id}'); closeExport()">📥 PDF</button>
+                                </div>
+                            </div>
                         </div>
                     </div>`;
                 groupEl.appendChild(item);
@@ -3217,6 +3341,242 @@
         currentNoteId = null;
         // Clear saved draft
         clearDraft();
+    }
+
+    // ── Export Dropdown / Popup ────────────────────────────────────
+    let activeExportDropdown = null;
+    let activeExportPopup = null;
+
+    function toggleExport(btn) {
+        closeExport();
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            // Mobile: show bottom popup
+            const dropdown = btn.parentElement.querySelector('.export-dropdown');
+            if (!dropdown) return;
+            const overlay = document.createElement('div');
+            overlay.className = 'export-popup-overlay open';
+            overlay.onclick = (e) => { if (e.target === overlay) closeExport(); };
+            const popup = document.createElement('div');
+            popup.className = 'export-popup';
+            popup.innerHTML = '<div class="export-popup-title">Export</div>'
+                + dropdown.innerHTML
+                + '<button class="export-popup-cancel" onclick="closeExport()">Cancel</button>';
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+            activeExportPopup = overlay;
+        } else {
+            // Desktop: show dropdown below button
+            const dropdown = btn.parentElement.querySelector('.export-dropdown');
+            if (!dropdown) return;
+            dropdown.classList.add('open');
+            activeExportDropdown = dropdown;
+        }
+    }
+
+    function closeExport() {
+        if (activeExportDropdown) {
+            activeExportDropdown.classList.remove('open');
+            activeExportDropdown = null;
+        }
+        if (activeExportPopup) {
+            activeExportPopup.remove();
+            activeExportPopup = null;
+        }
+    }
+
+    // Close dropdown on click-outside (desktop)
+    document.addEventListener('click', (e) => {
+        if (activeExportDropdown && !e.target.closest('.export-wrapper')) {
+            closeExport();
+        }
+    });
+
+    // ── PDF Generation ──────────────────────────────────────────────
+    function buildPdf(title, sections) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function addPageNumber() {
+            const pages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(9);
+                doc.setTextColor(160);
+                doc.text('CareNote', margin, pageHeight - 10);
+                doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+            }
+        }
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) {
+                doc.addPage();
+                y = margin;
+            }
+        }
+
+        // Header
+        doc.setFillColor(15, 39, 68); // --navy
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text(title, pageWidth - margin, 12, { align: 'right' });
+        y = 28;
+
+        // Sections
+        sections.forEach((section, sIndex) => {
+            if (sIndex > 0) {
+                checkPageBreak(15);
+                doc.setDrawColor(200);
+                doc.line(margin, y, pageWidth - margin, y);
+                y += 8;
+            }
+
+            // Section heading (day label or note type)
+            if (section.heading) {
+                checkPageBreak(12);
+                doc.setFontSize(12);
+                doc.setTextColor(15, 39, 68);
+                doc.text(section.heading, margin, y);
+                y += 7;
+            }
+
+            section.notes.forEach((note, nIndex) => {
+                if (nIndex > 0) {
+                    checkPageBreak(10);
+                    doc.setDrawColor(220);
+                    doc.setLineDashPattern([2, 2], 0);
+                    doc.line(margin, y, pageWidth - margin, y);
+                    doc.setLineDashPattern([], 0);
+                    y += 6;
+                }
+
+                // Note meta: type + date + labels
+                if (note.type) {
+                    checkPageBreak(8);
+                    doc.setFontSize(11);
+                    doc.setTextColor(13, 148, 136); // --teal
+                    doc.text(note.type, margin, y);
+                    y += 5;
+                }
+                if (note.date) {
+                    checkPageBreak(6);
+                    doc.setFontSize(9);
+                    doc.setTextColor(120);
+                    doc.text(note.date, margin, y);
+                    y += 4;
+                }
+                if (note.labels && note.labels.length > 0) {
+                    checkPageBreak(6);
+                    doc.setFontSize(9);
+                    doc.setTextColor(100);
+                    doc.text('Labels: ' + note.labels.join(', '), margin, y);
+                    y += 4;
+                }
+
+                y += 3;
+
+                // Note body
+                doc.setFontSize(10);
+                doc.setTextColor(40);
+                const lines = doc.splitTextToSize(note.text || '', maxWidth);
+                lines.forEach(line => {
+                    checkPageBreak(5);
+                    doc.text(line, margin, y);
+                    y += 4.5;
+                });
+
+                y += 4;
+            });
+        });
+
+        addPageNumber();
+        return doc;
+    }
+
+    function downloadResultPdf() {
+        const noteText = document.getElementById('result').value;
+        const noteType = document.getElementById('result-badge').innerText;
+        const labelEls = document.querySelectorAll('#result-labels .label-badge');
+        const labels = [...labelEls].map(el => el.textContent);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        const doc = buildPdf(noteType, [{
+            heading: null,
+            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels, text: noteText }]
+        }]);
+
+        const safeName = noteType.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+        doc.save('CareNote-' + safeName + '-' + now.toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function downloadHistoryNotePdf(id) {
+        const note = historyNotes.find(n => n.id === id);
+        if (!note) return;
+        const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+        const date = new Date(note.created_at);
+        const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        const doc = buildPdf(noteType, [{
+            heading: null,
+            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels: note.labels || [], text: note.generated_note }]
+        }]);
+
+        const safeName = noteType.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+        doc.save('CareNote-' + safeName + '-' + date.toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function downloadDayPdf(dateLabel) {
+        const dayNotes = historyNotes.filter(n => {
+            const d = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            return d === dateLabel;
+        });
+        if (dayNotes.length === 0) return;
+
+        const notes = dayNotes.map(n => {
+            const noteType = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
+            const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note };
+        });
+
+        const doc = buildPdf('Notes for ' + dateLabel, [{ heading: dateLabel, notes }]);
+        const safeDate = dateLabel.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+        doc.save('CareNote-' + safeDate + '.pdf');
+    }
+
+    function downloadAllPdf() {
+        if (historyNotes.length === 0) return;
+
+        // Group by date
+        const groups = {};
+        historyNotes.forEach(n => {
+            const dateLabel = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateLabel]) groups[dateLabel] = [];
+            groups[dateLabel].push(n);
+        });
+
+        const sections = Object.keys(groups).map(dateLabel => ({
+            heading: dateLabel,
+            notes: groups[dateLabel].map(n => {
+                const noteType = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
+                const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note };
+            })
+        }));
+
+        const doc = buildPdf('All Notes', sections);
+        doc.save('CareNote-All-Notes-' + new Date().toISOString().slice(0, 10) + '.pdf');
     }
 
     // ── Auto-Save Drafts ────────────────────────────────────────────
