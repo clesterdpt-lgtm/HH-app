@@ -3527,7 +3527,7 @@
     }
 
     function downloadHistoryNotePdf(id) {
-        const note = historyNotes.find(n => n.id === id);
+        const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
         const date = new Date(note.created_at);
