@@ -783,6 +783,28 @@
             transform: none;
         }
 
+        .assist-undo-btn {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            border: 2px solid var(--orange);
+            background: rgba(217, 119, 6, 0.08);
+            color: var(--orange);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+        .assist-undo-btn:hover {
+            background: var(--orange);
+            color: var(--white);
+            transform: translateY(-1px);
+        }
+
         @media (min-width: 769px) {
             body.assist-open main {
                 margin-right: 420px;
@@ -936,6 +958,7 @@
                             </div>
                             <button class="btn btn-primary generate-btn" id="gen-btn-transcript" onclick="generateNote('transcript')">Generate Note →</button>
                             <button class="assist-btn" id="assist-btn-transcript" onclick="openAssist('transcript')">🤖 Assist</button>
+                            <button class="assist-undo-btn" id="assist-undo-transcript" onclick="undoAssistUpdate('transcript')">↩ Undo Assist</button>
                         </div>
                     </div>
                 </div>
@@ -964,6 +987,7 @@
                         </div>
                         <button class="btn btn-primary generate-btn" id="gen-btn-manual" onclick="generateNote('manual')">Generate Note →</button>
                         <button class="assist-btn" id="assist-btn-manual" onclick="openAssist('manual')">🤖 Assist</button>
+                        <button class="assist-undo-btn" id="assist-undo-manual" onclick="undoAssistUpdate('manual')">↩ Undo Assist</button>
                     </div>
                 </div>
             </div>
@@ -2728,6 +2752,7 @@
     let assistMediaRecorder = null;
     let assistAudioChunks = [];
     let assistDone = false;
+    let assistOriginalNote = null;  // preserved for undo
 
     // Show/hide Assist buttons based on textarea content
     function updateAssistButtonVisibility() {
@@ -3064,14 +3089,19 @@
                 return;
             }
 
-            // Replace the raw note text
+            // Save original and replace the raw note text
             const targetId = assistSource === 'transcript' ? 'transcript' : 'manual-notes';
+            assistOriginalNote = { source: assistSource, text: document.getElementById(targetId).value };
             document.getElementById(targetId).value = data.text;
 
-            addAssistMessage('assistant', '✅ Your notes have been updated with all the details we discussed. You can now click "Generate Note" to create your formatted clinical note.');
+            addAssistMessage('assistant', '✅ Your notes have been updated with all the details we discussed. You can now click "Generate Note" to create your formatted clinical note.\n\nIf you want the original back, use the "↩ Undo Assist" button.');
 
             updateBtn.textContent = '✓ Updated!';
             updateBtn.disabled = true;
+
+            // Show the undo button for this source
+            const undoId = assistSource === 'transcript' ? 'assist-undo-transcript' : 'assist-undo-manual';
+            document.getElementById(undoId).style.display = 'inline-flex';
 
             // Close panel after a brief delay
             setTimeout(() => {
@@ -3084,6 +3114,18 @@
             updateBtn.disabled = false;
             updateBtn.textContent = '✨ Update My Note';
         }
+    }
+
+    // Undo the Assist rewrite — restore original note
+    function undoAssistUpdate(source) {
+        if (!assistOriginalNote || assistOriginalNote.source !== source) return;
+        const targetId = source === 'transcript' ? 'transcript' : 'manual-notes';
+        document.getElementById(targetId).value = assistOriginalNote.text;
+        // Hide the undo button
+        const undoId = source === 'transcript' ? 'assist-undo-transcript' : 'assist-undo-manual';
+        document.getElementById(undoId).style.display = 'none';
+        assistOriginalNote = null;
+        updateAssistButtonVisibility();
     }
 </script>
 </body>

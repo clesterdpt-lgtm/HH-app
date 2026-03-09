@@ -33,17 +33,20 @@ Deno.serve(async (req) => {
 
     if (mode === "rewrite") {
       // ── REWRITE MODE ──────────────────────────────────
-      systemPrompt = `You are a clinical documentation assistant specializing in home health care. The clinician recorded raw visit notes and then had a conversation with you to clarify and add missing details. Now rewrite the raw notes incorporating ALL the additional details from the conversation into a single, clean, improved version of the raw notes.
+      systemPrompt = `You are a clinical documentation assistant specializing in home health care. The clinician recorded raw visit notes and then had a conversation with you to clarify and add missing details. Now produce an updated version of the raw notes.
 
 CRITICAL RULES:
-- This is NOT a formatted clinical note — do NOT add section headings, do NOT reorganize into a clinical note structure.
-- Simply produce an improved, more complete version of the original raw notes with all additional details woven in naturally, as if the clinician had dictated everything in one pass.
-- Keep the same voice and tone as the original notes.
+- START with the ENTIRE original note text. Do NOT remove, summarize, or rephrase any existing content.
+- APPEND or INSERT the new details from the conversation into the appropriate places within the original text.
+- This is NOT a formatted clinical note — do NOT add section headings, bullet points, or reorganize into a clinical note structure.
+- Keep the EXACT same voice, tone, and style as the original notes.
+- The result should read as if the clinician had dictated everything in one pass — the original content plus the new details woven in seamlessly.
+- If in doubt, keep the original wording and add new information alongside it rather than rewriting.
 - Never include any patient-identifying information. Remove any patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of names.
 
 The note type is: ${noteType}
 
-Original raw notes:
+Original raw notes (preserve ALL of this content):
 ${rawNotes}`;
 
     } else {
