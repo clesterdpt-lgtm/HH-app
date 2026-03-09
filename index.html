@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -825,15 +825,12 @@
         }
         .export-dropdown {
             display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 4px;
+            position: fixed;
             background: var(--white);
             border: 1px solid var(--gray-200);
             border-radius: 10px;
             box-shadow: var(--shadow-md);
-            z-index: 100;
+            z-index: 9999;
             min-width: 140px;
             overflow: hidden;
         }
@@ -3367,9 +3364,13 @@
             document.body.appendChild(overlay);
             activeExportPopup = overlay;
         } else {
-            // Desktop: show dropdown below button
+            // Desktop: show dropdown below button (position: fixed to escape overflow:hidden)
             const dropdown = btn.parentElement.querySelector('.export-dropdown');
             if (!dropdown) return;
+            const rect = btn.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = 'auto';
+            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
             dropdown.classList.add('open');
             activeExportDropdown = dropdown;
         }
@@ -3395,6 +3396,10 @@
 
     // ── PDF Generation ──────────────────────────────────────────────
     function buildPdf(title, sections) {
+        if (!window.jspdf) {
+            alert('PDF library is still loading. Please try again in a moment.');
+            return null;
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -3515,6 +3520,7 @@
             heading: null,
             notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels, text: noteText }]
         }]);
+        if (!doc) return;
 
         const safeName = noteType.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
         doc.save('CareNote-' + safeName + '-' + now.toISOString().slice(0, 10) + '.pdf');
@@ -3532,6 +3538,7 @@
             heading: null,
             notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels: note.labels || [], text: note.generated_note }]
         }]);
+        if (!doc) return;
 
         const safeName = noteType.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
         doc.save('CareNote-' + safeName + '-' + date.toISOString().slice(0, 10) + '.pdf');
@@ -3551,6 +3558,7 @@
         });
 
         const doc = buildPdf('Notes for ' + dateLabel, [{ heading: dateLabel, notes }]);
+        if (!doc) return;
         const safeDate = dateLabel.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
         doc.save('CareNote-' + safeDate + '.pdf');
     }
@@ -3576,6 +3584,7 @@
         }));
 
         const doc = buildPdf('All Notes', sections);
+        if (!doc) return;
         doc.save('CareNote-All-Notes-' + new Date().toISOString().slice(0, 10) + '.pdf');
     }
 
