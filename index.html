@@ -948,6 +948,93 @@
                 font-size: 15px;
             }
         }
+        /* ── Output Format Toggle ───────────────── */
+        .format-options {
+            display: flex;
+            gap: 12px;
+        }
+        .format-option {
+            flex: 1;
+            text-align: left;
+            padding: 16px;
+            background: var(--gray-100);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .format-option:hover { border-color: var(--teal); }
+        .format-option.active {
+            border-color: var(--teal);
+            background: rgba(13,148,136,0.06);
+        }
+        .format-option-title {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 4px;
+        }
+        .format-option-desc {
+            display: block;
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+        .format-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .format-row-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-400);
+            letter-spacing: 0.3px;
+        }
+        .format-toggle {
+            display: inline-flex;
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid var(--gray-200);
+        }
+        .format-toggle-btn {
+            padding: 5px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--gray-600);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .format-toggle-btn.active {
+            background: var(--white);
+            color: var(--teal);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+        .format-toggle-btn:hover:not(.active) {
+            color: var(--gray-800);
+        }
+        .summary-badge {
+            background: rgba(99,102,241,0.1);
+            color: #6366f1;
+            border: 1px solid rgba(99,102,241,0.2);
+        }
+
+        @media (max-width: 600px) {
+            .format-options { flex-direction: column; }
+            .format-option { padding: 14px; }
+            .format-row { margin-top: 8px; }
+            .format-toggle-btn { padding: 8px 16px; font-size: 14px; }
+            .format-row-label { font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -1075,6 +1162,13 @@
                             <button class="assist-undo-btn" id="assist-undo-transcript" onclick="undoAssistUpdate('transcript')">↩ Undo Assist</button>
                             <span class="draft-status" id="draft-status-transcript"></span>
                         </div>
+                        <div class="format-row" id="format-row-transcript">
+                            <span class="format-row-label">Output:</span>
+                            <div class="format-toggle" id="format-toggle-transcript">
+                                <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('transcript', 'full')">Full Note</button>
+                                <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('transcript', 'summary')">Summary</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1105,6 +1199,13 @@
                         <button class="assist-undo-btn" id="assist-undo-manual" onclick="undoAssistUpdate('manual')">↩ Undo Assist</button>
                         <span class="draft-status" id="draft-status-manual"></span>
                     </div>
+                    <div class="format-row" id="format-row-manual">
+                        <span class="format-row-label">Output:</span>
+                        <div class="format-toggle" id="format-toggle-manual">
+                            <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('manual', 'full')">Full Note</button>
+                            <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('manual', 'summary')">Summary</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1125,6 +1226,7 @@
                     <div class="result-meta">
                         <div class="result-badges">
                             <span class="result-badge" id="result-badge">Note</span>
+                            <span class="result-badge summary-badge" id="result-format-badge" style="display:none;">Summary</span>
                             <span id="result-labels"></span>
                         </div>
                         <div class="result-actions">
@@ -1232,6 +1334,28 @@
 
             <div class="card">
                 <div class="card-header">
+                    <div class="card-header-icon">⚙️</div>
+                    <div class="card-header-text">
+                        <h2>Default Output Format</h2>
+                        <p>Choose the default format for generated notes</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="format-options" id="default-format-options">
+                        <button class="format-option active" data-value="full" onclick="setDefaultFormat('full')">
+                            <span class="format-option-title">Full Documentation</span>
+                            <span class="format-option-desc">Structured clinical note with all sections</span>
+                        </button>
+                        <button class="format-option" data-value="summary" onclick="setDefaultFormat('summary')">
+                            <span class="format-option-title">Clinical Summary</span>
+                            <span class="format-option-desc">Concise 2-3 paragraph visit narrative</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
                     <div class="card-header-icon">📋</div>
                     <div class="card-header-text">
                         <h2>Built-in Note Types</h2>
@@ -1310,6 +1434,7 @@
     ];
     let userTemplates = [];
     let hiddenBuiltinTypes = [];
+    let defaultOutputFormat = 'full';
     let templatesLoaded = false;
 
     // ── Online/Offline ────────────────────────────────────
@@ -1803,6 +1928,7 @@
 
         try {
             const body = { notes: item.notes, noteType: item.noteType };
+            if (item.outputFormat === 'summary') body.outputFormat = 'summary';
             if (item.customPrompt) body.customPrompt = item.customPrompt;
             if (item.sections && item.sections.length > 0) body.sections = item.sections;
 
@@ -1821,7 +1947,8 @@
                     user_id: currentUser.id,
                     note_type: item.noteType,
                     raw_notes: item.notes,
-                    generated_note: data.text
+                    generated_note: data.text,
+                    output_format: item.outputFormat || 'full'
                 };
                 if (item.labels && item.labels.length > 0) insertData.labels = item.labels;
                 if (item.templateId) insertData.template_id = item.templateId;
@@ -2152,6 +2279,8 @@
             noteType = rawNoteType;
         }
 
+        const outputFormat = getOutputFormat(source);
+
         // Queue for later if offline
         if (!isOnline) {
             const queueItem = {
@@ -2159,6 +2288,7 @@
                 notes,
                 noteType,
                 rawNoteType,
+                outputFormat,
                 labels: labels.length > 0 ? labels : null,
                 templateId: templateId || null,
                 customPrompt: customPrompt || null,
@@ -2183,6 +2313,7 @@
 
         try {
             const body = { notes, noteType };
+            if (outputFormat === 'summary') body.outputFormat = 'summary';
             if (customPrompt) body.customPrompt = customPrompt;
             if (sections && sections.length > 0) body.sections = sections;
 
@@ -2201,6 +2332,12 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result-card').style.display = 'block';
             document.getElementById('result-badge').innerText = noteTypeTitled;
+            const formatBadge = document.getElementById('result-format-badge');
+            if (outputFormat === 'summary') {
+                formatBadge.style.display = 'inline';
+            } else {
+                formatBadge.style.display = 'none';
+            }
             document.getElementById('result-labels').innerHTML = renderLabelBadges(labels, 'label-badge');
             document.getElementById('result').value = generatedNote;
             clearLabels(labelsContainerId);
@@ -2224,7 +2361,8 @@
                     user_id: currentUser.id,
                     note_type: noteType,
                     raw_notes: notes,
-                    generated_note: generatedNote
+                    generated_note: generatedNote,
+                    output_format: outputFormat
                 };
                 if (labels.length > 0) insertData.labels = labels;
                 if (templateId) insertData.template_id = templateId;
@@ -2385,6 +2523,9 @@
                 const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const noteTypeTitled = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
                 const preview = note.generated_note.substring(0, 70) + '...';
+                const summaryBadge = note.output_format === 'summary'
+                    ? '<span class="history-type-badge summary-badge">Summary</span>'
+                    : '';
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.id = `note-${note.id}`;
@@ -2392,6 +2533,7 @@
                     <div class="history-item-header" onclick="toggleHistory('${note.id}')">
                         <div class="history-item-left">
                             <span class="history-type-badge">${noteTypeTitled}</span>
+                            ${summaryBadge}
                             ${renderLabelBadges(note.labels, 'history-label-badge')}
                             <span class="history-preview">${preview}</span>
                         </div>
@@ -2541,6 +2683,7 @@
             const store = tx.objectStore('templateCache');
             store.put({ key: 'templates', data: templates });
             store.put({ key: 'hiddenBuiltinTypes', data: hiddenTypes });
+            store.put({ key: 'defaultOutputFormat', data: defaultOutputFormat });
         } catch (e) { console.log('IDB template cache error:', e); }
     }
 
@@ -2552,16 +2695,18 @@
             return new Promise(resolve => {
                 const templatesReq = store.get('templates');
                 const hiddenReq = store.get('hiddenBuiltinTypes');
+                const formatReq = store.get('defaultOutputFormat');
                 tx.oncomplete = () => {
                     resolve({
                         templates: templatesReq.result?.data || [],
-                        hiddenTypes: hiddenReq.result?.data || []
+                        hiddenTypes: hiddenReq.result?.data || [],
+                        defaultOutputFormat: formatReq.result?.data || 'full'
                     });
                 };
-                tx.onerror = () => resolve({ templates: [], hiddenTypes: [] });
+                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full' });
             });
         } catch (e) {
-            return { templates: [], hiddenTypes: [] };
+            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full' };
         }
     }
 
@@ -2574,20 +2719,23 @@
             userTemplates = templates || [];
 
             const { data: prefs } = await sb.from('user_preferences')
-                .select('hidden_builtin_types')
+                .select('hidden_builtin_types, default_output_format')
                 .eq('user_id', currentUser.id)
                 .single();
             hiddenBuiltinTypes = prefs?.hidden_builtin_types || [];
+            defaultOutputFormat = prefs?.default_output_format || 'full';
 
             await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         } else {
             const cached = await loadTemplatesFromIDB();
             userTemplates = cached.templates;
             hiddenBuiltinTypes = cached.hiddenTypes;
+            defaultOutputFormat = cached.defaultOutputFormat || 'full';
         }
 
         templatesLoaded = true;
         populateNoteTypeDropdowns();
+        syncFormatToggles();
     }
 
     async function loadTemplates() {
@@ -2639,6 +2787,48 @@
         await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         populateNoteTypeDropdowns();
         renderBuiltinTypesList();
+    }
+
+    // ── Output Format ────────────────────────────────────────
+    function syncFormatToggles() {
+        document.querySelectorAll('#default-format-options .format-option').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === defaultOutputFormat);
+        });
+        ['transcript', 'manual'].forEach(source => {
+            document.querySelectorAll(`#format-toggle-${source} .format-toggle-btn`).forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.value === defaultOutputFormat);
+            });
+        });
+    }
+
+    async function setDefaultFormat(format) {
+        defaultOutputFormat = format;
+        document.querySelectorAll('#default-format-options .format-option').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === format);
+        });
+        syncFormatToggles();
+
+        if (isOnline && currentUser) {
+            await sb.from('user_preferences').upsert({
+                user_id: currentUser.id,
+                hidden_builtin_types: hiddenBuiltinTypes,
+                default_output_format: format,
+                updated_at: new Date().toISOString()
+            });
+        }
+        await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+    }
+
+    function setNoteFormat(source, format) {
+        document.querySelectorAll(`#format-toggle-${source} .format-toggle-btn`).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === format);
+        });
+        scheduleDraftSave();
+    }
+
+    function getOutputFormat(source) {
+        const activeBtn = document.querySelector(`#format-toggle-${source} .format-toggle-btn.active`);
+        return activeBtn ? activeBtn.dataset.value : defaultOutputFormat;
     }
 
     function renderCustomTemplatesList() {
@@ -3336,6 +3526,8 @@
         document.getElementById('assist-undo-manual').style.display = 'none';
         assistOriginalNote = null;
         currentNoteId = null;
+        // Reset format toggles to default
+        syncFormatToggles();
         // Clear saved draft
         clearDraft();
     }
@@ -3602,6 +3794,8 @@
                 noteTypeManual: document.getElementById('note-type-manual').value,
                 labelsTranscript: getLabels('labels-transcript'),
                 labelsManual: getLabels('labels-manual'),
+                formatTranscript: getOutputFormat('transcript'),
+                formatManual: getOutputFormat('manual'),
                 savedAt: Date.now()
             };
 
@@ -3675,6 +3869,18 @@
                     if (draft.labelsManual && draft.labelsManual.length > 0) {
                         draft.labelsManual.forEach(l => addLabel('labels-manual', l));
                         restored = true;
+                    }
+
+                    // Restore output format toggles
+                    if (draft.formatTranscript) {
+                        document.querySelectorAll('#format-toggle-transcript .format-toggle-btn').forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.value === draft.formatTranscript);
+                        });
+                    }
+                    if (draft.formatManual) {
+                        document.querySelectorAll('#format-toggle-manual .format-toggle-btn').forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.value === draft.formatManual);
+                        });
                     }
 
                     if (restored) {

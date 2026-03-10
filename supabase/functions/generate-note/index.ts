@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { notes, noteType, customPrompt, sections } = await req.json();
+    const { notes, noteType, customPrompt, sections, outputFormat } = await req.json();
 
     if (!notes || !notes.trim()) {
       return new Response(JSON.stringify({ error: "No notes provided" }), {
@@ -29,13 +29,32 @@ serve(async (req) => {
       });
     }
 
-    // Build prompt — append custom instructions and sections when provided
-    let prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.
+    // Build prompt — conditionally use summary or full documentation mode
+    let prompt;
+
+    if (outputFormat === 'summary') {
+      prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a concise clinical summary for a ${noteType} visit.
+
+Write a brief 2-3 paragraph narrative that captures the key aspects of the visit interaction. Focus on:
+- What was observed during the visit (patient presentation, condition, environment)
+- What was discussed and any interventions performed
+- Patient response and any notable changes from previous visits
+
+IMPORTANT FORMATTING RULES:
+- Write in flowing prose paragraphs only — do NOT use structured sections, headings, bullet points, numbered lists, or tables
+- Do NOT include vital signs tables, pain scale ratings, formal goals, or plan of care sections — assume these are documented elsewhere in the EMR
+- Keep the tone concise and professional
+- This is a brief narrative overview, not a comprehensive note
+
+IMPORTANT: Never include any patient-identifying information. Use "the patient" or "pt" instead of any names. Omit dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information.`;
+    } else {
+      prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.
 
 IMPORTANT: Never include any patient-identifying information in the generated note. This includes patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of any names. If the visit notes contain patient identifiers, omit them from the output.`;
 
-    if (sections && sections.length > 0) {
-      prompt += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
+      if (sections && sections.length > 0) {
+        prompt += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
+      }
     }
 
     if (customPrompt) {
