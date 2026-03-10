@@ -123,7 +123,6 @@
         .recording-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
 
-        #transcript-area { display: none; margin-top: 16px; }
         .divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; color: var(--gray-400); font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
 
@@ -1128,10 +1127,10 @@
 
             <div class="card">
                 <div class="card-header">
-                    <div class="card-header-icon">🎙️</div>
+                    <div class="card-header-icon">📋</div>
                     <div class="card-header-text">
-                        <h2>Record Audio</h2>
-                        <p>Works online and offline — Whisper AI transcription</p>
+                        <h2>New Note</h2>
+                        <p>Record or type your visit notes</p>
                     </div>
                 </div>
                 <div class="card-body">
@@ -1143,67 +1142,28 @@
                             Recording in progress
                         </div>
                     </div>
-                    <div id="transcript-area">
-                        <div class="divider">Transcribed Text</div>
-                        <textarea id="transcript" placeholder="Your transcription will appear here. Avoid including patient names or identifiers."></textarea>
-                        <div class="controls-row">
-                            <div class="label-input-wrapper">
-                                <div class="label-input-container" id="labels-transcript" onclick="this.querySelector('.label-input').focus()">
-                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
-                                    <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
-                                </div>
-                                <div class="label-suggestions" id="suggestions-transcript"></div>
-                            </div>
-                            <div class="select-wrapper">
-                                <select id="note-type-transcript" class="note-type-select"></select>
-                            </div>
-                            <button class="btn btn-primary generate-btn" id="gen-btn-transcript" onclick="generateNote('transcript')">Generate Note →</button>
-                            <button class="assist-btn" id="assist-btn-transcript" onclick="openAssist('transcript')">🤖 Assist</button>
-                            <button class="assist-undo-btn" id="assist-undo-transcript" onclick="undoAssistUpdate('transcript')">↩ Undo Assist</button>
-                            <span class="draft-status" id="draft-status-transcript"></span>
-                        </div>
-                        <div class="format-row" id="format-row-transcript">
-                            <span class="format-row-label">Output:</span>
-                            <div class="format-toggle" id="format-toggle-transcript">
-                                <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('transcript', 'full')">Full Note</button>
-                                <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('transcript', 'summary')">Summary</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-header-icon">📝</div>
-                    <div class="card-header-text">
-                        <h2>Type Notes Manually</h2>
-                        <p>Type or paste visit notes — useful when offline</p>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <textarea id="manual-notes" placeholder="Example: Visited 78yo female patient at home. Knee pain rated 6/10... (avoid patient names or identifiers)"></textarea>
+                    <textarea id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
                     <div class="controls-row">
                         <div class="label-input-wrapper">
-                            <div class="label-input-container" id="labels-manual" onclick="this.querySelector('.label-input').focus()">
+                            <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
                                 <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
                                 <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
                             </div>
-                            <div class="label-suggestions" id="suggestions-manual"></div>
+                            <div class="label-suggestions" id="suggestions-note"></div>
                         </div>
                         <div class="select-wrapper">
-                            <select id="note-type-manual" class="note-type-select"></select>
+                            <select id="note-type" class="note-type-select"></select>
                         </div>
-                        <button class="btn btn-primary generate-btn" id="gen-btn-manual" onclick="generateNote('manual')">Generate Note →</button>
-                        <button class="assist-btn" id="assist-btn-manual" onclick="openAssist('manual')">🤖 Assist</button>
-                        <button class="assist-undo-btn" id="assist-undo-manual" onclick="undoAssistUpdate('manual')">↩ Undo Assist</button>
-                        <span class="draft-status" id="draft-status-manual"></span>
+                        <button class="btn btn-primary generate-btn" id="gen-btn" onclick="generateNote()">Generate Note →</button>
+                        <button class="assist-btn" id="assist-btn" onclick="openAssist()">🤖 Assist</button>
+                        <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
+                        <span class="draft-status" id="draft-status"></span>
                     </div>
-                    <div class="format-row" id="format-row-manual">
+                    <div class="format-row" id="format-row">
                         <span class="format-row-label">Output:</span>
-                        <div class="format-toggle" id="format-toggle-manual">
-                            <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('manual', 'full')">Full Note</button>
-                            <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('manual', 'summary')">Summary</button>
+                        <div class="format-toggle" id="format-toggle">
+                            <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('full')">Full Note</button>
+                            <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('summary')">Summary</button>
                         </div>
                     </div>
                 </div>
@@ -1833,10 +1793,9 @@
         if (!rec || !rec.transcript) return;
         const noteType = document.getElementById(`pending-type-${id}`)?.value || 'routine visit';
         showTab('new');
-        document.getElementById('transcript-area').style.display = 'block';
-        document.getElementById('transcript').value = rec.transcript;
-        document.getElementById('note-type-transcript').value = noteType;
-        document.getElementById('transcript').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('note-input').value = rec.transcript;
+        document.getElementById('note-type').value = noteType;
+        document.getElementById('note-input').scrollIntoView({ behavior: 'smooth' });
     }
 
     // ── Queued Notes (offline note generation) ───────────
@@ -2049,10 +2008,9 @@
 
             // Move to New Note tab with transcription pre-filled
             showTab('new');
-            document.getElementById('transcript-area').style.display = 'block';
-            document.getElementById('transcript').value = data.text;
-            document.getElementById('note-type-transcript').value = noteType;
-            document.getElementById('transcript').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('note-input').value = data.text;
+            document.getElementById('note-type').value = noteType;
+            document.getElementById('note-input').scrollIntoView({ behavior: 'smooth' });
 
         } catch (err) {
             statusEl.style.display = 'none';
@@ -2129,7 +2087,6 @@
             // Online — transcribe immediately with Whisper
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('loading-text').innerText = 'Transcribing with Whisper...';
-            document.getElementById('transcript-area').style.display = 'none';
 
             try {
                 const formData = new FormData();
@@ -2146,9 +2103,8 @@
                 }
                 if (!data?.text) throw new Error('No transcription returned');
 
-                document.getElementById('transcript-area').style.display = 'block';
-                const existing = document.getElementById('transcript').value.trim();
-                document.getElementById('transcript').value = existing ? existing + ' ' + data.text : data.text;
+                const existing = document.getElementById('note-input').value.trim();
+                document.getElementById('note-input').value = existing ? existing + ' ' + data.text : data.text;
                 updateAssistButtonVisibility();
 
             } catch (err) {
@@ -2250,20 +2206,14 @@
         return labels.map(l => `<span class="${cssClass}">${l}</span>`).join('');
     }
 
-    // Initialize label inputs on page load
-    initLabelInput('labels-transcript');
-    initLabelInput('labels-manual');
+    // Initialize label input on page load
+    initLabelInput('labels-note');
 
     // ── Note Generation ───────────────────────────────────
-    async function generateNote(source) {
-        const notes = source === 'transcript'
-            ? document.getElementById('transcript').value
-            : document.getElementById('manual-notes').value;
-        const rawNoteType = source === 'transcript'
-            ? document.getElementById('note-type-transcript').value
-            : document.getElementById('note-type-manual').value;
-        const labelsContainerId = source === 'transcript' ? 'labels-transcript' : 'labels-manual';
-        const labels = getLabels(labelsContainerId);
+    async function generateNote() {
+        const notes = document.getElementById('note-input').value;
+        const rawNoteType = document.getElementById('note-type').value;
+        const labels = getLabels('labels-note');
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
 
         // Determine if custom template or built-in type
@@ -2279,7 +2229,7 @@
             noteType = rawNoteType;
         }
 
-        const outputFormat = getOutputFormat(source);
+        const outputFormat = getOutputFormat();
 
         // Queue for later if offline
         if (!isOnline) {
@@ -2298,7 +2248,7 @@
             };
             pendingNoteQueue.push(queueItem);
             saveNoteToDB(queueItem);
-            clearLabels(labelsContainerId);
+            clearLabels('labels-note');
             clearDraft();
             loadPendingBadge();
             if (document.getElementById('view-pending').style.display !== 'none') renderPendingNotesList();
@@ -2794,10 +2744,8 @@
         document.querySelectorAll('#default-format-options .format-option').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.value === defaultOutputFormat);
         });
-        ['transcript', 'manual'].forEach(source => {
-            document.querySelectorAll(`#format-toggle-${source} .format-toggle-btn`).forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.value === defaultOutputFormat);
-            });
+        document.querySelectorAll('#format-toggle .format-toggle-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === defaultOutputFormat);
         });
     }
 
@@ -2819,15 +2767,15 @@
         await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
     }
 
-    function setNoteFormat(source, format) {
-        document.querySelectorAll(`#format-toggle-${source} .format-toggle-btn`).forEach(btn => {
+    function setNoteFormat(format) {
+        document.querySelectorAll('#format-toggle .format-toggle-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.value === format);
         });
         scheduleDraftSave();
     }
 
-    function getOutputFormat(source) {
-        const activeBtn = document.querySelector(`#format-toggle-${source} .format-toggle-btn.active`);
+    function getOutputFormat() {
+        const activeBtn = document.querySelector('#format-toggle .format-toggle-btn.active');
         return activeBtn ? activeBtn.dataset.value : defaultOutputFormat;
     }
 
@@ -3120,34 +3068,26 @@
     let assistDone = false;
     let assistOriginalNote = null;  // preserved for undo
 
-    // Show/hide Assist buttons based on textarea content
+    // Show/hide Assist button based on textarea content
     function updateAssistButtonVisibility() {
-        const transcriptText = document.getElementById('transcript')?.value?.trim() || '';
-        const manualText = document.getElementById('manual-notes')?.value?.trim() || '';
-        const transcriptBtn = document.getElementById('assist-btn-transcript');
-        const manualBtn = document.getElementById('assist-btn-manual');
-        if (transcriptBtn) transcriptBtn.style.display = transcriptText.length > 0 ? 'inline-flex' : 'none';
-        if (manualBtn) manualBtn.style.display = manualText.length > 0 ? 'inline-flex' : 'none';
+        const noteText = document.getElementById('note-input')?.value?.trim() || '';
+        const btn = document.getElementById('assist-btn');
+        if (btn) btn.style.display = noteText.length > 0 ? 'inline-flex' : 'none';
     }
 
-    document.getElementById('transcript').addEventListener('input', updateAssistButtonVisibility);
-    document.getElementById('manual-notes').addEventListener('input', updateAssistButtonVisibility);
+    document.getElementById('note-input').addEventListener('input', updateAssistButtonVisibility);
 
     // Open the Assist panel
-    function openAssist(source) {
-        assistSource = source;
+    function openAssist() {
+        assistSource = 'note';
         assistConversation = [];
         assistDone = false;
 
         // Snapshot raw notes
-        assistRawNotes = source === 'transcript'
-            ? document.getElementById('transcript').value
-            : document.getElementById('manual-notes').value;
+        assistRawNotes = document.getElementById('note-input').value;
 
         // Determine note type and template info
-        const rawNoteType = source === 'transcript'
-            ? document.getElementById('note-type-transcript').value
-            : document.getElementById('note-type-manual').value;
+        const rawNoteType = document.getElementById('note-type').value;
 
         if (rawNoteType.startsWith('custom:')) {
             const templateId = rawNoteType.replace('custom:', '');
@@ -3458,18 +3398,16 @@
             }
 
             // Save original and replace the raw note text
-            const targetId = assistSource === 'transcript' ? 'transcript' : 'manual-notes';
-            assistOriginalNote = { source: assistSource, text: document.getElementById(targetId).value };
-            document.getElementById(targetId).value = data.text;
+            assistOriginalNote = { text: document.getElementById('note-input').value };
+            document.getElementById('note-input').value = data.text;
 
             addAssistMessage('assistant', '✅ Your notes have been updated with all the details we discussed. You can now click "Generate Note" to create your formatted clinical note.\n\nIf you want the original back, use the "↩ Undo Assist" button.');
 
             updateBtn.textContent = '✓ Updated!';
             updateBtn.disabled = true;
 
-            // Show the undo button for this source
-            const undoId = assistSource === 'transcript' ? 'assist-undo-transcript' : 'assist-undo-manual';
-            document.getElementById(undoId).style.display = 'inline-flex';
+            // Show the undo button
+            document.getElementById('assist-undo').style.display = 'inline-flex';
 
             // Close panel after a brief delay
             setTimeout(() => {
@@ -3485,13 +3423,10 @@
     }
 
     // Undo the Assist rewrite — restore original note
-    function undoAssistUpdate(source) {
-        if (!assistOriginalNote || assistOriginalNote.source !== source) return;
-        const targetId = source === 'transcript' ? 'transcript' : 'manual-notes';
-        document.getElementById(targetId).value = assistOriginalNote.text;
-        // Hide the undo button
-        const undoId = source === 'transcript' ? 'assist-undo-transcript' : 'assist-undo-manual';
-        document.getElementById(undoId).style.display = 'none';
+    function undoAssistUpdate() {
+        if (!assistOriginalNote) return;
+        document.getElementById('note-input').value = assistOriginalNote.text;
+        document.getElementById('assist-undo').style.display = 'none';
         assistOriginalNote = null;
         updateAssistButtonVisibility();
     }
@@ -3500,30 +3435,24 @@
     function confirmClearAll() {
         showConfirm(
             'Clear All Notes?',
-            'This will clear both note fields, all labels, and the generated note. This cannot be undone.',
+            'This will clear the note field, all labels, and the generated note. This cannot be undone.',
             clearAllNotes
         );
     }
 
     function clearAllNotes() {
-        // Clear textareas
-        document.getElementById('transcript').value = '';
-        document.getElementById('manual-notes').value = '';
-        // Hide transcript area
-        document.getElementById('transcript-area').style.display = 'none';
+        // Clear textarea
+        document.getElementById('note-input').value = '';
         // Clear labels
-        clearLabels('labels-transcript');
-        clearLabels('labels-manual');
-        // Reset note type dropdowns to first option
+        clearLabels('labels-note');
+        // Reset note type dropdown to first option
         document.querySelectorAll('.note-type-select').forEach(sel => { sel.selectedIndex = 0; });
         // Hide result card
         document.getElementById('result-card').style.display = 'none';
         document.getElementById('loading').style.display = 'none';
         // Hide assist/undo buttons
-        document.getElementById('assist-btn-transcript').style.display = 'none';
-        document.getElementById('assist-btn-manual').style.display = 'none';
-        document.getElementById('assist-undo-transcript').style.display = 'none';
-        document.getElementById('assist-undo-manual').style.display = 'none';
+        document.getElementById('assist-btn').style.display = 'none';
+        document.getElementById('assist-undo').style.display = 'none';
         assistOriginalNote = null;
         currentNoteId = null;
         // Reset format toggles to default
@@ -3787,21 +3716,15 @@
         try {
             const draft = {
                 key: 'currentDraft',
-                transcriptText: document.getElementById('transcript').value,
-                transcriptAreaVisible: document.getElementById('transcript-area').style.display !== 'none',
-                manualText: document.getElementById('manual-notes').value,
-                noteTypeTranscript: document.getElementById('note-type-transcript').value,
-                noteTypeManual: document.getElementById('note-type-manual').value,
-                labelsTranscript: getLabels('labels-transcript'),
-                labelsManual: getLabels('labels-manual'),
-                formatTranscript: getOutputFormat('transcript'),
-                formatManual: getOutputFormat('manual'),
+                noteText: document.getElementById('note-input').value,
+                noteType: document.getElementById('note-type').value,
+                labels: getLabels('labels-note'),
+                format: getOutputFormat(),
                 savedAt: Date.now()
             };
 
             // Only save if there's actual content
-            const hasContent = draft.transcriptText.trim() || draft.manualText.trim()
-                || draft.labelsTranscript.length > 0 || draft.labelsManual.length > 0;
+            const hasContent = draft.noteText.trim() || draft.labels.length > 0;
             if (!hasContent) {
                 clearDraft();
                 return;
@@ -3812,8 +3735,7 @@
             tx.objectStore('drafts').put(draft);
 
             // Show "Draft saved" indicator
-            showDraftStatus('transcript');
-            showDraftStatus('manual');
+            showDraftStatus();
         } catch (e) { /* silently fail — draft save is best-effort */ }
     }
 
@@ -3831,62 +3753,49 @@
 
                     let restored = false;
 
-                    // Restore transcript
-                    if (draft.transcriptText && draft.transcriptText.trim()) {
-                        document.getElementById('transcript').value = draft.transcriptText;
-                        if (draft.transcriptAreaVisible) {
-                            document.getElementById('transcript-area').style.display = 'block';
+                    // Restore note text (backward compat: merge old transcriptText + manualText)
+                    if (draft.noteText && draft.noteText.trim()) {
+                        document.getElementById('note-input').value = draft.noteText;
+                        restored = true;
+                    } else {
+                        // Backward compat with old dual-field drafts
+                        const parts = [draft.transcriptText, draft.manualText].filter(t => t && t.trim());
+                        if (parts.length > 0) {
+                            document.getElementById('note-input').value = parts.join(' ');
+                            restored = true;
                         }
-                        restored = true;
                     }
 
-                    // Restore manual notes
-                    if (draft.manualText && draft.manualText.trim()) {
-                        document.getElementById('manual-notes').value = draft.manualText;
-                        restored = true;
-                    }
-
-                    // Restore note type selections
-                    if (draft.noteTypeTranscript) {
-                        const sel = document.getElementById('note-type-transcript');
-                        // Check the option exists before setting
+                    // Restore note type selection
+                    const savedType = draft.noteType || draft.noteTypeTranscript || draft.noteTypeManual;
+                    if (savedType) {
+                        const sel = document.getElementById('note-type');
                         for (const opt of sel.options) {
-                            if (opt.value === draft.noteTypeTranscript) { sel.value = draft.noteTypeTranscript; break; }
-                        }
-                    }
-                    if (draft.noteTypeManual) {
-                        const sel = document.getElementById('note-type-manual');
-                        for (const opt of sel.options) {
-                            if (opt.value === draft.noteTypeManual) { sel.value = draft.noteTypeManual; break; }
+                            if (opt.value === savedType) { sel.value = savedType; break; }
                         }
                     }
 
-                    // Restore labels
-                    if (draft.labelsTranscript && draft.labelsTranscript.length > 0) {
-                        draft.labelsTranscript.forEach(l => addLabel('labels-transcript', l));
-                        restored = true;
-                    }
-                    if (draft.labelsManual && draft.labelsManual.length > 0) {
-                        draft.labelsManual.forEach(l => addLabel('labels-manual', l));
+                    // Restore labels (backward compat: merge old label arrays)
+                    const savedLabels = draft.labels || [
+                        ...(draft.labelsTranscript || []),
+                        ...(draft.labelsManual || [])
+                    ];
+                    if (savedLabels.length > 0) {
+                        savedLabels.forEach(l => addLabel('labels-note', l));
                         restored = true;
                     }
 
-                    // Restore output format toggles
-                    if (draft.formatTranscript) {
-                        document.querySelectorAll('#format-toggle-transcript .format-toggle-btn').forEach(btn => {
-                            btn.classList.toggle('active', btn.dataset.value === draft.formatTranscript);
-                        });
-                    }
-                    if (draft.formatManual) {
-                        document.querySelectorAll('#format-toggle-manual .format-toggle-btn').forEach(btn => {
-                            btn.classList.toggle('active', btn.dataset.value === draft.formatManual);
+                    // Restore output format toggle
+                    const savedFormat = draft.format || draft.formatTranscript || draft.formatManual;
+                    if (savedFormat) {
+                        document.querySelectorAll('#format-toggle .format-toggle-btn').forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.value === savedFormat);
                         });
                     }
 
                     if (restored) {
                         updateAssistButtonVisibility();
-                        showDraftStatus('transcript', 'Draft restored');
-                        showDraftStatus('manual', 'Draft restored');
+                        showDraftStatus('Draft restored');
                     }
 
                     resolve(restored);
@@ -3904,8 +3813,8 @@
         } catch (e) { /* silently fail */ }
     }
 
-    function showDraftStatus(source, text) {
-        const el = document.getElementById('draft-status-' + source);
+    function showDraftStatus(text) {
+        const el = document.getElementById('draft-status');
         if (!el) return;
         el.textContent = text || '✓ Draft saved';
         el.classList.add('show');
@@ -3918,23 +3827,18 @@
         draftSaveTimer = setTimeout(saveDraft, 2000);
     }
 
-    // Attach listeners to textareas
-    document.getElementById('transcript').addEventListener('input', scheduleDraftSave);
-    document.getElementById('manual-notes').addEventListener('input', scheduleDraftSave);
+    // Attach listener to textarea
+    document.getElementById('note-input').addEventListener('input', scheduleDraftSave);
 
-    // Attach listeners to note type dropdowns
-    document.querySelectorAll('.note-type-select').forEach(sel => {
-        sel.addEventListener('change', scheduleDraftSave);
-    });
+    // Attach listener to note type dropdown
+    document.getElementById('note-type').addEventListener('change', scheduleDraftSave);
 
-    // Watch for label changes using MutationObserver on both label containers
-    ['labels-transcript', 'labels-manual'].forEach(id => {
-        const container = document.getElementById(id);
-        if (container) {
-            const observer = new MutationObserver(scheduleDraftSave);
-            observer.observe(container, { childList: true, subtree: true });
-        }
-    });
+    // Watch for label changes using MutationObserver
+    const labelContainer = document.getElementById('labels-note');
+    if (labelContainer) {
+        const observer = new MutationObserver(scheduleDraftSave);
+        observer.observe(labelContainer, { childList: true, subtree: true });
+    }
 </script>
 </body>
 </html>
