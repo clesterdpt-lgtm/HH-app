@@ -1415,6 +1415,7 @@
         { value: 'routine visit', label: 'Routine Visit' }
     ];
     let userTemplates = [];
+    let builtinCustomizations = {}; // keyed by builtin value, e.g. { 'initial evaluation': { id, sections, custom_prompt, ... } }
     let hiddenBuiltinTypes = [];
     let defaultOutputFormat = 'full';
     let templatesLoaded = false;
@@ -2386,6 +2387,11 @@
             sections = template.sections || undefined;
         } else {
             noteType = rawNoteType;
+            const builtinCust = builtinCustomizations[rawNoteType];
+            if (builtinCust) {
+                customPrompt = builtinCust.custom_prompt || undefined;
+                sections = builtinCust.sections || undefined;
+            }
         }
 
         const outputFormat = getOutputFormat();
@@ -2793,6 +2799,7 @@
             store.put({ key: 'templates', data: templates });
             store.put({ key: 'hiddenBuiltinTypes', data: hiddenTypes });
             store.put({ key: 'defaultOutputFormat', data: defaultOutputFormat });
+            store.put({ key: 'builtinCustomizations', data: builtinCustomizations });
         } catch (e) { console.log('IDB template cache error:', e); }
     }
 
@@ -2805,18 +2812,33 @@
                 const templatesReq = store.get('templates');
                 const hiddenReq = store.get('hiddenBuiltinTypes');
                 const formatReq = store.get('defaultOutputFormat');
+                const builtinCustReq = store.get('builtinCustomizations');
                 tx.oncomplete = () => {
                     resolve({
                         templates: templatesReq.result?.data || [],
                         hiddenTypes: hiddenReq.result?.data || [],
-                        defaultOutputFormat: formatReq.result?.data || 'full'
+                        defaultOutputFormat: formatReq.result?.data || 'full',
+                        builtinCustomizations: builtinCustReq.result?.data || {}
                     });
                 };
-                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full' });
+                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {} });
             });
         } catch (e) {
-            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full' };
+            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {} };
         }
+    }
+
+    function splitTemplatesByType(allTemplates) {
+        const custom = [];
+        const builtinCust = {};
+        (allTemplates || []).forEach(t => {
+            if (t.builtin_key) {
+                builtinCust[t.builtin_key] = t;
+            } else {
+                custom.push(t);
+            }
+        });
+        return { custom, builtinCust };
     }
 
     async function loadUserTemplatesAndPrefs() {
@@ -2825,7 +2847,9 @@
         if (isOnline) {
             const { data: templates } = await sb.from('note_templates')
                 .select('*').order('sort_order', { ascending: true });
-            userTemplates = templates || [];
+            const split = splitTemplatesByType(templates);
+            userTemplates = split.custom;
+            builtinCustomizations = split.builtinCust;
 
             const { data: prefs } = await sb.from('user_preferences')
                 .select('hidden_builtin_types, default_output_format')
@@ -2840,6 +2864,7 @@
             userTemplates = cached.templates;
             hiddenBuiltinTypes = cached.hiddenTypes;
             defaultOutputFormat = cached.defaultOutputFormat || 'full';
+            builtinCustomizations = cached.builtinCustomizations || {};
         }
 
         templatesLoaded = true;
@@ -2859,11 +2884,21 @@
         container.innerHTML = '';
         BUILTIN_TYPES.forEach(type => {
             const isHidden = hiddenBuiltinTypes.includes(type.value);
+            const cust = builtinCustomizations[type.value];
+            const hasCust = !!cust;
+            const sectionCount = cust?.sections?.length || 0;
+            const metaText = hasCust
+                ? sectionCount + ' section' + (sectionCount !== 1 ? 's' : '') + (cust.custom_prompt ? ' · Custom instructions' : '')
+                : 'Default (no sections configured)';
             const item = document.createElement('div');
             item.className = 'template-toggle-item';
             item.innerHTML = `
-                <span class="template-toggle-name">${type.label}</span>
+                <div style="flex:1;min-width:0;">
+                    <span class="template-toggle-name">${type.label}</span>
+                    <div class="template-list-meta">${metaText}</div>
+                </div>
                 <div class="template-toggle-right">
+                    <button class="btn btn-outline btn-sm" onclick="openTemplateEditor(null, '${type.value}')">${hasCust ? 'Edit' : 'Configure'}</button>
                     <span class="template-toggle-label">${isHidden ? 'Hidden' : 'Visible'}</span>
                     <input type="checkbox" ${isHidden ? '' : 'checked'}
                            onchange="toggleBuiltinType('${type.value}', this.checked)">
@@ -2964,25 +2999,53 @@
         });
     }
 
-    function openTemplateEditor(templateId) {
-        const isEdit = !!templateId;
-        const template = isEdit ? userTemplates.find(t => t.id === templateId) : null;
+    function openTemplateEditor(templateId, builtinKey) {
+        const isBuiltin = !!builtinKey;
+        const isEdit = !!templateId || isBuiltin;
+
+        let template;
+        if (isBuiltin) {
+            template = builtinCustomizations[builtinKey] || null;
+        } else {
+            template = templateId ? userTemplates.find(t => t.id === templateId) : null;
+        }
+
+        const builtinType = isBuiltin ? BUILTIN_TYPES.find(t => t.value === builtinKey) : null;
 
         if (!isOnline) { alert('You need to be online to manage templates.'); return; }
 
         const existing = document.getElementById('template-editor-overlay');
         if (existing) existing.remove();
 
+        const title = isBuiltin
+            ? 'Configure ' + builtinType.label
+            : (isEdit ? 'Edit Template' : 'New Template');
+
+        const nameFieldHTML = isBuiltin
+            ? `<div class="form-group">
+                    <label class="form-label">Note Type</label>
+                    <div style="font-weight:600;color:var(--navy);font-size:15px;">${builtinType.label}</div>
+               </div>`
+            : `<div class="form-group">
+                    <label class="form-label">Template Name *</label>
+                    <input class="form-input" type="text" id="tmpl-name" value="${template?.name || ''}" placeholder="e.g., Wound Care Visit">
+               </div>`;
+
+        const resetBtn = isBuiltin && template
+            ? `<button class="btn btn-outline" style="color:var(--red);border-color:var(--red);" onclick="resetBuiltinCustomization('${builtinKey}')">Reset to Default</button>`
+            : '';
+
+        const saveAction = isBuiltin
+            ? `saveBuiltinCustomization('${builtinKey}')`
+            : `saveTemplate('${templateId || ''}')`;
+
         const overlay = document.createElement('div');
         overlay.className = 'confirm-overlay';
         overlay.id = 'template-editor-overlay';
         overlay.innerHTML = `
             <div class="confirm-box" style="max-width:500px;">
-                <div class="confirm-title">${isEdit ? 'Edit Template' : 'New Template'}</div>
-                <div class="form-group">
-                    <label class="form-label">Template Name *</label>
-                    <input class="form-input" type="text" id="tmpl-name" value="${template?.name || ''}" placeholder="e.g., Wound Care Visit">
-                </div>
+                <div class="confirm-title">${title}</div>
+                ${nameFieldHTML}
                 <div class="form-group">
                     <label class="form-label">Custom AI Instructions</label>
                     <textarea id="tmpl-prompt" class="form-input" style="min-height:80px;resize:vertical;" placeholder="e.g., Focus on wound care assessment, include wound measurements and healing progress...">${template?.custom_prompt || ''}</textarea>
@@ -2992,8 +3055,9 @@
                     <textarea id="tmpl-sections" class="form-input" style="min-height:100px;resize:vertical;" placeholder="Subjective&#10;Objective&#10;Assessment&#10;Plan">${template?.sections?.join('\n') || ''}</textarea>
                 </div>
                 <div class="confirm-actions">
+                    ${resetBtn}
                     <button class="btn btn-outline" onclick="document.getElementById('template-editor-overlay').remove()">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveTemplate('${templateId || ''}')">
+                    <button class="btn btn-primary" onclick="${saveAction}">
                         ${isEdit ? 'Save Changes' : 'Create Template'}
                     </button>
                 </div>
@@ -3045,12 +3109,76 @@
         document.getElementById('template-editor-overlay').remove();
 
         // Reload templates
+        await reloadAllTemplates();
+        renderCustomTemplatesList();
+    }
+
+    async function reloadAllTemplates() {
         const { data: templates } = await sb.from('note_templates')
             .select('*').order('sort_order', { ascending: true });
-        userTemplates = templates || [];
+        const split = splitTemplatesByType(templates);
+        userTemplates = split.custom;
+        builtinCustomizations = split.builtinCust;
         await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         populateNoteTypeDropdowns();
-        renderCustomTemplatesList();
+    }
+
+    async function saveBuiltinCustomization(builtinKey) {
+        const customPrompt = document.getElementById('tmpl-prompt').value.trim();
+        const sectionsRaw = document.getElementById('tmpl-sections').value.trim();
+        const errEl = document.getElementById('tmpl-error');
+        const builtinType = BUILTIN_TYPES.find(t => t.value === builtinKey);
+
+        const sections = sectionsRaw
+            ? sectionsRaw.split('\n').map(s => s.trim()).filter(Boolean)
+            : [];
+
+        if (!customPrompt && sections.length === 0) {
+            errEl.innerText = 'Add at least one section or custom instruction.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const existing = builtinCustomizations[builtinKey];
+
+        const record = {
+            user_id: currentUser.id,
+            name: builtinType.label,
+            builtin_key: builtinKey,
+            custom_prompt: customPrompt || null,
+            sections: sections.length > 0 ? sections : null,
+            updated_at: new Date().toISOString()
+        };
+
+        let error;
+        if (existing) {
+            ({ error } = await sb.from('note_templates').update(record).eq('id', existing.id));
+        } else {
+            ({ error } = await sb.from('note_templates').insert(record));
+        }
+
+        if (error) {
+            errEl.innerText = 'Failed to save: ' + error.message;
+            errEl.style.display = 'block';
+            return;
+        }
+
+        document.getElementById('template-editor-overlay').remove();
+        await reloadAllTemplates();
+        renderBuiltinTypesList();
+    }
+
+    async function resetBuiltinCustomization(builtinKey) {
+        const existing = builtinCustomizations[builtinKey];
+        if (!existing) return;
+
+        const { error } = await sb.from('note_templates').delete().eq('id', existing.id);
+        if (!error) {
+            delete builtinCustomizations[builtinKey];
+            await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+            document.getElementById('template-editor-overlay').remove();
+            renderBuiltinTypesList();
+        }
     }
 
     function confirmDeleteTemplate(id, name) {
@@ -3064,9 +3192,7 @@
     async function deleteTemplate(id) {
         const { error } = await sb.from('note_templates').delete().eq('id', id);
         if (!error) {
-            userTemplates = userTemplates.filter(t => t.id !== id);
-            await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
-            populateNoteTypeDropdowns();
+            await reloadAllTemplates();
             renderCustomTemplatesList();
         }
     }
@@ -3256,8 +3382,9 @@
             assistSections = template?.sections || null;
         } else {
             assistNoteType = rawNoteType;
-            assistCustomPrompt = null;
-            assistSections = null;
+            const builtinCust = builtinCustomizations[rawNoteType];
+            assistCustomPrompt = builtinCust?.custom_prompt || null;
+            assistSections = builtinCust?.sections || null;
         }
 
         // Reset UI

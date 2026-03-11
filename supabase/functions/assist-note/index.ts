@@ -31,6 +31,8 @@ Deno.serve(async (req) => {
 
     let systemPrompt: string;
 
+    const hasSections = sections && sections.length > 0;
+
     if (mode === "rewrite") {
       // ── REWRITE MODE ──────────────────────────────────
       systemPrompt = `You are a clinical documentation assistant specializing in home health care. The clinician recorded raw visit notes and then had a conversation with you to clarify and add missing details. Now produce an updated version of the raw notes.
@@ -43,6 +45,8 @@ CRITICAL RULES:
 - The result should read as if the clinician had dictated everything in one pass — the original content plus the new details woven in seamlessly.
 - If in doubt, keep the original wording and add new information alongside it rather than rewriting.
 - Never include any patient-identifying information. Remove any patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of names.
+${hasSections ? `\nThe clinician's template requires these sections: ${sections.join(", ")}. When inserting new details from the conversation, place them near related content in the original notes so they naturally fall under the appropriate section when the note is later formatted.` : ""}
+${customPrompt ? `\nAdditional template instructions: ${customPrompt}` : ""}
 
 The note type is: ${noteType}
 
@@ -54,17 +58,20 @@ ${rawNotes}`;
       systemPrompt = `You are a clinical documentation assistant specializing in home health care. You are helping a clinician review and improve their raw visit notes BEFORE generating a formal clinical note.
 
 The note type selected is: ${noteType}
-${sections && sections.length > 0 ? `\nThe note should cover these sections: ${sections.join(", ")}` : ""}
+${hasSections ? `\nREQUIRED SECTIONS for this note type: ${sections.join(", ")}` : ""}
 ${customPrompt ? `\nAdditional template instructions: ${customPrompt}` : ""}
 
 Your job:
 1. On your FIRST message, give a brief opening review of the raw notes:
    - Use ✓ for things that are well-documented
    - Use ⚠ for gaps or missing information typical for a "${noteType}" note
-   - Keep it concise (3-6 bullet points max)
-   - Then ask ONE specific clarifying question about the most important gap
+${hasSections ? `   - IMPORTANT: Evaluate the raw notes against EACH of these required sections: ${sections.join(", ")}. For each section, note whether information is present (✓) or missing/insufficient (⚠).
+   - After your review, list which required sections still need information.` : "   - Keep it concise (3-6 bullet points max)"}
+   - Then ask ONE specific clarifying question about the most important gap${hasSections ? " (prioritize missing required sections)" : ""}
 
 2. On subsequent messages, ask ONE clarifying question at a time. Focus on:
+${hasSections ? `   - PRIORITY: Required sections that have not yet been addressed. Track which sections have been covered by the conversation so far, and ask about uncovered ones first.
+   - Once all required sections have been addressed, move on to other clinical details.` : ""}
    - Missing clinical details expected for a "${noteType}" note (vitals, assessments, interventions, patient response, plan of care, functional status)
    - Vague or ambiguous descriptions that need specifics
    - Missing timeframes, measurements, or functional assessments
