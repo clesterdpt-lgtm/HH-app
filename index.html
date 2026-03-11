@@ -1736,20 +1736,10 @@
             if (statusEl) statusEl.style.display = 'flex';
 
             try {
-                const formData = new FormData();
-                formData.append('audio', rec.blob, 'recording.webm');
-
-                const { data, error: fnError } = await sb.functions.invoke('transcribe', { body: formData });
-
-                if (fnError) {
-                    let detail = fnError.message;
-                    try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
-                    throw new Error(detail);
-                }
-                if (!data?.text) throw new Error('No transcription returned');
+                const text = await transcribeBlob(rec.blob);
 
                 rec.transcribed = true;
-                rec.transcript = data.text;
+                rec.transcript = text;
                 updateRecordingInDB(rec);
                 success++;
 
@@ -1976,22 +1966,16 @@
         statusEl.style.display = 'flex';
 
         try {
-            // Send audio file directly to Whisper via Edge Function — no playback needed
-            const formData = new FormData();
-            formData.append('audio', rec.blob, 'recording.webm');
-
-            const { data, error: fnError } = await sb.functions.invoke('transcribe', { body: formData });
-
-            if (fnError) {
-                let detail = fnError.message;
-                try { const body = await fnError.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
-                throw new Error(detail);
+            // Transcribe with chunking support for large files
+            if (rec.blob.size > WHISPER_MAX_SIZE) {
+                statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Transcribing large file (${(rec.blob.size / 1024 / 1024).toFixed(1)} MB)...`;
             }
-            if (!data?.text) throw new Error('No transcription returned');
+
+            const text = await transcribeBlob(rec.blob);
 
             // Mark as transcribed and store transcript text
             rec.transcribed = true;
-            rec.transcript = data.text;
+            rec.transcript = text;
             updateRecordingInDB(rec);
             statusEl.style.display = 'none';
             btn.disabled = false;
@@ -2008,7 +1992,7 @@
 
             // Move to New Note tab with transcription pre-filled
             showTab('new');
-            document.getElementById('note-input').value = data.text;
+            document.getElementById('note-input').value = text;
             document.getElementById('note-type').value = noteType;
             document.getElementById('note-input').scrollIntoView({ behavior: 'smooth' });
 
@@ -2016,8 +2000,53 @@
             statusEl.style.display = 'none';
             btn.disabled = false;
             btn.innerText = rec.transcribed ? 'Re-transcribe →' : 'Transcribe →';
-            alert('Transcription failed: ' + err.message + '. Please try again.');
+            alert('Transcription failed: ' + err.message + '\n\nYour recording is still saved — you can retry anytime.');
         }
+    }
+
+    // ── Chunked Transcription Helper ─────────────────────
+    const WHISPER_MAX_SIZE = 24 * 1024 * 1024; // 24MB safety margin (Whisper limit is 25MB)
+
+    async function transcribeBlob(blob) {
+        // If blob is under the limit, send directly
+        if (blob.size <= WHISPER_MAX_SIZE) {
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.webm');
+            const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+            if (error) {
+                let detail = error.message;
+                try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                throw new Error(detail);
+            }
+            if (!data?.text) throw new Error('No transcription returned');
+            return data.text;
+        }
+
+        // Large file — split into chunks and transcribe sequentially
+        const totalChunks = Math.ceil(blob.size / WHISPER_MAX_SIZE);
+        const transcripts = [];
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * WHISPER_MAX_SIZE;
+            const end = Math.min(start + WHISPER_MAX_SIZE, blob.size);
+            const chunk = blob.slice(start, end, blob.type);
+
+            document.getElementById('loading-text').innerText = `Transcribing chunk ${i + 1} of ${totalChunks}...`;
+
+            const formData = new FormData();
+            formData.append('audio', chunk, `recording-part${i + 1}.webm`);
+            const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+
+            if (error) {
+                let detail = error.message;
+                try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+                throw new Error(`Chunk ${i + 1}/${totalChunks} failed: ${detail}`);
+            }
+            if (!data?.text) throw new Error(`Chunk ${i + 1}/${totalChunks}: No transcription returned`);
+            transcripts.push(data.text);
+        }
+
+        return transcripts.join(' ');
     }
 
     // ── Recording ─────────────────────────────────────────
@@ -2079,38 +2108,46 @@
             const blob = new Blob(audioChunks, { type: 'audio/webm' });
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
+            // Always save to IndexedDB first so audio is never lost
+            const id = Date.now();
+            const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const rec = { id, blob, timestamp, durationSec };
+            pendingRecordings.push(rec);
+            await saveRecordingToDB(rec);
+            loadPendingBadge();
+
             if (!isOnline) {
-                savePendingRecording(blob, durationSec);
+                if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+                alert(`Recording saved locally (${Math.round(durationSec)}s). Go to Pending Recordings when online to transcribe.`);
                 return;
             }
 
-            // Online — transcribe immediately with Whisper
+            // Online — attempt transcription with chunking support
             document.getElementById('loading').style.display = 'flex';
-            document.getElementById('loading-text').innerText = 'Transcribing with Whisper...';
+            document.getElementById('loading-text').innerText = blob.size > WHISPER_MAX_SIZE
+                ? `Transcribing large recording (${(blob.size / 1024 / 1024).toFixed(1)} MB)...`
+                : 'Transcribing with Whisper...';
 
             try {
-                const formData = new FormData();
-                formData.append('audio', blob, 'recording.webm');
-
-                const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+                const text = await transcribeBlob(blob);
 
                 document.getElementById('loading').style.display = 'none';
 
-                if (error) {
-                    let detail = error.message;
-                    try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
-                    throw new Error(detail);
-                }
-                if (!data?.text) throw new Error('No transcription returned');
-
                 const existing = document.getElementById('note-input').value.trim();
-                document.getElementById('note-input').value = existing ? existing + ' ' + data.text : data.text;
+                document.getElementById('note-input').value = existing ? existing + ' ' + text : text;
                 updateAssistButtonVisibility();
+
+                // Mark recording as transcribed (keep in pending for reference)
+                rec.transcribed = true;
+                rec.transcript = text;
+                updateRecordingInDB(rec);
+                if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
 
             } catch (err) {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('loading-text').innerText = 'Generating your clinical note...';
-                alert('Transcription failed: ' + err.message);
+                if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+                alert('Transcription failed: ' + err.message + '\n\nYour recording has been saved to Pending Recordings — you can retry from there.');
             }
 
             document.getElementById('loading-text').innerText = 'Generating your clinical note...';
