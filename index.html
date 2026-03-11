@@ -2507,7 +2507,7 @@
             }
         } catch (err) {
             document.getElementById('loading').style.display = 'none';
-            alert('Something went wrong. Please check your connection and try again.');
+            alert('Note generation error: ' + (err.message || 'Unknown error') + '\n\nPlease check your connection and try again.');
         }
     }
 
