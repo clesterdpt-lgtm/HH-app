@@ -123,6 +123,20 @@
         .recording-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
 
+        /* Dim screen overlay during recording */
+        #recording-dim-overlay {
+            display: none; position: fixed; inset: 0; z-index: 99999;
+            background: #000; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+            opacity: 0; transition: opacity 0.5s ease;
+            -webkit-user-select: none; user-select: none; cursor: pointer;
+        }
+        #recording-dim-overlay.visible { opacity: 1; }
+        .dim-pulse-dot { width: 14px; height: 14px; background: #dc2626; border-radius: 50%; animation: dimPulse 2s ease-in-out infinite; }
+        @keyframes dimPulse { 0%, 100% { opacity: 0.9; box-shadow: 0 0 8px rgba(220,38,38,0.5); } 50% { opacity: 0.3; box-shadow: 0 0 2px rgba(220,38,38,0.2); } }
+        .dim-text { color: rgba(255,255,255,0.25); font-size: 16px; font-weight: 500; letter-spacing: 0.5px; }
+        .dim-timer { color: rgba(255,255,255,0.15); font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; }
+        .dim-hint { color: rgba(255,255,255,0.12); font-size: 13px; position: absolute; bottom: 60px; }
+
         .divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; color: var(--gray-400); font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
 
@@ -2081,6 +2095,72 @@
         }
     });
 
+    // ── Dim Screen During Recording ─────────────────────
+    const DIM_DELAY = 8000; // 8 seconds of inactivity before dimming
+    let dimTimer = null;
+    let dimTimerInterval = null;
+    let isDimmed = false;
+
+    function startDimTimer() {
+        clearDimTimer();
+        dimTimer = setTimeout(showDimOverlay, DIM_DELAY);
+    }
+
+    function clearDimTimer() {
+        if (dimTimer) { clearTimeout(dimTimer); dimTimer = null; }
+    }
+
+    function showDimOverlay() {
+        if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+        const overlay = document.getElementById('recording-dim-overlay');
+        overlay.style.display = 'flex';
+        isDimmed = true;
+        // Trigger CSS transition
+        requestAnimationFrame(() => { overlay.classList.add('visible'); });
+        // Start elapsed timer display
+        updateDimTimer();
+        dimTimerInterval = setInterval(updateDimTimer, 1000);
+    }
+
+    function updateDimTimer() {
+        if (!recordingStartTime) return;
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        document.getElementById('dim-timer').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function dismissDimOverlay() {
+        const overlay = document.getElementById('recording-dim-overlay');
+        overlay.classList.remove('visible');
+        isDimmed = false;
+        if (dimTimerInterval) { clearInterval(dimTimerInterval); dimTimerInterval = null; }
+        // Wait for fade-out transition then hide
+        setTimeout(() => { overlay.style.display = 'none'; }, 500);
+        // Restart inactivity timer if still recording
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            startDimTimer();
+        }
+    }
+
+    function stopDimming() {
+        clearDimTimer();
+        if (dimTimerInterval) { clearInterval(dimTimerInterval); dimTimerInterval = null; }
+        const overlay = document.getElementById('recording-dim-overlay');
+        overlay.classList.remove('visible');
+        isDimmed = false;
+        setTimeout(() => { overlay.style.display = 'none'; }, 500);
+    }
+
+    // Reset inactivity timer on any touch/mouse/key activity
+    ['touchstart', 'mousedown', 'keydown', 'scroll'].forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording' && !isDimmed) {
+                startDimTimer();
+            }
+        }, { passive: true });
+    });
+
     function startRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
@@ -2091,6 +2171,7 @@
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.start();
                 requestWakeLock();
+                startDimTimer();
 
                 document.getElementById('recording-status').style.display = 'flex';
                 document.getElementById('stop-btn').style.display = 'inline-flex';
@@ -2102,6 +2183,7 @@
     async function stopRecording() {
         if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
         releaseWakeLock();
+        stopDimming();
 
         mediaRecorder.onstop = async () => {
             const durationSec = (Date.now() - recordingStartTime) / 1000;
@@ -3877,5 +3959,14 @@
         observer.observe(labelContainer, { childList: true, subtree: true });
     }
 </script>
+
+<!-- Dim screen overlay during recording -->
+<div id="recording-dim-overlay" onclick="dismissDimOverlay()">
+    <div class="dim-pulse-dot"></div>
+    <div class="dim-text">Recording in progress</div>
+    <div class="dim-timer" id="dim-timer">0:00</div>
+    <div class="dim-hint">Tap anywhere to resume</div>
+</div>
+
 </body>
 </html>
