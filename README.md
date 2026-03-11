@@ -18,6 +18,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Record audio or type notes manually
 - Select from built-in note types: Initial Evaluation, Start of Care, Discharge, Reassessment, Recertification, Routine Visit
 - Create custom templates with custom AI instructions and sections
+- Configure built-in note types with custom sections and AI instructions
 - AI generates properly formatted clinical documentation from raw notes
 - HIPAA-aware: automatically strips patient-identifying information
 
@@ -28,6 +29,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 
 ### Assist (AI Chat)
 - Pre-generation review: AI reviews raw notes, asks clarifying questions, flags gaps
+- **Category-aware tracking**: When a template has required sections (e.g., Living Environment, Functional Mobility), the assist evaluates each section individually and prioritizes asking about missing ones
 - Flags potential HIPAA issues (patient identifiers in notes)
 - "Update My Note" rewrites raw notes with new details from the conversation
 - Undo button to restore original notes
@@ -36,7 +38,17 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 ### Audio Recording
 - In-browser audio recording using MediaRecorder API (WebM format)
 - Transcription via OpenAI Whisper
+- **Chunked transcription**: Recordings exceeding 24MB are automatically split into chunks to stay within Whisper's 25MB limit
+- **Audio preservation**: Recordings are always saved to IndexedDB before transcription, so audio is never lost if transcription fails
 - Screen Wake Lock to prevent recording from stopping when screen turns off
+- **Dim screen mode**: After 8 seconds of inactivity during recording, the screen dims to near-black showing a recording timer — saves battery and adds privacy. Requires double-tap to dismiss (prevents pocket wakes)
+- Pending Recordings tab for retry after failures
+
+### Editable Templates
+- **Built-in types**: Configure section headings and custom AI instructions on standard note types (Initial Evaluation, Routine Visit, etc.)
+- **Custom templates**: Create fully custom note types with their own sections and AI instructions
+- **Help tooltips**: Each template section has a ? button explaining the feature
+- Template sections flow into both note generation (for structure) and the assist feature (for gap tracking)
 
 ### Export
 - Combined Export button (dropdown on desktop, popup on mobile)
@@ -88,15 +100,15 @@ supabase/
 ## Database Tables
 
 - **notes**: Generated notes (id, user_id, note_type, raw_notes, generated_note, labels, template_id, output_format)
-- **note_templates**: Custom templates (name, custom_prompt, sections, sort_order)
+- **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
 - **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format)
 
 ## Edge Functions
 
 | Function | Purpose |
 |----------|---------|
-| `generate-note` | Takes raw notes + note type + output format, returns formatted clinical note via Claude API |
-| `assist-note` | Chat mode (review/clarify notes) and rewrite mode (update notes with new details) |
+| `generate-note` | Takes raw notes + note type + output format + optional sections/custom prompt, returns formatted clinical note via Claude API |
+| `assist-note` | Chat mode (category-aware review/clarify notes) and rewrite mode (update notes with new details). Tracks required sections and prioritizes missing ones. |
 | `transcribe` | Accepts audio blob, sends to OpenAI Whisper, returns transcript |
 
 ## Deployment
@@ -105,9 +117,9 @@ supabase/
 
 **Edge Functions**:
 ```
-npx supabase functions deploy generate-note --project-ref bctqzflbykwozbanyamp
-npx supabase functions deploy assist-note --project-ref bctqzflbykwozbanyamp
-npx supabase functions deploy transcribe --project-ref bctqzflbykwozbanyamp
+supabase functions deploy generate-note
+supabase functions deploy assist-note
+supabase functions deploy transcribe
 ```
 
 **Database migrations**: Run SQL files in Supabase Dashboard > SQL Editor.
@@ -117,5 +129,9 @@ npx supabase functions deploy transcribe --project-ref bctqzflbykwozbanyamp
 - **Single HTML file**: No build step, no framework — keeps deployment simple via GitHub Pages
 - **Supabase Edge Functions**: Keeps API keys server-side (Anthropic, OpenAI)
 - **IndexedDB v4**: Four stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`
+- **Audio-first safety**: Recordings always persist to IndexedDB before transcription attempts, preventing data loss on network or API failures
+- **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
+- **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates
+- **Category-aware assist**: When templates define required sections, the assist system prompt instructs Claude to evaluate each section individually and prioritize missing ones in follow-up questions
 - **Position: fixed dropdowns**: Export dropdowns use fixed positioning to escape parent `overflow: hidden` on cards/history items
 - **Loose equality for ID lookups**: Supabase IDs compared with `==` not `===` to handle potential type differences
