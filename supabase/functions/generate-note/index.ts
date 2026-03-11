@@ -29,39 +29,41 @@ serve(async (req) => {
       });
     }
 
-    // Build prompt — conditionally use summary or full documentation mode
-    let prompt;
+    // Build system prompt and user message separately for better instruction-following
+    let systemPrompt;
+    let userMessage;
 
     if (outputFormat === 'summary') {
-      prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a concise clinical summary for a ${noteType} visit.
+      systemPrompt = `You are a clinical documentation assistant specializing in home health care. Your task is to write a concise clinical summary in plain paragraph form.
 
-Write a brief 2-3 paragraph narrative that captures the key aspects of the visit interaction. Focus on:
-- What was observed during the visit (patient presentation, condition, environment)
-- What was discussed and any interventions performed
-- Patient response and any notable changes from previous visits
+OUTPUT FORMAT: Write ONLY 2-3 flowing prose paragraphs. Do not use any headings, section titles, bullet points, numbered lists, tables, or any structured formatting whatsoever. The entire response must be continuous paragraphs of text, nothing else.
 
-IMPORTANT FORMATTING RULES:
-- Write in flowing prose paragraphs only — do NOT use structured sections, headings, bullet points, numbered lists, or tables
-- Do NOT include vital signs tables, pain scale ratings, formal goals, or plan of care sections — assume these are documented elsewhere in the EMR
-- Keep the tone concise and professional
-- This is a brief narrative overview, not a comprehensive note
+CONTENT: Summarize what happened during the visit — the patient's presentation, what the clinician observed and did, any interventions performed, and the patient's response. Do not include vital signs tables, pain scale ratings, formal goals, or plan of care sections — those are documented separately in the EMR.
 
-IMPORTANT: Never include any patient-identifying information. Use "the patient" or "pt" instead of any names. Omit dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information.`;
+PRIVACY: Never include patient-identifying information. Use "the patient" or "pt" instead of names. Omit dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information.`;
+
+      userMessage = `Write a clinical summary in paragraph form for this ${noteType} visit.`;
+      if (customPrompt) {
+        userMessage += ` Additional instructions: ${customPrompt}`;
+      }
+      userMessage += `\n\nVisit notes:\n${notes}`;
     } else {
-      prompt = `You are a clinical documentation assistant specializing in home health care. Convert the following visit notes into a properly formatted ${noteType} note. Follow standard home health documentation requirements and be concise and professional.
+      systemPrompt = `You are a clinical documentation assistant specializing in home health care. Convert visit notes into properly formatted clinical notes. Follow standard home health documentation requirements and be concise and professional.
 
 IMPORTANT: Never include any patient-identifying information in the generated note. This includes patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of any names. If the visit notes contain patient identifiers, omit them from the output.`;
 
+      userMessage = `Convert the following visit notes into a properly formatted ${noteType} note.`;
+
       if (sections && sections.length > 0) {
-        prompt += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
+        userMessage += `\n\nOrganize the note using exactly these sections:\n${sections.map((s: string) => `- ${s}`).join('\n')}`;
       }
-    }
 
-    if (customPrompt) {
-      prompt += `\n\nAdditional instructions: ${customPrompt}`;
-    }
+      if (customPrompt) {
+        userMessage += `\n\nAdditional instructions: ${customPrompt}`;
+      }
 
-    prompt += `\n\nVisit notes: ${notes}`;
+      userMessage += `\n\nVisit notes:\n${notes}`;
+    }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -73,9 +75,10 @@ IMPORTANT: Never include any patient-identifying information in the generated no
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 2000,
+        system: systemPrompt,
         messages: [{
           role: "user",
-          content: prompt
+          content: userMessage
         }]
       })
     });
