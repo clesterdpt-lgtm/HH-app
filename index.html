@@ -135,6 +135,14 @@
         @keyframes dimPulse { 0%, 100% { opacity: 0.9; box-shadow: 0 0 8px rgba(220,38,38,0.5); } 50% { opacity: 0.3; box-shadow: 0 0 2px rgba(220,38,38,0.2); } }
         .dim-text { color: rgba(255,255,255,0.25); font-size: 16px; font-weight: 500; letter-spacing: 0.5px; }
         .dim-timer { color: rgba(255,255,255,0.15); font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; }
+        .dim-unlock-btn {
+            margin-top: 20px; padding: 14px 36px; border-radius: 12px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.3); font-size: 15px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .dim-unlock-btn:active { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.5); }
         .dim-hint { color: rgba(255,255,255,0.12); font-size: 13px; position: absolute; bottom: 60px; }
 
         .divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; color: var(--gray-400); font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
@@ -2130,6 +2138,37 @@
         document.getElementById('dim-timer').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
+    // Double-tap detection for unlock button
+    let dimUnlockLastTap = 0;
+    document.addEventListener('DOMContentLoaded', () => {
+        const unlockBtn = document.getElementById('dim-unlock-btn');
+        const overlay = document.getElementById('recording-dim-overlay');
+
+        // Block all single taps/touches on the overlay from doing anything
+        overlay.addEventListener('touchstart', e => { e.preventDefault(); }, { passive: false });
+        overlay.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
+
+        // Double-tap on the button only
+        unlockBtn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const now = Date.now();
+            if (now - dimUnlockLastTap < 400) {
+                dimUnlockLastTap = 0;
+                dismissDimOverlay();
+            } else {
+                dimUnlockLastTap = now;
+            }
+        }, { passive: false });
+
+        // Fallback for desktop: double-click
+        unlockBtn.addEventListener('dblclick', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dismissDimOverlay();
+        });
+    });
+
     function dismissDimOverlay() {
         const overlay = document.getElementById('recording-dim-overlay');
         overlay.classList.remove('visible');
@@ -2152,10 +2191,11 @@
         setTimeout(() => { overlay.style.display = 'none'; }, 500);
     }
 
-    // Reset inactivity timer on any touch/mouse/key activity
+    // Reset inactivity timer on any touch/mouse/key activity (but not while dimmed — prevents pocket wakes)
     ['touchstart', 'mousedown', 'keydown', 'scroll'].forEach(evt => {
-        document.addEventListener(evt, () => {
-            if (mediaRecorder && mediaRecorder.state === 'recording' && !isDimmed) {
+        document.addEventListener(evt, (e) => {
+            if (isDimmed) return; // Ignore touches while dimmed
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
                 startDimTimer();
             }
         }, { passive: true });
@@ -3961,11 +4001,11 @@
 </script>
 
 <!-- Dim screen overlay during recording -->
-<div id="recording-dim-overlay" onclick="dismissDimOverlay()">
+<div id="recording-dim-overlay">
     <div class="dim-pulse-dot"></div>
     <div class="dim-text">Recording in progress</div>
     <div class="dim-timer" id="dim-timer">0:00</div>
-    <div class="dim-hint">Tap anywhere to resume</div>
+    <button class="dim-unlock-btn" id="dim-unlock-btn">Double-tap to resume</button>
 </div>
 
 </body>
