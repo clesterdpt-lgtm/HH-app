@@ -2480,12 +2480,20 @@
                         user_id: currentUser.id,
                         note_type: noteType,
                         raw_notes: notes,
-                        generated_note: generatedNote,
-                        output_format: outputFormat
+                        generated_note: generatedNote
                     };
                     if (labels.length > 0) insertData.labels = labels;
                     if (templateId) insertData.template_id = templateId;
-                    const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
+                    if (outputFormat) insertData.output_format = outputFormat;
+
+                    let { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
+
+                    // If output_format column doesn't exist yet, retry without it
+                    if (error && error.message && error.message.includes('output_format')) {
+                        delete insertData.output_format;
+                        ({ data: inserted, error } = await sb.from('notes').insert(insertData).select().single());
+                    }
+
                     if (!error && inserted) {
                         currentNoteId = inserted.id;
                         document.getElementById('save-status').style.display = 'flex';
