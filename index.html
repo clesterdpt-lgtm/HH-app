@@ -2473,21 +2473,28 @@
                 }
             };
 
+            // Save to history (separate try/catch so a save failure doesn't show a scary error)
             if (currentUser) {
-                const insertData = {
-                    user_id: currentUser.id,
-                    note_type: noteType,
-                    raw_notes: notes,
-                    generated_note: generatedNote,
-                    output_format: outputFormat
-                };
-                if (labels.length > 0) insertData.labels = labels;
-                if (templateId) insertData.template_id = templateId;
-                const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
-                if (!error && inserted) {
-                    currentNoteId = inserted.id;
-                    document.getElementById('save-status').style.display = 'flex';
-                    clearDraft();
+                try {
+                    const insertData = {
+                        user_id: currentUser.id,
+                        note_type: noteType,
+                        raw_notes: notes,
+                        generated_note: generatedNote,
+                        output_format: outputFormat
+                    };
+                    if (labels.length > 0) insertData.labels = labels;
+                    if (templateId) insertData.template_id = templateId;
+                    const { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
+                    if (!error && inserted) {
+                        currentNoteId = inserted.id;
+                        document.getElementById('save-status').style.display = 'flex';
+                        clearDraft();
+                    } else if (error) {
+                        console.log('Note save error:', error.message);
+                    }
+                } catch (saveErr) {
+                    console.log('Note save error:', saveErr.message);
                 }
             }
         } catch (err) {
