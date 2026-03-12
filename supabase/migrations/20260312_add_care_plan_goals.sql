@@ -1,7 +1,7 @@
 -- Care Plan Goals: AI-generated goals linked to generated notes
 CREATE TABLE care_plan_goals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  note_id UUID REFERENCES notes(id) ON DELETE CASCADE NOT NULL,
+  note_id BIGINT REFERENCES notes(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   goal_text TEXT NOT NULL,
   timeframe TEXT,
