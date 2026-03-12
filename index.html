@@ -2674,7 +2674,8 @@
 
     function copyNote() {
         const text = document.getElementById('result').value;
-        navigator.clipboard.writeText(text);
+        const goalsText = formatGoalsText(currentGoals);
+        navigator.clipboard.writeText(text + goalsText);
         const btn = document.getElementById('copy-btn');
         btn.innerText = '✅ Copied!';
         setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
@@ -2867,7 +2868,7 @@
                         <div class="history-note-text">${note.generated_note}</div>
                         <div class="history-goals-section" id="history-goals-${note.id}"></div>
                         <div class="history-actions">
-                            <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}')">📋 Copy Note</button>
+                            <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}', event)">📋 Copy Note</button>
                             <div class="export-wrapper">
                                 <button class="btn btn-outline" onclick="toggleExport(this)">📤 Export</button>
                                 <div class="export-dropdown">
@@ -2915,10 +2916,12 @@
         }
     }
 
-    function copyHistoryNote(id) {
+    async function copyHistoryNote(id, event) {
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
-        navigator.clipboard.writeText(note.generated_note);
+        const goalsMap = await fetchGoalsForNotes([id]);
+        const goalsText = formatGoalsText(goalsMap[id]);
+        navigator.clipboard.writeText(note.generated_note + goalsText);
         event.target.innerText = '✅ Copied!';
         setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
     }
