@@ -409,3 +409,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/assist-note/deno.json"
 entrypoint = "./functions/assist-note/index.ts"
+
+[functions.generate-goals]
+enabled = true
+verify_jwt = false
+import_map = "./functions/generate-goals/deno.json"
+entrypoint = "./functions/generate-goals/index.ts"

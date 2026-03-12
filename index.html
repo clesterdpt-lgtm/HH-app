@@ -2581,13 +2581,12 @@
                 body: { generatedNote, noteType }
             });
 
-            console.log('Goals invoke result:', { data, fnError });
             if (fnError) {
                 let detail = fnError.message;
                 try { const b = await fnError.context?.json(); detail = b?.error || b?.message || JSON.stringify(b); } catch {}
                 throw new Error(detail);
             }
-            if (!data?.goals || !Array.isArray(data.goals)) throw new Error('No goals returned – data was: ' + JSON.stringify(data));
+            if (!data?.goals || !Array.isArray(data.goals)) throw new Error('No goals returned');
 
             currentGoals = data.goals;
             renderGoals();
