@@ -1244,6 +1244,9 @@
                         </div>
                     </div>
                     <textarea class="result-content" id="result" rows="12" placeholder="Your generated note will appear here..."></textarea>
+                    <div style="margin-top:12px;">
+                        <button class="btn btn-outline" id="generate-goals-btn" onclick="regenerateGoals()" style="display:none;">🎯 Generate Care Plan Goals</button>
+                    </div>
                 </div>
             </div>
 
@@ -1262,7 +1265,7 @@
                         <span style="color:var(--gray-600);font-size:14px;margin-left:10px;">Generating care plan goals...</span>
                     </div>
                     <div id="goals-list"></div>
-                    <div id="goals-actions" style="display:none;margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <div id="goals-actions" style="display:none;margin-top:16px;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button class="btn btn-primary" id="goals-save-btn" onclick="saveGoals()">💾 Save Goals</button>
                         <button class="btn btn-outline" onclick="regenerateGoals()">🔄 Regenerate</button>
                         <div class="save-status" id="goals-save-status" style="display:none;">✅ Goals saved</div>
@@ -2466,6 +2469,7 @@
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('result-card').style.display = 'none';
         document.getElementById('goals-card').style.display = 'none';
+        document.getElementById('generate-goals-btn').style.display = 'none';
         document.getElementById('save-status').style.display = 'none';
         currentGoals = [];
 
@@ -2547,8 +2551,8 @@
                 }
             }
 
-            // Generate care plan goals from the finished note (non-blocking)
-            generateGoals(generatedNote, noteType);
+            // Show the "Generate Goals" button (user can click it if they want goals)
+            document.getElementById('generate-goals-btn').style.display = 'inline-flex';
 
         } catch (err) {
             document.getElementById('loading').style.display = 'none';
@@ -2662,7 +2666,10 @@
     function regenerateGoals() {
         const noteText = document.getElementById('result').value;
         const noteType = document.getElementById('result-badge').innerText;
-        if (noteText.trim()) generateGoals(noteText, noteType);
+        if (noteText.trim()) {
+            document.getElementById('generate-goals-btn').style.display = 'none';
+            generateGoals(noteText, noteType);
+        }
     }
 
     function copyNote() {
@@ -3963,6 +3970,7 @@
         // Hide result and goals cards
         document.getElementById('result-card').style.display = 'none';
         document.getElementById('goals-card').style.display = 'none';
+        document.getElementById('generate-goals-btn').style.display = 'none';
         document.getElementById('loading').style.display = 'none';
         currentGoals = [];
         // Hide assist/undo buttons
