@@ -151,6 +151,21 @@
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
 
         #result-card { display: none; }
+        #goals-card { display: none; }
+
+        /* ── Care Plan Goals ── */
+        .goals-loading { display: flex; align-items: center; padding: 8px 0; }
+        .goal-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; margin-bottom: 10px; transition: box-shadow 0.2s; }
+        .goal-item:hover { box-shadow: var(--shadow-sm); }
+        .goal-number { width: 26px; height: 26px; background: var(--teal); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-top: 2px; }
+        .goal-content { flex: 1; min-width: 0; }
+        .goal-text-input { width: 100%; padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--gray-800); background: transparent; border: 1px solid transparent; border-radius: 6px; resize: none; outline: none; transition: border-color 0.2s, background 0.2s; box-sizing: border-box; }
+        .goal-text-input:focus { border-color: var(--teal); background: var(--white); }
+        .goal-timeframe { font-size: 12px; color: var(--gray-600); margin-top: 4px; padding-left: 10px; }
+        .goal-timeframe strong { color: var(--navy); }
+        .goal-remove { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; transition: color 0.2s, background 0.2s; }
+        .goal-remove:hover { color: #ef4444; background: #fee2e2; }
+        .history-goals-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200); }
         .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
         .result-badge { background: rgba(13,148,136,0.1); color: var(--teal); font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.2); }
         .result-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -1231,6 +1246,29 @@
                     <textarea class="result-content" id="result" rows="12" placeholder="Your generated note will appear here..."></textarea>
                 </div>
             </div>
+
+            <!-- Care Plan Goals Card -->
+            <div class="card" id="goals-card">
+                <div class="card-header">
+                    <div class="card-header-icon">🎯</div>
+                    <div class="card-header-text">
+                        <h2>Care Plan Goals</h2>
+                        <p>AI-suggested from your note — edit or remove as needed</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="goals-loading" id="goals-loading">
+                        <div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>
+                        <span style="color:var(--gray-600);font-size:14px;margin-left:10px;">Generating care plan goals...</span>
+                    </div>
+                    <div id="goals-list"></div>
+                    <div id="goals-actions" style="display:none;margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button class="btn btn-primary" id="goals-save-btn" onclick="saveGoals()">💾 Save Goals</button>
+                        <button class="btn btn-outline" onclick="regenerateGoals()">🔄 Regenerate</button>
+                        <div class="save-status" id="goals-save-status" style="display:none;">✅ Goals saved</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Pending Tab -->
@@ -1406,6 +1444,7 @@
     let pendingRecordings = [];
     let pendingNoteQueue = [];
     let currentNoteId = null;
+    let currentGoals = [];
 
     // Template system
     const BUILTIN_TYPES = [
@@ -2426,7 +2465,9 @@
 
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('result-card').style.display = 'none';
+        document.getElementById('goals-card').style.display = 'none';
         document.getElementById('save-status').style.display = 'none';
+        currentGoals = [];
 
         try {
             const body = { notes, noteType };
@@ -2505,10 +2546,123 @@
                     console.log('Note save error:', saveErr.message);
                 }
             }
+
+            // Generate care plan goals from the finished note (non-blocking)
+            generateGoals(generatedNote, noteType);
+
         } catch (err) {
             document.getElementById('loading').style.display = 'none';
             alert('Note generation error: ' + (err.message || 'Unknown error') + '\n\nPlease check your connection and try again.');
         }
+    }
+
+    // ── Care Plan Goals ───────────────────────────────────
+
+    async function generateGoals(generatedNote, noteType) {
+        const goalsCard = document.getElementById('goals-card');
+        const goalsLoading = document.getElementById('goals-loading');
+        const goalsList = document.getElementById('goals-list');
+        const goalsActions = document.getElementById('goals-actions');
+        const goalsSaveStatus = document.getElementById('goals-save-status');
+
+        goalsCard.style.display = 'block';
+        goalsLoading.style.display = 'flex';
+        goalsList.innerHTML = '';
+        goalsActions.style.display = 'none';
+        goalsSaveStatus.style.display = 'none';
+        currentGoals = [];
+
+        try {
+            const { data, error: fnError } = await sb.functions.invoke('generate-goals', {
+                body: { generatedNote, noteType }
+            });
+
+            if (fnError) {
+                let detail = fnError.message;
+                try { const b = await fnError.context?.json(); detail = b?.error || b?.message || JSON.stringify(b); } catch {}
+                throw new Error(detail);
+            }
+            if (!data?.goals || !Array.isArray(data.goals)) throw new Error('No goals returned');
+
+            currentGoals = data.goals;
+            renderGoals();
+        } catch (err) {
+            goalsLoading.style.display = 'none';
+            goalsList.innerHTML = `<div style="color:var(--gray-600);font-size:14px;">Could not generate goals. <a href="#" onclick="regenerateGoals();return false;" style="color:var(--teal);">Try again</a></div>`;
+            console.log('Goals generation error:', err.message);
+        }
+    }
+
+    function renderGoals() {
+        const goalsLoading = document.getElementById('goals-loading');
+        const goalsList = document.getElementById('goals-list');
+        const goalsActions = document.getElementById('goals-actions');
+
+        goalsLoading.style.display = 'none';
+        goalsList.innerHTML = '';
+
+        if (currentGoals.length === 0) {
+            goalsList.innerHTML = '<div style="color:var(--gray-600);font-size:14px;">No goals generated.</div>';
+            goalsActions.style.display = 'none';
+            return;
+        }
+
+        currentGoals.forEach((goal, index) => {
+            const div = document.createElement('div');
+            div.className = 'goal-item';
+            div.innerHTML = `
+                <div class="goal-number">${index + 1}</div>
+                <div class="goal-content">
+                    <textarea class="goal-text-input" rows="2"
+                        oninput="currentGoals[${index}].goal_text = this.value"
+                    >${goal.goal_text}</textarea>
+                    <div class="goal-timeframe"><strong>Timeframe:</strong> ${goal.timeframe || 'Not specified'}</div>
+                </div>
+                <button class="goal-remove" onclick="removeGoal(${index})" title="Remove goal">✕</button>`;
+            goalsList.appendChild(div);
+        });
+
+        goalsActions.style.display = 'flex';
+    }
+
+    function removeGoal(index) {
+        currentGoals.splice(index, 1);
+        renderGoals();
+    }
+
+    async function saveGoals() {
+        if (!currentNoteId || !currentUser || currentGoals.length === 0) return;
+        const btn = document.getElementById('goals-save-btn');
+        const statusEl = document.getElementById('goals-save-status');
+        btn.innerText = '⏳ Saving...';
+        btn.disabled = true;
+        try {
+            await sb.from('care_plan_goals').delete().eq('note_id', currentNoteId);
+            const rows = currentGoals.map((g, i) => ({
+                note_id: currentNoteId,
+                user_id: currentUser.id,
+                goal_text: g.goal_text,
+                timeframe: g.timeframe || null,
+                status: 'active',
+                sort_order: i
+            }));
+            const { error } = await sb.from('care_plan_goals').insert(rows);
+            if (error) throw error;
+            statusEl.style.display = 'flex';
+            btn.innerText = '✅ Saved!';
+            setTimeout(() => { btn.innerText = '💾 Save Goals'; btn.disabled = false; statusEl.style.display = 'none'; }, 2500);
+        } catch (err) {
+            btn.innerText = '❌ Error';
+            btn.disabled = false;
+            setTimeout(() => { btn.innerText = '💾 Save Goals'; }, 2000);
+            console.log('Goals save error:', err.message);
+        }
+    }
+
+    function regenerateGoals() {
+        const noteText = document.getElementById('result').value;
+        const noteType = document.getElementById('result-badge').innerText;
+        if (noteText.trim()) generateGoals(noteText, noteType);
     }
 
     function copyNote() {
@@ -2534,8 +2688,15 @@
         const labels = [...labelEls].map(el => el.textContent.trim());
         const now = new Date().toLocaleString();
         const header = formatNoteHeader(noteType, now, labels);
+        let goalsText = '';
+        if (currentGoals.length > 0) {
+            goalsText = '\n\n--- CARE PLAN GOALS ---\n' +
+                currentGoals.map((g, i) =>
+                    `${i + 1}. ${g.goal_text}${g.timeframe ? ` (Timeframe: ${g.timeframe})` : ''}`
+                ).join('\n');
+        }
         const subject = encodeURIComponent(`CareNote - ${noteType}`);
-        const body = encodeURIComponent(`${header}\n\n${text}`);
+        const body = encodeURIComponent(`${header}\n\n${text}${goalsText}`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
@@ -2677,6 +2838,7 @@
                     </div>
                     <div class="history-item-body" id="body-${note.id}">
                         <div class="history-note-text">${note.generated_note}</div>
+                        <div class="history-goals-section" id="history-goals-${note.id}"></div>
                         <div class="history-actions">
                             <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}')">📋 Copy Note</button>
                             <div class="export-wrapper">
@@ -2700,9 +2862,30 @@
         renderHistory(search, label);
     }
 
-    function toggleHistory(id) {
-        document.getElementById(`body-${id}`).classList.toggle('open');
+    async function toggleHistory(id) {
+        const body = document.getElementById(`body-${id}`);
+        body.classList.toggle('open');
         document.getElementById(`chevron-${id}`).classList.toggle('open');
+
+        // Lazy-load goals the first time a history item is expanded
+        if (body.classList.contains('open') && !body.dataset.goalsLoaded) {
+            body.dataset.goalsLoaded = 'true';
+            const goalsContainer = document.getElementById(`history-goals-${id}`);
+            if (goalsContainer) {
+                const { data: goals } = await sb.from('care_plan_goals')
+                    .select('*')
+                    .eq('note_id', id)
+                    .order('sort_order');
+                if (goals && goals.length > 0) {
+                    goalsContainer.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;">🎯 Care Plan Goals</div>' +
+                        goals.map((g, i) => `
+                            <div style="font-size:13px;color:var(--gray-800);padding:6px 0;border-bottom:1px solid var(--gray-200);">
+                                <strong>${i + 1}.</strong> ${g.goal_text}
+                                ${g.timeframe ? `<span style="color:var(--gray-600);margin-left:8px;">(${g.timeframe})</span>` : ''}
+                            </div>`).join('');
+                }
+            }
+        }
     }
 
     function copyHistoryNote(id) {
@@ -3777,9 +3960,11 @@
         clearLabels('labels-note');
         // Reset note type dropdown to first option
         document.querySelectorAll('.note-type-select').forEach(sel => { sel.selectedIndex = 0; });
-        // Hide result card
+        // Hide result and goals cards
         document.getElementById('result-card').style.display = 'none';
+        document.getElementById('goals-card').style.display = 'none';
         document.getElementById('loading').style.display = 'none';
+        currentGoals = [];
         // Hide assist/undo buttons
         document.getElementById('assist-btn').style.display = 'none';
         document.getElementById('assist-undo').style.display = 'none';
@@ -3951,6 +4136,35 @@
                 });
 
                 y += 4;
+
+                // Goals section (if any)
+                if (note.goals && note.goals.length > 0) {
+                    checkPageBreak(10);
+                    doc.setFontSize(11);
+                    doc.setTextColor(13, 148, 136); // --teal
+                    doc.text('Care Plan Goals', margin, y);
+                    y += 6;
+                    note.goals.forEach((goal, gIndex) => {
+                        checkPageBreak(8);
+                        doc.setFontSize(10);
+                        doc.setTextColor(40);
+                        const goalLine = `${gIndex + 1}. ${goal.goal_text}`;
+                        const goalLines = doc.splitTextToSize(goalLine, maxWidth);
+                        goalLines.forEach(line => {
+                            checkPageBreak(5);
+                            doc.text(line, margin, y);
+                            y += 4.5;
+                        });
+                        if (goal.timeframe) {
+                            checkPageBreak(5);
+                            doc.setFontSize(9);
+                            doc.setTextColor(100);
+                            doc.text(`   Timeframe: ${goal.timeframe}`, margin, y);
+                            y += 4.5;
+                        }
+                    });
+                    y += 2;
+                }
             });
         });
 
@@ -3969,7 +4183,7 @@
 
         const doc = buildPdf(noteType, [{
             heading: null,
-            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels, text: noteText }]
+            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels, text: noteText, goals: currentGoals }]
         }]);
         if (!doc) return;
 
@@ -3977,7 +4191,7 @@
         doc.save('CareNote-' + safeName + '-' + now.toISOString().slice(0, 10) + '.pdf');
     }
 
-    function downloadHistoryNotePdf(id) {
+    async function downloadHistoryNotePdf(id) {
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
@@ -3985,9 +4199,15 @@
         const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+        // Fetch saved goals for this note
+        let goals = [];
+        const { data: fetchedGoals } = await sb.from('care_plan_goals')
+            .select('*').eq('note_id', id).order('sort_order');
+        if (fetchedGoals) goals = fetchedGoals;
+
         const doc = buildPdf(noteType, [{
             heading: null,
-            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels: note.labels || [], text: note.generated_note }]
+            notes: [{ type: noteType, date: dateStr + ' at ' + timeStr, labels: note.labels || [], text: note.generated_note, goals }]
         }]);
         if (!doc) return;
 
