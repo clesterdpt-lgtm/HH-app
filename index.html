@@ -2680,6 +2680,26 @@
         setTimeout(() => { btn.innerText = '📋 Copy Note'; }, 2000);
     }
 
+    async function fetchGoalsForNotes(noteIds) {
+        if (!noteIds.length) return {};
+        const { data } = await sb.from('care_plan_goals')
+            .select('*').in('note_id', noteIds).order('sort_order');
+        const map = {};
+        (data || []).forEach(g => {
+            if (!map[g.note_id]) map[g.note_id] = [];
+            map[g.note_id].push(g);
+        });
+        return map;
+    }
+
+    function formatGoalsText(goals) {
+        if (!goals || goals.length === 0) return '';
+        return '\n\n--- CARE PLAN GOALS ---\n' +
+            goals.map((g, i) =>
+                `${i + 1}. ${g.goal_text}${g.timeframe ? ` (Timeframe: ${g.timeframe})` : ''}`
+            ).join('\n');
+    }
+
     function formatNoteHeader(type, timestamp, labels) {
         let header = `Type: ${type}`;
         if (timestamp) header += `\nDate: ${timestamp}`;
@@ -2903,7 +2923,7 @@
         setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
     }
 
-    function emailHistoryNote(id) {
+    async function emailHistoryNote(id) {
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
@@ -2914,33 +2934,37 @@
         const tmp = document.createElement('div');
         tmp.innerHTML = note.generated_note;
         const plainText = tmp.textContent || tmp.innerText || '';
-        const body = encodeURIComponent(`${header}\n\n${plainText}`);
+        const goalsMap = await fetchGoalsForNotes([id]);
+        const goalsText = formatGoalsText(goalsMap[id]);
+        const body = encodeURIComponent(`${header}\n\n${plainText}${goalsText}`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
-    function formatEmailNote(note) {
+    function formatEmailNote(note, goals) {
         const timestamp = new Date(note.created_at).toLocaleString();
         const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const type = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
         const labels = note.labels || [];
         const header = formatNoteHeader(type, timestamp, labels);
-        return `--- ${type} (${time}) ---\n${header}\n\n${note.generated_note}`;
+        return `--- ${type} (${time}) ---\n${header}\n\n${note.generated_note}${formatGoalsText(goals)}`;
     }
 
-    function emailDay(dateLabel) {
+    async function emailDay(dateLabel) {
         const notes = historyNotes.filter(n => {
             const d = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             return d === dateLabel;
         });
         if (notes.length === 0) return;
-        const lines = notes.map(formatEmailNote).join('\n\n\n');
+        const goalsMap = await fetchGoalsForNotes(notes.map(n => n.id));
+        const lines = notes.map(n => formatEmailNote(n, goalsMap[n.id])).join('\n\n\n');
         const subject = encodeURIComponent(`CareNote - Notes for ${dateLabel}`);
         const body = encodeURIComponent(lines);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
-    function emailAllNotes() {
+    async function emailAllNotes() {
         if (historyNotes.length === 0) return;
+        const goalsMap = await fetchGoalsForNotes(historyNotes.map(n => n.id));
         const groups = {};
         historyNotes.forEach(n => {
             const dateKey = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -2948,7 +2972,7 @@
             groups[dateKey].push(n);
         });
         const lines = Object.entries(groups).map(([dateLabel, notes]) => {
-            const noteLines = notes.map(formatEmailNote).join('\n\n\n');
+            const noteLines = notes.map(n => formatEmailNote(n, goalsMap[n.id])).join('\n\n\n');
             return `=== ${dateLabel} ===\n\n${noteLines}`;
         }).join('\n\n\n\n');
         const subject = encodeURIComponent('CareNote - All Notes');
@@ -4223,17 +4247,18 @@
         doc.save('CareNote-' + safeName + '-' + date.toISOString().slice(0, 10) + '.pdf');
     }
 
-    function downloadDayPdf(dateLabel) {
+    async function downloadDayPdf(dateLabel) {
         const dayNotes = historyNotes.filter(n => {
             const d = new Date(n.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             return d === dateLabel;
         });
         if (dayNotes.length === 0) return;
 
+        const goalsMap = await fetchGoalsForNotes(dayNotes.map(n => n.id));
         const notes = dayNotes.map(n => {
             const noteType = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
             const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note };
+            return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note, goals: goalsMap[n.id] || [] };
         });
 
         const doc = buildPdf('Notes for ' + dateLabel, [{ heading: dateLabel, notes }]);
@@ -4242,8 +4267,10 @@
         doc.save('CareNote-' + safeDate + '.pdf');
     }
 
-    function downloadAllPdf() {
+    async function downloadAllPdf() {
         if (historyNotes.length === 0) return;
+
+        const goalsMap = await fetchGoalsForNotes(historyNotes.map(n => n.id));
 
         // Group by date
         const groups = {};
@@ -4258,7 +4285,7 @@
             notes: groups[dateLabel].map(n => {
                 const noteType = n.note_type.replace(/\b\w/g, l => l.toUpperCase());
                 const time = new Date(n.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note };
+                return { type: noteType, date: time, labels: n.labels || [], text: n.generated_note, goals: goalsMap[n.id] || [] };
             })
         }));
 
