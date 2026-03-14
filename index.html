@@ -2394,7 +2394,7 @@
 
     function addLabelFromInput(containerId) {
         const input = document.getElementById(containerId).querySelector('.label-input');
-        const val = input.value.replace(/,/g, '').trim();
+        const val = input.value.replace(/[,.\s]+$/g, '').replace(/,/g, '').trim();
         if (val) addLabel(containerId, val);
         input.value = '';
         const suggestionsId = containerId.replace('labels-', 'suggestions-');
@@ -2881,7 +2881,7 @@
                             <span class="history-chevron" id="chevron-${note.id}">▼</span>
                             <div class="note-menu-wrapper">
                                 <button class="note-menu-btn" onclick="event.stopPropagation(); toggleNoteMenu(this, '${note.id}')" title="Actions">⋮</button>
-                                <div class="note-menu-dropdown" id="note-menu-${note.id}">
+                                <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
                                     <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                                     <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
