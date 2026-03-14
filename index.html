@@ -2890,9 +2890,7 @@
                 const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const noteTypeTitled = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
                 const preview = note.generated_note.substring(0, 70) + '...';
-                const summaryBadge = note.output_format === 'summary'
-                    ? '<span class="history-type-badge summary-badge">Summary</span>'
-                    : '';
+                const summaryBadge = '';
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.id = `note-${note.id}`;
@@ -2912,6 +2910,7 @@
                                 <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
                                     <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); editHistoryNote('${note.id}')">✏️ Edit</button>
+                                    <button class="note-menu-option" onclick="closeNoteMenu(); changeNoteType('${note.id}')">📝 Change Type</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                                     <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
                                     <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
@@ -3085,6 +3084,55 @@
         body.querySelector('.history-note-text').style.display = '';
         body.querySelector('.history-note-edit')?.remove();
         body.querySelector('.history-edit-actions')?.remove();
+    }
+
+    function changeNoteType(id) {
+        const note = historyNotes.find(n => n.id == id);
+        if (!note) return;
+        // Expand body
+        const body = document.getElementById(`body-${id}`);
+        const chevron = document.getElementById(`chevron-${id}`);
+        if (body) body.classList.add('open');
+        if (chevron) chevron.classList.add('open');
+        // Build select with all available types
+        const visibleBuiltins = BUILTIN_TYPES.filter(t => !hiddenBuiltinTypes.includes(t.value));
+        let options = visibleBuiltins.map(t => `<option value="${t.value}"${note.note_type === t.value ? ' selected' : ''}>${t.label}</option>`).join('');
+        if (userTemplates.length > 0) {
+            options += '<optgroup label="Custom Templates">';
+            userTemplates.forEach(tmpl => {
+                const val = tmpl.name.toLowerCase();
+                options += `<option value="${val}"${note.note_type === val ? ' selected' : ''}>${tmpl.name}</option>`;
+            });
+            options += '</optgroup>';
+        }
+        const editor = document.createElement('div');
+        editor.className = 'history-edit-actions';
+        editor.id = `type-editor-${id}`;
+        editor.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;';
+        editor.innerHTML = `
+            <label style="font-size:13px;font-weight:600;color:var(--navy);">Note Type:</label>
+            <select class="note-type-select" id="type-select-${id}" style="flex:1;min-width:140px;">${options}</select>
+            <button class="btn btn-outline btn-sm" onclick="cancelChangeNoteType('${id}')">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveNoteType('${id}')">Save</button>`;
+        body.insertBefore(editor, body.querySelector('.history-label-editor'));
+        setTimeout(() => editor.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+
+    async function saveNoteType(id) {
+        const select = document.getElementById(`type-select-${id}`);
+        const newType = select.value;
+        const { error } = await sb.from('notes').update({ note_type: newType }).eq('id', id);
+        if (error) { alert('Failed to update note type.'); return; }
+        const note = historyNotes.find(n => n.id == id);
+        if (note) note.note_type = newType;
+        // Update badge in header
+        const badge = document.querySelector(`#note-${id} .history-type-badge`);
+        if (badge) badge.textContent = newType.replace(/\b\w/g, l => l.toUpperCase());
+        cancelChangeNoteType(id);
+    }
+
+    function cancelChangeNoteType(id) {
+        document.getElementById(`type-editor-${id}`)?.remove();
     }
 
     function refreshLabelFilter() {
