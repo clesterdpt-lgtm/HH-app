@@ -283,6 +283,8 @@
         .history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
         .history-item-body.open { display: block; }
         .history-note-text { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-top: 16px; }
+        .history-note-edit { width: 100%; min-height: 200px; background: var(--white); border: 2px solid var(--teal); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); font-family: 'DM Sans', sans-serif; margin-top: 16px; resize: vertical; outline: none; }
+        .history-edit-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
         .history-actions { display: flex; gap: 10px; margin-top: 12px; }
         .note-menu-wrapper { position: relative; display: inline-flex; }
         .note-menu-btn { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 18px; font-weight: 700; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; line-height: 1; letter-spacing: 1px; }
@@ -2884,6 +2886,7 @@
                                 <button class="note-menu-btn" onclick="event.stopPropagation(); toggleNoteMenu(this, '${note.id}')" title="Actions">⋮</button>
                                 <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
                                     <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
+                                    <button class="note-menu-option" onclick="closeNoteMenu(); editHistoryNote('${note.id}')">✏️ Edit</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                                     <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
                                     <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
@@ -3004,6 +3007,59 @@
         const editor = document.getElementById(`label-editor-${id}`);
         editor.classList.remove('open');
         clearLabels(`labels-history-${id}`);
+    }
+
+    function editHistoryNote(id) {
+        // Auto-expand note body if collapsed
+        const body = document.getElementById(`body-${id}`);
+        if (!body.classList.contains('open')) {
+            body.classList.add('open');
+            document.getElementById(`chevron-${id}`).classList.add('open');
+        }
+        const note = historyNotes.find(n => n.id == id);
+        if (!note) return;
+        const textEl = body.querySelector('.history-note-text');
+        const existing = body.querySelector('.history-note-edit');
+        if (existing) { existing.focus(); return; }
+        // Replace text div with textarea
+        const textarea = document.createElement('textarea');
+        textarea.className = 'history-note-edit';
+        textarea.value = note.generated_note;
+        const actions = document.createElement('div');
+        actions.className = 'history-edit-actions';
+        actions.innerHTML = `<button class="btn btn-outline btn-sm" onclick="cancelEditHistoryNote('${id}')">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveEditHistoryNote('${id}')">Save</button>`;
+        textEl.style.display = 'none';
+        textEl.after(actions);
+        textEl.after(textarea);
+        setTimeout(() => {
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            textarea.focus();
+        }, 50);
+    }
+
+    async function saveEditHistoryNote(id) {
+        const body = document.getElementById(`body-${id}`);
+        const textarea = body.querySelector('.history-note-edit');
+        const newText = textarea.value;
+        const { error } = await sb.from('notes').update({ generated_note: newText }).eq('id', id);
+        if (error) { alert('Failed to save note.'); return; }
+        const note = historyNotes.find(n => n.id == id);
+        if (note) note.generated_note = newText;
+        const textEl = body.querySelector('.history-note-text');
+        textEl.textContent = newText;
+        textEl.style.display = '';
+        // Update preview in header
+        const header = document.querySelector(`#note-${id} .history-preview`);
+        if (header) header.textContent = newText.substring(0, 70) + '...';
+        body.querySelector('.history-note-edit').remove();
+        body.querySelector('.history-edit-actions').remove();
+    }
+
+    function cancelEditHistoryNote(id) {
+        const body = document.getElementById(`body-${id}`);
+        body.querySelector('.history-note-text').style.display = '';
+        body.querySelector('.history-note-edit')?.remove();
+        body.querySelector('.history-edit-actions')?.remove();
     }
 
     function refreshLabelFilter() {
