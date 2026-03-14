@@ -55,6 +55,34 @@
         .btn-signout { background: rgba(255,255,255,0.08); color: var(--gray-400); border: 1px solid rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
         .btn-signout:hover { background: rgba(255,255,255,0.15); color: var(--white); }
 
+        /* Hamburger button */
+        .hamburger-btn { background: none; border: none; color: var(--white); font-size: 22px; cursor: pointer; padding: 6px 10px; margin-right: 6px; border-radius: 6px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .hamburger-btn:hover { background: rgba(255,255,255,0.12); }
+
+        /* Sidebar drawer */
+        .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .sidebar-backdrop.open { opacity: 1; pointer-events: auto; }
+        .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--navy); z-index: 1000; transform: translateX(-100%); transition: transform 0.3s ease; display: flex; flex-direction: column; box-shadow: 4px 0 24px rgba(0,0,0,0.3); }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 12px; }
+        .sidebar-header .logo-icon { width: 38px; height: 38px; font-size: 20px; }
+        .sidebar-header .logo-text { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); }
+        .sidebar-header .logo-tag { font-size: 10px; color: var(--teal-light); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+        .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .sidebar-item { display: flex; align-items: center; gap: 14px; padding: 14px 24px; color: rgba(255,255,255,0.65); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; font-family: 'DM Sans', sans-serif; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+        .sidebar-item.active { background: rgba(13,148,136,0.15); color: var(--teal-light); border-left-color: var(--teal-light); }
+        .sidebar-item-icon { font-size: 20px; width: 28px; text-align: center; }
+        .sidebar-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 22px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; }
+        .sidebar-close:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+
+        /* Module placeholder views */
+        .module-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; }
+        .module-placeholder-icon { font-size: 64px; margin-bottom: 20px; }
+        .module-placeholder-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 8px; }
+        .module-placeholder-subtitle { font-size: 15px; color: var(--gray-400); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .module-placeholder-desc { font-size: 15px; color: var(--gray-600); max-width: 400px; line-height: 1.7; }
+
         .nav-tabs { background: var(--white); padding: 0 40px; display: flex; gap: 8px; border-bottom: 1px solid var(--gray-200); }
         .nav-tab { padding: 16px 20px 14px; font-size: 14px; font-weight: 500; color: var(--gray-500); border: none; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; position: relative; letter-spacing: 0.2px; }
         .nav-tab:hover { color: var(--navy); }
@@ -1114,6 +1142,7 @@
 <body>
 
 <header>
+    <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">☰</button>
     <div class="logo">
         <div class="logo-icon">🩺</div>
         <div>
@@ -1128,6 +1157,36 @@
         <button class="btn-signout" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
     </div>
 </header>
+
+<!-- Sidebar Drawer -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">&times;</button>
+    <div class="sidebar-header">
+        <div class="logo-icon">🩺</div>
+        <div>
+            <div class="logo-text">CareNote</div>
+            <div class="logo-tag">Home Health Toolkit</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-item active" data-module="notes" onclick="switchModule('notes')">
+            <span class="sidebar-item-icon">📋</span> Clinical Notes
+        </div>
+        <div class="sidebar-item" data-module="medication" onclick="switchModule('medication')">
+            <span class="sidebar-item-icon">💊</span> Medication Manager
+        </div>
+        <div class="sidebar-item" data-module="hep" onclick="switchModule('hep')">
+            <span class="sidebar-item-icon">🏋️</span> Home Exercise Program
+        </div>
+        <div class="sidebar-item" data-module="education" onclick="switchModule('education')">
+            <span class="sidebar-item-icon">📚</span> Patient Education
+        </div>
+        <div class="sidebar-item" data-module="vehicle" onclick="switchModule('vehicle')">
+            <span class="sidebar-item-icon">🚗</span> Vehicle Tracking
+        </div>
+    </nav>
+</div>
 
 <!-- Auth Screen -->
 <div id="auth-screen">
@@ -1474,6 +1533,43 @@
                 </div>
             </div>
         </div>
+
+        <!-- Module Placeholder Views -->
+        <div id="view-medication" style="display:none;">
+            <div class="module-placeholder">
+                <div class="module-placeholder-icon">💊</div>
+                <div class="module-placeholder-title">Medication Manager</div>
+                <div class="module-placeholder-subtitle">Coming Soon</div>
+                <div class="module-placeholder-desc">Track patient medications, dosages, schedules, and interactions. Manage med lists and reconciliation for home health visits.</div>
+            </div>
+        </div>
+
+        <div id="view-hep" style="display:none;">
+            <div class="module-placeholder">
+                <div class="module-placeholder-icon">🏋️</div>
+                <div class="module-placeholder-title">Home Exercise Program</div>
+                <div class="module-placeholder-subtitle">Coming Soon</div>
+                <div class="module-placeholder-desc">Create and manage personalized exercise programs for patients. Build routines, track progress, and generate printable handouts.</div>
+            </div>
+        </div>
+
+        <div id="view-education" style="display:none;">
+            <div class="module-placeholder">
+                <div class="module-placeholder-icon">📚</div>
+                <div class="module-placeholder-title">Patient Education</div>
+                <div class="module-placeholder-subtitle">Coming Soon</div>
+                <div class="module-placeholder-desc">Access and share patient education materials on diagnoses, procedures, and self-management strategies for home health patients.</div>
+            </div>
+        </div>
+
+        <div id="view-vehicle" style="display:none;">
+            <div class="module-placeholder">
+                <div class="module-placeholder-icon">🚗</div>
+                <div class="module-placeholder-title">Vehicle Tracking</div>
+                <div class="module-placeholder-subtitle">Coming Soon</div>
+                <div class="module-placeholder-desc">Log mileage between patient visits for reimbursement. Track routes, distances, and generate mileage reports.</div>
+            </div>
+        </div>
     </main>
 
     <!-- Assist Panel Overlay (mobile backdrop) -->
@@ -1635,6 +1731,50 @@
         if (tab === 'pending') { renderPendingList(); renderPendingNotesList(); }
         if (tab === 'templates') loadTemplates();
     }
+
+    // ── Sidebar Navigation ──────────────────────────────────
+    let currentModule = 'notes';
+    const moduleViews = ['medication', 'hep', 'education', 'vehicle'];
+    const notesViews = ['new', 'pending', 'history', 'templates'];
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-backdrop').classList.toggle('open');
+    }
+
+    function switchModule(module) {
+        currentModule = module;
+        // Update sidebar active state
+        document.querySelectorAll('.sidebar-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.module === module);
+        });
+        // Close sidebar
+        toggleSidebar();
+
+        if (module === 'notes') {
+            // Show notes tab bar and current notes view
+            document.querySelector('.nav-tabs').style.display = 'flex';
+            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
+            // Re-trigger current notes tab
+            const activeTab = document.querySelector('.nav-tab.active');
+            if (activeTab) activeTab.click();
+            else showTab('new');
+        } else {
+            // Hide notes tab bar and all notes views
+            document.querySelector('.nav-tabs').style.display = 'none';
+            notesViews.forEach(t => document.getElementById(`view-${t}`).style.display = 'none');
+            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
+            // Show selected module placeholder
+            document.getElementById(`view-${module}`).style.display = 'block';
+        }
+    }
+
+    // Close sidebar with ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) {
+            toggleSidebar();
+        }
+    });
 
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
