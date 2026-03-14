@@ -2916,7 +2916,6 @@
                                 <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
                                     <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); editHistoryNote('${note.id}')">✏️ Edit</button>
-                                    <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                                     <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
                                     <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
                                     <button class="note-menu-option danger" onclick="closeNoteMenu(); confirmDeleteOne('${note.id}')">🗑️ Delete</button>
@@ -3064,10 +3063,21 @@
         // Build combined edit UI
         const wrapper = document.createElement('div');
         wrapper.className = 'history-edit-wrapper';
+        const labelContainerId = `labels-edit-${id}`;
+        const labelSuggestionsId = `suggestions-edit-${id}`;
         wrapper.innerHTML = `
             <div class="history-edit-type-row">
                 <label>Note Type:</label>
                 <select class="note-type-select history-type-select" id="type-select-${id}">${typeOpts}</select>
+            </div>
+            <div class="history-edit-type-row">
+                <label>Labels:</label>
+                <div class="label-input-wrapper" style="flex:1;min-width:0;">
+                    <div class="label-input-container" id="${labelContainerId}" onclick="this.querySelector('.label-input').focus()">
+                        <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                    </div>
+                    <div class="label-suggestions" id="${labelSuggestionsId}"></div>
+                </div>
             </div>
             <textarea class="history-note-edit">${note.generated_note}</textarea>
             <div class="history-edit-actions">
@@ -3076,6 +3086,9 @@
             </div>`;
         textEl.style.display = 'none';
         textEl.after(wrapper);
+        // Populate existing labels and init input
+        if (note.labels) note.labels.forEach(l => addLabel(labelContainerId, l));
+        initLabelInput(labelContainerId);
         setTimeout(() => {
             wrapper.querySelector('textarea').scrollIntoView({ behavior: 'smooth', block: 'center' });
             wrapper.querySelector('textarea').focus();
@@ -3087,26 +3100,40 @@
         const wrapper = body.querySelector('.history-edit-wrapper');
         const newText = wrapper.querySelector('textarea').value;
         const newType = wrapper.querySelector('select').value;
+        const newLabels = getLabels(`labels-edit-${id}`);
         const note = historyNotes.find(n => n.id == id);
         const updates = {};
         if (newText !== note.generated_note) updates.generated_note = newText;
         if (newType !== note.note_type) updates.note_type = newType;
+        if (JSON.stringify(newLabels) !== JSON.stringify(note.labels || [])) updates.labels = newLabels;
         if (Object.keys(updates).length > 0) {
             const { error } = await sb.from('notes').update(updates).eq('id', id);
             if (error) { alert('Failed to save changes.'); return; }
             if (updates.generated_note) note.generated_note = newText;
             if (updates.note_type) note.note_type = newType;
+            if (updates.labels !== undefined) note.labels = newLabels;
         }
         // Update text display
         const textEl = body.querySelector('.history-note-text');
         textEl.textContent = note.generated_note;
         textEl.style.display = '';
         // Update preview in header
-        const header = document.querySelector(`#note-${id} .history-preview`);
-        if (header) header.textContent = note.generated_note.substring(0, 70) + '...';
+        const headerPreview = document.querySelector(`#note-${id} .history-preview`);
+        if (headerPreview) headerPreview.textContent = note.generated_note.substring(0, 70) + '...';
         // Update type badge in header
         const badge = document.querySelector(`#note-${id} .history-type-badge`);
         if (badge) badge.textContent = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+        // Update label badges in header
+        const headerLeft = document.querySelector(`#note-${id} .history-item-left`);
+        if (headerLeft) {
+            headerLeft.querySelectorAll('.history-label-badge').forEach(el => el.remove());
+            const badgesHtml = renderLabelBadges(note.labels, 'history-label-badge');
+            if (badgesHtml) {
+                const preview = headerLeft.querySelector('.history-preview');
+                preview.insertAdjacentHTML('beforebegin', badgesHtml);
+            }
+        }
+        refreshLabelFilter();
         wrapper.remove();
     }
 
