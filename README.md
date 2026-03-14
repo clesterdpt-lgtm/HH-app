@@ -47,6 +47,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 ### Editable Templates
 - **Built-in types**: Configure section headings and custom AI instructions on standard note types (Initial Evaluation, Routine Visit, etc.)
 - **Custom templates**: Create fully custom note types with their own sections and AI instructions
+- **Smart Phrases**: Save abbreviation/expansion pairs (e.g., `.bp` → "Blood pressure within normal limits"). Type `.abbreviation` in the note textarea to trigger inline suggestions
 - **Help tooltips**: Each template section has a ? button explaining the feature
 - Template sections flow into both note generation (for structure) and the assist feature (for gap tracking)
 
@@ -78,8 +79,9 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Grouped by date with expandable items
 - Search and filter by label
 - Copy, email, or PDF export any note
-- Edit saved notes in place
-- Summary badge on notes generated with clinical summary format
+- **Unified Edit**: Edit note text, change note type, and manage labels all in one inline editor via the ⋮ overflow menu
+- **3-dot overflow menu**: Consolidates all note actions (Copy, Edit, Email, PDF, Delete) into a clean ⋮ button
+- Mobile-optimized: text preview hidden on narrow screens for compact list view
 
 ## Project Structure
 
@@ -102,6 +104,7 @@ supabase/
 - **notes**: Generated notes (id, user_id, note_type, raw_notes, generated_note, labels, template_id, output_format)
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
 - **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format)
+- **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 
 ## Edge Functions
 
