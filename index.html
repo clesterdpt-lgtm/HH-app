@@ -284,9 +284,12 @@
         .history-item-body.open { display: block; }
         .history-note-text { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-top: 16px; }
         .history-edit-wrapper { margin-top: 16px; }
-        .history-edit-type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .history-edit-type-row label { font-size: 13px; font-weight: 600; color: var(--navy); white-space: nowrap; }
-        .history-type-select { flex: 1; min-width: 0; }
+        .history-edit-fields { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+        .history-edit-fields label { font-size: 13px; font-weight: 600; color: var(--navy); white-space: nowrap; }
+        .history-type-select { width: 100%; min-width: 0; padding: 8px 32px 8px 12px; font-size: 13px; background: var(--white); border: 2px solid var(--gray-200); border-radius: 10px; }
+        .history-type-select:focus { border-color: var(--teal); }
+        .history-edit-fields .label-input-wrapper { width: 100%; max-width: 100%; }
+        .history-edit-fields .label-input-container { border: 2px solid var(--gray-200); background: var(--white); min-height: 38px; padding: 6px 12px; }
         .history-note-edit { width: 100%; min-height: 200px; background: var(--white); border: 2px solid var(--teal); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); font-family: 'DM Sans', sans-serif; resize: vertical; outline: none; }
         .history-edit-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
         .history-actions { display: flex; gap: 10px; margin-top: 12px; }
@@ -416,7 +419,8 @@
             .history-item-body { padding: 0 16px 16px; }
             .history-note-text { padding: 14px; font-size: 14px; line-height: 1.9; }
             .history-actions { flex-wrap: wrap; }
-            .history-type-select { font-size: 13px; padding: 6px 8px; }
+            .history-edit-fields { gap: 6px 10px; }
+            .history-type-select { font-size: 14px; padding: 8px 28px 8px 10px; }
             .history-note-edit { min-height: 150px; padding: 12px; font-size: 14px; }
 
             /* Result */
@@ -3066,13 +3070,11 @@
         const labelContainerId = `labels-edit-${id}`;
         const labelSuggestionsId = `suggestions-edit-${id}`;
         wrapper.innerHTML = `
-            <div class="history-edit-type-row">
-                <label>Note Type:</label>
+            <div class="history-edit-fields">
+                <label>Type:</label>
                 <select class="note-type-select history-type-select" id="type-select-${id}">${typeOpts}</select>
-            </div>
-            <div class="history-edit-type-row">
                 <label>Labels:</label>
-                <div class="label-input-wrapper" style="flex:1;min-width:0;">
+                <div class="label-input-wrapper" style="min-width:0;">
                     <div class="label-input-container" id="${labelContainerId}" onclick="this.querySelector('.label-input').focus()">
                         <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
                     </div>
