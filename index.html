@@ -283,7 +283,11 @@
         .history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
         .history-item-body.open { display: block; }
         .history-note-text { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-top: 16px; }
-        .history-note-edit { width: 100%; min-height: 200px; background: var(--white); border: 2px solid var(--teal); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); font-family: 'DM Sans', sans-serif; margin-top: 16px; resize: vertical; outline: none; }
+        .history-edit-wrapper { margin-top: 16px; }
+        .history-edit-type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .history-edit-type-row label { font-size: 13px; font-weight: 600; color: var(--navy); white-space: nowrap; }
+        .history-type-select { flex: 1; min-width: 0; }
+        .history-note-edit { width: 100%; min-height: 200px; background: var(--white); border: 2px solid var(--teal); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); font-family: 'DM Sans', sans-serif; resize: vertical; outline: none; }
         .history-edit-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
         .history-actions { display: flex; gap: 10px; margin-top: 12px; }
         .note-menu-wrapper { position: relative; display: inline-flex; }
@@ -412,6 +416,8 @@
             .history-item-body { padding: 0 16px 16px; }
             .history-note-text { padding: 14px; font-size: 14px; line-height: 1.9; }
             .history-actions { flex-wrap: wrap; }
+            .history-type-select { font-size: 13px; padding: 6px 8px; }
+            .history-note-edit { min-height: 150px; padding: 12px; font-size: 14px; }
 
             /* Result */
             .result-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -2910,7 +2916,6 @@
                                 <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
                                     <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); editHistoryNote('${note.id}')">✏️ Edit</button>
-                                    <button class="note-menu-option" onclick="closeNoteMenu(); changeNoteType('${note.id}')">📝 Change Type</button>
                                     <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                                     <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
                                     <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
@@ -3043,96 +3048,72 @@
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const textEl = body.querySelector('.history-note-text');
-        const existing = body.querySelector('.history-note-edit');
-        if (existing) { existing.focus(); return; }
-        // Replace text div with textarea
-        const textarea = document.createElement('textarea');
-        textarea.className = 'history-note-edit';
-        textarea.value = note.generated_note;
-        const actions = document.createElement('div');
-        actions.className = 'history-edit-actions';
-        actions.innerHTML = `<button class="btn btn-outline btn-sm" onclick="cancelEditHistoryNote('${id}')">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveEditHistoryNote('${id}')">Save</button>`;
+        const existing = body.querySelector('.history-edit-wrapper');
+        if (existing) { existing.querySelector('textarea')?.focus(); return; }
+        // Build type selector options
+        const visibleBuiltins = BUILTIN_TYPES.filter(t => !hiddenBuiltinTypes.includes(t.value));
+        let typeOpts = visibleBuiltins.map(t => `<option value="${t.value}"${note.note_type === t.value ? ' selected' : ''}>${t.label}</option>`).join('');
+        if (userTemplates.length > 0) {
+            typeOpts += '<optgroup label="Custom Templates">';
+            userTemplates.forEach(tmpl => {
+                const val = tmpl.name.toLowerCase();
+                typeOpts += `<option value="${val}"${note.note_type === val ? ' selected' : ''}>${tmpl.name}</option>`;
+            });
+            typeOpts += '</optgroup>';
+        }
+        // Build combined edit UI
+        const wrapper = document.createElement('div');
+        wrapper.className = 'history-edit-wrapper';
+        wrapper.innerHTML = `
+            <div class="history-edit-type-row">
+                <label>Note Type:</label>
+                <select class="note-type-select history-type-select" id="type-select-${id}">${typeOpts}</select>
+            </div>
+            <textarea class="history-note-edit">${note.generated_note}</textarea>
+            <div class="history-edit-actions">
+                <button class="btn btn-outline btn-sm" onclick="cancelEditHistoryNote('${id}')">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveEditHistoryNote('${id}')">Save</button>
+            </div>`;
         textEl.style.display = 'none';
-        textEl.after(actions);
-        textEl.after(textarea);
+        textEl.after(wrapper);
         setTimeout(() => {
-            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            textarea.focus();
+            wrapper.querySelector('textarea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            wrapper.querySelector('textarea').focus();
         }, 50);
     }
 
     async function saveEditHistoryNote(id) {
         const body = document.getElementById(`body-${id}`);
-        const textarea = body.querySelector('.history-note-edit');
-        const newText = textarea.value;
-        const { error } = await sb.from('notes').update({ generated_note: newText }).eq('id', id);
-        if (error) { alert('Failed to save note.'); return; }
+        const wrapper = body.querySelector('.history-edit-wrapper');
+        const newText = wrapper.querySelector('textarea').value;
+        const newType = wrapper.querySelector('select').value;
         const note = historyNotes.find(n => n.id == id);
-        if (note) note.generated_note = newText;
+        const updates = {};
+        if (newText !== note.generated_note) updates.generated_note = newText;
+        if (newType !== note.note_type) updates.note_type = newType;
+        if (Object.keys(updates).length > 0) {
+            const { error } = await sb.from('notes').update(updates).eq('id', id);
+            if (error) { alert('Failed to save changes.'); return; }
+            if (updates.generated_note) note.generated_note = newText;
+            if (updates.note_type) note.note_type = newType;
+        }
+        // Update text display
         const textEl = body.querySelector('.history-note-text');
-        textEl.textContent = newText;
+        textEl.textContent = note.generated_note;
         textEl.style.display = '';
         // Update preview in header
         const header = document.querySelector(`#note-${id} .history-preview`);
-        if (header) header.textContent = newText.substring(0, 70) + '...';
-        body.querySelector('.history-note-edit').remove();
-        body.querySelector('.history-edit-actions').remove();
+        if (header) header.textContent = note.generated_note.substring(0, 70) + '...';
+        // Update type badge in header
+        const badge = document.querySelector(`#note-${id} .history-type-badge`);
+        if (badge) badge.textContent = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+        wrapper.remove();
     }
 
     function cancelEditHistoryNote(id) {
         const body = document.getElementById(`body-${id}`);
         body.querySelector('.history-note-text').style.display = '';
-        body.querySelector('.history-note-edit')?.remove();
-        body.querySelector('.history-edit-actions')?.remove();
-    }
-
-    function changeNoteType(id) {
-        const note = historyNotes.find(n => n.id == id);
-        if (!note) return;
-        // Expand body
-        const body = document.getElementById(`body-${id}`);
-        const chevron = document.getElementById(`chevron-${id}`);
-        if (body) body.classList.add('open');
-        if (chevron) chevron.classList.add('open');
-        // Build select with all available types
-        const visibleBuiltins = BUILTIN_TYPES.filter(t => !hiddenBuiltinTypes.includes(t.value));
-        let options = visibleBuiltins.map(t => `<option value="${t.value}"${note.note_type === t.value ? ' selected' : ''}>${t.label}</option>`).join('');
-        if (userTemplates.length > 0) {
-            options += '<optgroup label="Custom Templates">';
-            userTemplates.forEach(tmpl => {
-                const val = tmpl.name.toLowerCase();
-                options += `<option value="${val}"${note.note_type === val ? ' selected' : ''}>${tmpl.name}</option>`;
-            });
-            options += '</optgroup>';
-        }
-        const editor = document.createElement('div');
-        editor.className = 'history-edit-actions';
-        editor.id = `type-editor-${id}`;
-        editor.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;';
-        editor.innerHTML = `
-            <label style="font-size:13px;font-weight:600;color:var(--navy);">Note Type:</label>
-            <select class="note-type-select" id="type-select-${id}" style="flex:1;min-width:140px;">${options}</select>
-            <button class="btn btn-outline btn-sm" onclick="cancelChangeNoteType('${id}')">Cancel</button>
-            <button class="btn btn-primary btn-sm" onclick="saveNoteType('${id}')">Save</button>`;
-        body.insertBefore(editor, body.querySelector('.history-label-editor'));
-        setTimeout(() => editor.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-    }
-
-    async function saveNoteType(id) {
-        const select = document.getElementById(`type-select-${id}`);
-        const newType = select.value;
-        const { error } = await sb.from('notes').update({ note_type: newType }).eq('id', id);
-        if (error) { alert('Failed to update note type.'); return; }
-        const note = historyNotes.find(n => n.id == id);
-        if (note) note.note_type = newType;
-        // Update badge in header
-        const badge = document.querySelector(`#note-${id} .history-type-badge`);
-        if (badge) badge.textContent = newType.replace(/\b\w/g, l => l.toUpperCase());
-        cancelChangeNoteType(id);
-    }
-
-    function cancelChangeNoteType(id) {
-        document.getElementById(`type-editor-${id}`)?.remove();
+        body.querySelector('.history-edit-wrapper')?.remove();
     }
 
     function refreshLabelFilter() {
