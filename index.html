@@ -2350,7 +2350,11 @@
         const suggestionsEl = document.getElementById(suggestionsId);
 
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+            if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab' || e.key === '.') {
+                e.preventDefault();
+                addLabelFromInput(containerId);
+            }
+            if (e.key === ' ' && input.value.endsWith(' ')) {
                 e.preventDefault();
                 addLabelFromInput(containerId);
             }
@@ -2361,7 +2365,7 @@
         });
 
         input.addEventListener('input', () => {
-            if (input.value.includes(',')) {
+            if (input.value.includes(',') || input.value.includes('.')) {
                 addLabelFromInput(containerId);
                 return;
             }
@@ -2965,6 +2969,12 @@
             initLabelInput(containerId);
             editor.dataset.initialized = 'true';
         }
+        // Scroll to editor and focus input
+        setTimeout(() => {
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const input = document.getElementById(containerId).querySelector('.label-input');
+            if (input) input.focus();
+        }, 50);
     }
 
     async function saveHistoryLabels(id) {
