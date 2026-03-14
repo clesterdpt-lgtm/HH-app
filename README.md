@@ -44,16 +44,17 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Dim screen mode**: After 8 seconds of inactivity during recording, the screen dims to near-black showing a recording timer — saves battery and adds privacy. Requires double-tap to dismiss (prevents pocket wakes)
 - Pending Recordings tab for retry after failures
 
-### Editable Templates
+### Settings
+- **Default Email**: Set a default recipient address for all email exports
 - **Built-in types**: Configure section headings and custom AI instructions on standard note types (Initial Evaluation, Routine Visit, etc.)
 - **Custom templates**: Create fully custom note types with their own sections and AI instructions
 - **Smart Phrases**: Save abbreviation/expansion pairs (e.g., `.bp` → "Blood pressure within normal limits"). Type `.abbreviation` in the note textarea to trigger inline suggestions
-- **Help tooltips**: Each template section has a ? button explaining the feature
+- **Help tooltips**: Each settings section has a ? button explaining the feature
 - Template sections flow into both note generation (for structure) and the assist feature (for gap tracking)
 
 ### Export
 - Combined Export button (dropdown on desktop, popup on mobile)
-- Email notes via mailto link
+- Email notes via mailto link with optional **default email recipient** (set in Settings)
 - PDF download: single note, day's notes, or all notes
 - Professional PDF layout with navy header, page numbers, auto-pagination
 
@@ -103,7 +104,7 @@ supabase/
 
 - **notes**: Generated notes (id, user_id, note_type, raw_notes, generated_note, labels, template_id, output_format)
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
-- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format)
+- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email)
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 
 ## Edge Functions
