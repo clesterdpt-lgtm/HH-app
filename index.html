@@ -1396,6 +1396,25 @@
 
             <div class="card">
                 <div class="card-header">
+                    <div class="card-header-icon">✉️</div>
+                    <div class="card-header-text">
+                        <h2>Default Email <button class="help-btn" onclick="toggleHelp('help-email', event)">?</button></h2>
+                        <p>Pre-fill the recipient when emailing notes</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="email" id="default-email-input" placeholder="email@example.com"
+                               style="flex:1;padding:10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;background:var(--gray-50);color:var(--gray-900);"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();saveDefaultEmail();}">
+                        <button class="btn btn-primary" onclick="saveDefaultEmail()" style="white-space:nowrap;">Save</button>
+                    </div>
+                    <div id="default-email-status" style="display:none;margin-top:8px;font-size:13px;color:var(--primary);"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
                     <div class="card-header-icon">⚙️</div>
                     <div class="card-header-text">
                         <h2>Default Output Format <button class="help-btn" onclick="toggleHelp('help-format', event)">?</button></h2>
@@ -1513,6 +1532,7 @@
     let builtinCustomizations = {}; // keyed by builtin value, e.g. { 'initial evaluation': { id, sections, custom_prompt, ... } }
     let hiddenBuiltinTypes = [];
     let defaultOutputFormat = 'full';
+    let defaultEmail = '';
     let templatesLoaded = false;
 
     // ── Online/Offline ────────────────────────────────────
@@ -2781,7 +2801,8 @@
         }
         const subject = encodeURIComponent(`CareNote - ${noteType}`);
         const body = encodeURIComponent(`${header}\n\n${text}${goalsText}`);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     }
 
     async function saveEditedNote() {
@@ -3183,7 +3204,8 @@
         const goalsMap = await fetchGoalsForNotes([id]);
         const goalsText = formatGoalsText(goalsMap[id]);
         const body = encodeURIComponent(`${header}\n\n${plainText}${goalsText}`);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     }
 
     function formatEmailNote(note, goals) {
@@ -3205,7 +3227,8 @@
         const lines = notes.map(n => formatEmailNote(n, goalsMap[n.id])).join('\n\n\n');
         const subject = encodeURIComponent(`CareNote - Notes for ${dateLabel}`);
         const body = encodeURIComponent(lines);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     }
 
     async function emailAllNotes() {
@@ -3223,7 +3246,8 @@
         }).join('\n\n\n\n');
         const subject = encodeURIComponent('CareNote - All Notes');
         const body = encodeURIComponent(lines);
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
     }
 
     // ── Template System ──────────────────────────────────
@@ -3276,6 +3300,7 @@
             store.put({ key: 'templates', data: templates });
             store.put({ key: 'hiddenBuiltinTypes', data: hiddenTypes });
             store.put({ key: 'defaultOutputFormat', data: defaultOutputFormat });
+            store.put({ key: 'defaultEmail', data: defaultEmail });
             store.put({ key: 'builtinCustomizations', data: builtinCustomizations });
         } catch (e) { console.log('IDB template cache error:', e); }
     }
@@ -3290,18 +3315,20 @@
                 const hiddenReq = store.get('hiddenBuiltinTypes');
                 const formatReq = store.get('defaultOutputFormat');
                 const builtinCustReq = store.get('builtinCustomizations');
+                const emailReq = store.get('defaultEmail');
                 tx.oncomplete = () => {
                     resolve({
                         templates: templatesReq.result?.data || [],
                         hiddenTypes: hiddenReq.result?.data || [],
                         defaultOutputFormat: formatReq.result?.data || 'full',
-                        builtinCustomizations: builtinCustReq.result?.data || {}
+                        builtinCustomizations: builtinCustReq.result?.data || {},
+                        defaultEmail: emailReq.result?.data || ''
                     });
                 };
-                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {} });
+                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '' });
             });
         } catch (e) {
-            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {} };
+            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '' };
         }
     }
 
@@ -3329,11 +3356,12 @@
             builtinCustomizations = split.builtinCust;
 
             const { data: prefs } = await sb.from('user_preferences')
-                .select('hidden_builtin_types, default_output_format')
+                .select('hidden_builtin_types, default_output_format, default_email')
                 .eq('user_id', currentUser.id)
                 .single();
             hiddenBuiltinTypes = prefs?.hidden_builtin_types || [];
             defaultOutputFormat = prefs?.default_output_format || 'full';
+            defaultEmail = prefs?.default_email || '';
 
             await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         } else {
@@ -3342,6 +3370,7 @@
             hiddenBuiltinTypes = cached.hiddenTypes;
             defaultOutputFormat = cached.defaultOutputFormat || 'full';
             builtinCustomizations = cached.builtinCustomizations || {};
+            defaultEmail = cached.defaultEmail || '';
         }
 
         templatesLoaded = true;
@@ -3356,9 +3385,11 @@
         renderBuiltinTypesList();
         renderCustomTemplatesList();
         renderSmartPhrasesList();
+        document.getElementById('default-email-input').value = defaultEmail;
     }
 
     const helpTexts = {
+        'help-email': 'Set a default email address so it\'s automatically filled in as the recipient whenever you email a note.<br><br>You can always change the recipient in your email client before sending. Clear the field and save to remove the default.',
         'help-format': '<strong>Full Documentation</strong> generates a structured clinical note with headings and sections (e.g., Subjective, Objective, Assessment, Plan).<br><br><strong>Clinical Summary</strong> produces a concise 2-3 paragraph narrative of the visit — ideal when your EMR handles the structured formatting.<br><br>This sets the default; you can override it per note.',
         'help-builtin': 'These are standard home health note types. Use the toggle to <strong>show or hide</strong> them in your note type dropdown.<br><br>Click <strong>Configure</strong> to add section headings (e.g., Living Environment, Functional Mobility) and custom AI instructions.<br><br>The <strong>Assist</strong> feature will then check your notes against those sections and prompt you for anything missing.',
         'help-custom': 'Create your own note types for specialized visits (e.g., Wound Care, Fall Risk Assessment).<br><br>Each template can include <strong>section headings</strong> to organize the generated note and <strong>custom AI instructions</strong> to guide what the AI focuses on.<br><br>Your custom templates appear alongside the built-in types in the note type dropdown.',
@@ -3473,6 +3504,28 @@
             btn.classList.toggle('active', btn.dataset.value === format);
         });
         scheduleDraftSave();
+    }
+
+    async function saveDefaultEmail() {
+        const input = document.getElementById('default-email-input');
+        const email = input.value.trim();
+        defaultEmail = email;
+        const statusEl = document.getElementById('default-email-status');
+
+        if (isOnline && currentUser) {
+            await sb.from('user_preferences').upsert({
+                user_id: currentUser.id,
+                hidden_builtin_types: hiddenBuiltinTypes,
+                default_output_format: defaultOutputFormat,
+                default_email: email || null,
+                updated_at: new Date().toISOString()
+            });
+        }
+        await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+
+        statusEl.textContent = email ? '✓ Saved' : '✓ Cleared';
+        statusEl.style.display = 'block';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
     }
 
     function getOutputFormat() {
