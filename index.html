@@ -284,6 +284,16 @@
         .history-item-body.open { display: block; }
         .history-note-text { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-top: 16px; }
         .history-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .note-menu-wrapper { position: relative; display: inline-flex; }
+        .note-menu-btn { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 18px; font-weight: 700; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; line-height: 1; letter-spacing: 1px; }
+        .note-menu-btn:hover { background: var(--gray-200); color: var(--gray-700); }
+        .note-menu-dropdown { display: none; position: fixed; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 9999; min-width: 160px; overflow: hidden; }
+        .note-menu-dropdown.open { display: block; }
+        .note-menu-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 11px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--gray-800); background: none; border: none; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+        .note-menu-option:hover { background: var(--gray-100); }
+        .note-menu-option + .note-menu-option { border-top: 1px solid var(--gray-100); }
+        .note-menu-option.danger { color: var(--red); }
+        .note-menu-option.danger:hover { background: var(--red-light); }
 
         #history-loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--gray-600); font-size: 14px; }
 
@@ -2865,23 +2875,21 @@
                         <div class="history-item-right">
                             <span class="history-time">${time}</span>
                             <span class="history-chevron" id="chevron-${note.id}">▼</span>
-                            <button class="btn-delete-single" onclick="event.stopPropagation(); confirmDeleteOne('${note.id}')">🗑️</button>
+                            <div class="note-menu-wrapper">
+                                <button class="note-menu-btn" onclick="event.stopPropagation(); toggleNoteMenu(this, '${note.id}')" title="Actions">⋮</button>
+                                <div class="note-menu-dropdown" id="note-menu-${note.id}">
+                                    <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
+                                    <button class="note-menu-option" onclick="closeNoteMenu(); toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
+                                    <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
+                                    <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
+                                    <button class="note-menu-option danger" onclick="closeNoteMenu(); confirmDeleteOne('${note.id}')">🗑️ Delete</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="history-item-body" id="body-${note.id}">
                         <div class="history-note-text">${note.generated_note}</div>
                         <div class="history-goals-section" id="history-goals-${note.id}"></div>
-                        <div class="history-actions">
-                            <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}', event)">📋 Copy Note</button>
-                            <button class="btn btn-outline" onclick="toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
-                            <div class="export-wrapper">
-                                <button class="btn btn-outline" onclick="toggleExport(this)">📤 Export</button>
-                                <div class="export-dropdown">
-                                    <button class="export-option" onclick="emailHistoryNote('${note.id}'); closeExport()">✉️ Email</button>
-                                    <button class="export-option" onclick="downloadHistoryNotePdf('${note.id}'); closeExport()">📥 PDF</button>
-                                </div>
-                            </div>
-                        </div>
                         <div class="history-label-editor" id="label-editor-${note.id}">
                             <div class="label-input-wrapper">
                                 <div class="label-input-container" id="labels-history-${note.id}" onclick="this.querySelector('.label-input').focus()">
@@ -2940,6 +2948,12 @@
             cancelHistoryLabels(id);
             return;
         }
+        // Auto-expand note body if collapsed
+        const body = document.getElementById(`body-${id}`);
+        if (!body.classList.contains('open')) {
+            body.classList.add('open');
+            document.getElementById(`chevron-${id}`).classList.add('open');
+        }
         editor.classList.add('open');
         const containerId = `labels-history-${id}`;
         clearLabels(containerId);
@@ -2997,14 +3011,12 @@
         filterSelect.value = currentValue;
     }
 
-    async function copyHistoryNote(id, event) {
+    async function copyHistoryNote(id) {
         const note = historyNotes.find(n => n.id == id);
         if (!note) return;
         const goalsMap = await fetchGoalsForNotes([id]);
         const goalsText = formatGoalsText(goalsMap[id]);
-        navigator.clipboard.writeText(note.generated_note + goalsText);
-        event.target.innerText = '✅ Copied!';
-        setTimeout(() => { event.target.innerText = '📋 Copy Note'; }, 2000);
+        await navigator.clipboard.writeText(note.generated_note + goalsText);
     }
 
     async function emailHistoryNote(id) {
@@ -4139,10 +4151,59 @@
         }
     }
 
-    // Close dropdown on click-outside (desktop)
+    // ── Note 3-dot Menu ────────────────────────────────────────────
+    let activeNoteMenu = null;
+    let activeNoteMenuPopup = null;
+
+    function toggleNoteMenu(btn, id) {
+        closeNoteMenu();
+        closeExport();
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            const dropdown = document.getElementById(`note-menu-${id}`);
+            if (!dropdown) return;
+            const overlay = document.createElement('div');
+            overlay.className = 'export-popup-overlay open';
+            overlay.onclick = (e) => { if (e.target === overlay) closeNoteMenu(); };
+            const popup = document.createElement('div');
+            popup.className = 'export-popup';
+            popup.innerHTML = '<div class="export-popup-title">Actions</div>'
+                + dropdown.innerHTML
+                + '<button class="export-popup-cancel" onclick="closeNoteMenu()">Cancel</button>';
+            overlay.appendChild(popup);
+            document.body.appendChild(overlay);
+            activeNoteMenuPopup = overlay;
+        } else {
+            const dropdown = document.getElementById(`note-menu-${id}`);
+            if (!dropdown) return;
+            const rect = btn.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = 'auto';
+            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+            dropdown.classList.add('open');
+            activeNoteMenu = dropdown;
+        }
+    }
+
+    function closeNoteMenu() {
+        if (activeNoteMenu) {
+            activeNoteMenu.classList.remove('open');
+            activeNoteMenu = null;
+        }
+        if (activeNoteMenuPopup) {
+            activeNoteMenuPopup.remove();
+            activeNoteMenuPopup = null;
+        }
+    }
+
+    // Close dropdowns on click-outside (desktop)
     document.addEventListener('click', (e) => {
         if (activeExportDropdown && !e.target.closest('.export-wrapper')) {
             closeExport();
+        }
+        if (activeNoteMenu && !e.target.closest('.note-menu-wrapper')) {
+            closeNoteMenu();
         }
     });
 
