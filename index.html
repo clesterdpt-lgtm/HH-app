@@ -316,6 +316,15 @@
         .template-list-name { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 4px; }
         .template-list-meta { font-size: 12px; color: var(--gray-400); }
         .template-list-actions { display: flex; gap: 10px; align-items: center; }
+        .smart-phrase-abbr { font-family: monospace; background: rgba(13,148,136,0.1); color: var(--teal); font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+        .smart-phrase-text { font-size: 13px; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+        .phrase-suggestions { position: fixed; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 9999; min-width: 280px; max-width: 400px; max-height: 200px; overflow-y: auto; display: none; }
+        .phrase-suggestions.open { display: block; }
+        .phrase-suggestion-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background 0.15s; }
+        .phrase-suggestion-item:hover, .phrase-suggestion-item.highlighted { background: var(--gray-100); }
+        .phrase-suggestion-item + .phrase-suggestion-item { border-top: 1px solid var(--gray-100); }
+        .phrase-suggestion-abbr { font-family: monospace; font-weight: 600; color: var(--teal); font-size: 13px; flex-shrink: 0; }
+        .phrase-suggestion-text { font-size: 12px; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         footer { text-align: center; padding: 24px; color: var(--gray-400); font-size: 12px; }
 
@@ -1199,6 +1208,7 @@
                         </div>
                     </div>
                     <textarea id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
+                    <div class="phrase-suggestions" id="phrase-suggestions"></div>
                     <div class="controls-row">
                         <div class="label-input-wrapper">
                             <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
@@ -1420,6 +1430,20 @@
                     <div id="custom-templates-list" style="margin-top:16px;"></div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">⚡</div>
+                    <div class="card-header-text">
+                        <h2>Smart Phrases</h2>
+                        <p>Type <strong>.abbreviation</strong> in your notes to expand saved text</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary" onclick="openPhraseEditor()">+ New Phrase</button>
+                    <div id="smart-phrases-list" style="margin-top:16px;"></div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -1533,6 +1557,7 @@
         document.getElementById('user-email').innerText = email;
         showInstallBanner();
         await loadUserTemplatesAndPrefs();
+        loadSmartPhrases(); // load phrases for dot-prefix expansion (no await, non-blocking)
         // Restore draft after templates are loaded (so dropdown values are available)
         await loadDraft();
     }
@@ -3269,8 +3294,10 @@
     async function loadTemplates() {
         if (!currentUser) return;
         if (!templatesLoaded) await loadUserTemplatesAndPrefs();
+        await loadSmartPhrases();
         renderBuiltinTypesList();
         renderCustomTemplatesList();
+        renderSmartPhrasesList();
     }
 
     const helpTexts = {
@@ -3618,6 +3645,207 @@
         }
     }
 
+    // ── Smart Phrases ──────────────────────────────────────
+    let smartPhrases = [];
+
+    async function loadSmartPhrases() {
+        if (!currentUser) return;
+        const { data, error } = await sb.from('smart_phrases').select('*').order('abbreviation');
+        if (!error && data) smartPhrases = data;
+    }
+
+    function renderSmartPhrasesList() {
+        const container = document.getElementById('smart-phrases-list');
+        if (!container) return;
+        if (smartPhrases.length === 0) {
+            container.innerHTML = '<p style="color:var(--gray-400);font-size:14px;">No smart phrases yet. Create one to quickly insert common text.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        smartPhrases.forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'template-list-item';
+            const preview = p.expansion.length > 60 ? p.expansion.substring(0, 60) + '...' : p.expansion;
+            item.innerHTML = `
+                <div class="template-list-info" style="display:flex;align-items:center;gap:10px;">
+                    <span class="smart-phrase-abbr">.${p.abbreviation}</span>
+                    <span class="smart-phrase-text">${preview}</span>
+                </div>
+                <div class="template-list-actions">
+                    <button class="btn btn-outline btn-sm" onclick="openPhraseEditor('${p.id}')">Edit</button>
+                    <button class="btn-delete-single" onclick="confirmDeletePhrase('${p.id}', '${p.abbreviation}')" title="Delete phrase">🗑️</button>
+                </div>`;
+            container.appendChild(item);
+        });
+    }
+
+    function openPhraseEditor(phraseId) {
+        if (!isOnline) { alert('You need to be online to manage smart phrases.'); return; }
+        const existing = document.getElementById('phrase-editor-overlay');
+        if (existing) existing.remove();
+        const phrase = phraseId ? smartPhrases.find(p => p.id === phraseId) : null;
+        const title = phrase ? 'Edit Smart Phrase' : 'New Smart Phrase';
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.id = 'phrase-editor-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-box" style="max-width:500px;">
+                <div class="confirm-title">${title}</div>
+                <div class="form-group">
+                    <label class="form-label">Abbreviation</label>
+                    <input class="form-input" type="text" id="phrase-abbr" value="${phrase?.abbreviation || ''}" placeholder="e.g., bp, rom, wbc" style="font-family:monospace;">
+                    <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Type <strong>.${phrase?.abbreviation || 'abbreviation'}</strong> in your notes to trigger</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expansion Text</label>
+                    <textarea id="phrase-expansion" class="form-input" style="min-height:100px;resize:vertical;" placeholder="The full text that will be inserted...">${phrase?.expansion || ''}</textarea>
+                </div>
+                <div class="confirm-actions">
+                    <button class="btn btn-outline" onclick="document.getElementById('phrase-editor-overlay').remove()">Cancel</button>
+                    <button class="btn btn-primary" onclick="savePhrase('${phraseId || ''}')">${phrase ? 'Save Changes' : 'Create Phrase'}</button>
+                </div>
+                <div class="auth-error" id="phrase-error" style="display:none;margin-top:12px;"></div>
+            </div>`;
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+        document.getElementById('phrase-abbr').focus();
+    }
+
+    async function savePhrase(phraseId) {
+        const abbr = document.getElementById('phrase-abbr').value.trim().toLowerCase().replace(/^\./, '');
+        const expansion = document.getElementById('phrase-expansion').value.trim();
+        const errEl = document.getElementById('phrase-error');
+        if (!abbr) { errEl.textContent = 'Abbreviation is required.'; errEl.style.display = 'block'; return; }
+        if (!expansion) { errEl.textContent = 'Expansion text is required.'; errEl.style.display = 'block'; return; }
+        if (/\s/.test(abbr)) { errEl.textContent = 'Abbreviation cannot contain spaces.'; errEl.style.display = 'block'; return; }
+        const data = { abbreviation: abbr, expansion, user_id: currentUser.id };
+        let error;
+        if (phraseId) {
+            ({ error } = await sb.from('smart_phrases').update({ abbreviation: abbr, expansion }).eq('id', phraseId));
+        } else {
+            ({ error } = await sb.from('smart_phrases').insert(data));
+        }
+        if (error) {
+            errEl.textContent = error.message.includes('duplicate') ? 'A phrase with that abbreviation already exists.' : 'Failed to save phrase.';
+            errEl.style.display = 'block';
+            return;
+        }
+        document.getElementById('phrase-editor-overlay').remove();
+        await loadSmartPhrases();
+        renderSmartPhrasesList();
+    }
+
+    function confirmDeletePhrase(id, abbr) {
+        showConfirm('Delete Smart Phrase', 'Delete the phrase ".' + abbr + '"?', () => deletePhrase(id));
+    }
+
+    async function deletePhrase(id) {
+        await sb.from('smart_phrases').delete().eq('id', id);
+        await loadSmartPhrases();
+        renderSmartPhrasesList();
+    }
+
+    // ── Smart Phrase Input Detection ────────────────────────
+    let phraseHighlightIndex = -1;
+
+    function handleSmartPhraseInput() {
+        const textarea = document.getElementById('note-input');
+        const cursorPos = textarea.selectionStart;
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const match = textBefore.match(/\.(\w+)$/);
+        if (!match || smartPhrases.length === 0) {
+            hidePhraseSuggestions();
+            return;
+        }
+        const query = match[1].toLowerCase();
+        const matches = smartPhrases.filter(p => p.abbreviation.toLowerCase().includes(query));
+        if (matches.length === 0) {
+            hidePhraseSuggestions();
+            return;
+        }
+        const replaceStart = cursorPos - match[0].length;
+        showPhraseSuggestions(matches, replaceStart, cursorPos);
+    }
+
+    function showPhraseSuggestions(matches, replaceStart, replaceEnd) {
+        const el = document.getElementById('phrase-suggestions');
+        phraseHighlightIndex = 0;
+        el.innerHTML = matches.map((p, i) => {
+            const preview = p.expansion.length > 50 ? p.expansion.substring(0, 50) + '...' : p.expansion;
+            return `<div class="phrase-suggestion-item${i === 0 ? ' highlighted' : ''}" data-phrase-id="${p.id}" data-start="${replaceStart}" data-end="${replaceEnd}">
+                <span class="phrase-suggestion-abbr">.${p.abbreviation}</span>
+                <span class="phrase-suggestion-text">${preview}</span>
+            </div>`;
+        }).join('');
+        // Position near cursor line inside textarea
+        const textarea = document.getElementById('note-input');
+        const rect = textarea.getBoundingClientRect();
+        const text = textarea.value.substring(0, textarea.selectionStart);
+        const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+        const paddingTop = parseFloat(getComputedStyle(textarea).paddingTop) || 0;
+        const lines = text.split('\n');
+        const charsPerLine = Math.floor((textarea.clientWidth - 24) / 8.5) || 60;
+        let visualLines = 0;
+        lines.forEach(line => { visualLines += Math.max(1, Math.ceil((line.length + 1) / charsPerLine)); });
+        const cursorY = rect.top + paddingTop + (visualLines * lineHeight) - textarea.scrollTop;
+        const dropdownTop = Math.min(cursorY + lineHeight + 2, rect.bottom - 4);
+        el.style.top = Math.max(rect.top, dropdownTop) + 'px';
+        el.style.left = rect.left + 'px';
+        el.style.minWidth = Math.min(rect.width, 400) + 'px';
+        el.classList.add('open');
+        el.querySelectorAll('.phrase-suggestion-item').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                insertPhrase(item.dataset.phraseId, +item.dataset.start, +item.dataset.end);
+            });
+        });
+    }
+
+    function hidePhraseSuggestions() {
+        const el = document.getElementById('phrase-suggestions');
+        el.classList.remove('open');
+        phraseHighlightIndex = -1;
+    }
+
+    function insertPhrase(phraseId, start, end) {
+        const phrase = smartPhrases.find(p => p.id === phraseId);
+        if (!phrase) return;
+        const textarea = document.getElementById('note-input');
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = before + phrase.expansion + after;
+        const newPos = start + phrase.expansion.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.focus();
+        hidePhraseSuggestions();
+        textarea.dispatchEvent(new Event('input'));
+    }
+
+    function handlePhraseKeydown(e) {
+        const el = document.getElementById('phrase-suggestions');
+        if (!el.classList.contains('open')) return;
+        const items = el.querySelectorAll('.phrase-suggestion-item');
+        if (items.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            phraseHighlightIndex = Math.min(phraseHighlightIndex + 1, items.length - 1);
+            items.forEach((it, i) => it.classList.toggle('highlighted', i === phraseHighlightIndex));
+            items[phraseHighlightIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            phraseHighlightIndex = Math.max(phraseHighlightIndex - 1, 0);
+            items.forEach((it, i) => it.classList.toggle('highlighted', i === phraseHighlightIndex));
+            items[phraseHighlightIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            const item = items[phraseHighlightIndex] || items[0];
+            insertPhrase(item.dataset.phraseId, +item.dataset.start, +item.dataset.end);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            hidePhraseSuggestions();
+        }
+    }
+
     // ── Delete ────────────────────────────────────────────
     function showConfirm(title, message, onConfirm) {
         const overlay = document.createElement('div');
@@ -3782,6 +4010,9 @@
     }
 
     document.getElementById('note-input').addEventListener('input', updateAssistButtonVisibility);
+    document.getElementById('note-input').addEventListener('input', handleSmartPhraseInput);
+    document.getElementById('note-input').addEventListener('keydown', handlePhraseKeydown);
+    document.getElementById('note-input').addEventListener('blur', () => { setTimeout(hidePhraseSuggestions, 150); });
 
     // Open the Assist panel
     function openAssist() {
