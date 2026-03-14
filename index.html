@@ -182,6 +182,10 @@
         .label-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; max-height: 150px; overflow-y: auto; z-index: 100; display: none; }
         .label-suggestions .suggestion-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--gray-700); }
         .label-suggestions .suggestion-item:hover { background: var(--gray-100); }
+        .history-label-editor { display: none; margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: 10px; border: 1px solid var(--gray-200); }
+        .history-label-editor.open { display: block; }
+        .history-label-editor .label-input-wrapper { max-width: 100%; }
+        .history-label-editor .history-label-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
         .btn-label-info { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--gray-300); background: var(--gray-100); color: var(--gray-400); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s, background 0.2s; font-family: 'DM Sans', sans-serif; padding: 0; margin-left: auto; }
         .btn-label-info:hover { border-color: #6366f1; color: #6366f1; background: rgba(99,102,241,0.08); }
         .label-guide-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -2869,12 +2873,25 @@
                         <div class="history-goals-section" id="history-goals-${note.id}"></div>
                         <div class="history-actions">
                             <button class="btn btn-outline" onclick="copyHistoryNote('${note.id}', event)">📋 Copy Note</button>
+                            <button class="btn btn-outline" onclick="toggleHistoryLabels('${note.id}')">🏷️ Labels</button>
                             <div class="export-wrapper">
                                 <button class="btn btn-outline" onclick="toggleExport(this)">📤 Export</button>
                                 <div class="export-dropdown">
                                     <button class="export-option" onclick="emailHistoryNote('${note.id}'); closeExport()">✉️ Email</button>
                                     <button class="export-option" onclick="downloadHistoryNotePdf('${note.id}'); closeExport()">📥 PDF</button>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="history-label-editor" id="label-editor-${note.id}">
+                            <div class="label-input-wrapper">
+                                <div class="label-input-container" id="labels-history-${note.id}" onclick="this.querySelector('.label-input').focus()">
+                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                </div>
+                                <div class="label-suggestions" id="suggestions-history-${note.id}"></div>
+                            </div>
+                            <div class="history-label-actions">
+                                <button class="btn btn-outline btn-sm" onclick="cancelHistoryLabels('${note.id}')">Cancel</button>
+                                <button class="btn btn-primary btn-sm" onclick="saveHistoryLabels('${note.id}')">Save Labels</button>
                             </div>
                         </div>
                     </div>`;
@@ -2914,6 +2931,70 @@
                 }
             }
         }
+    }
+
+    function toggleHistoryLabels(id) {
+        const editor = document.getElementById(`label-editor-${id}`);
+        const isOpen = editor.classList.contains('open');
+        if (isOpen) {
+            cancelHistoryLabels(id);
+            return;
+        }
+        editor.classList.add('open');
+        const containerId = `labels-history-${id}`;
+        clearLabels(containerId);
+        const note = historyNotes.find(n => n.id == id);
+        if (note && note.labels) {
+            note.labels.forEach(l => addLabel(containerId, l));
+        }
+        if (!editor.dataset.initialized) {
+            initLabelInput(containerId);
+            editor.dataset.initialized = 'true';
+        }
+    }
+
+    async function saveHistoryLabels(id) {
+        const containerId = `labels-history-${id}`;
+        const labels = getLabels(containerId);
+        const { error } = await sb.from('notes').update({ labels }).eq('id', id);
+        if (error) { alert('Failed to save labels.'); return; }
+        const note = historyNotes.find(n => n.id == id);
+        if (note) note.labels = labels;
+        // Update label badges in the header
+        const header = document.querySelector(`#note-${id} .history-item-left`);
+        if (header) {
+            header.querySelectorAll('.history-label-badge').forEach(el => el.remove());
+            const badgesHtml = renderLabelBadges(labels, 'history-label-badge');
+            if (badgesHtml) {
+                const preview = header.querySelector('.history-preview');
+                preview.insertAdjacentHTML('beforebegin', badgesHtml);
+            }
+        }
+        // Rebuild allLabels and filter dropdown
+        refreshLabelFilter();
+        cancelHistoryLabels(id);
+    }
+
+    function cancelHistoryLabels(id) {
+        const editor = document.getElementById(`label-editor-${id}`);
+        editor.classList.remove('open');
+        clearLabels(`labels-history-${id}`);
+    }
+
+    function refreshLabelFilter() {
+        const labelSet = new Set();
+        historyNotes.forEach(n => (n.labels || []).forEach(l => labelSet.add(l)));
+        allLabels = [...labelSet].sort();
+        const filterSelect = document.getElementById('label-filter-select');
+        const currentValue = filterSelect.value;
+        filterSelect.innerHTML = '<option value="">All Labels</option>';
+        allLabels.forEach(label => {
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            filterSelect.appendChild(opt);
+        });
+        filterSelect.value = currentValue;
     }
 
     async function copyHistoryNote(id, event) {
