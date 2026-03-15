@@ -363,6 +363,16 @@
 
         footer { text-align: center; padding: 24px; color: var(--gray-400); font-size: 12px; }
 
+        /* ── Medication Action Areas ─────────────── */
+        .med-top-actions { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .med-top-actions .btn-outline { flex: 1; justify-content: center; }
+        .btn-clear-meds { border: 1.5px solid var(--gray-200) !important; background: transparent !important; color: var(--gray-400) !important; font-weight: 500; white-space: nowrap; }
+        .btn-clear-meds:hover { border-color: var(--red) !important; color: var(--red) !important; background: transparent !important; }
+        .med-action-area { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .med-action-buttons { display: flex; gap: 12px; align-items: stretch; }
+        .med-action-buttons .btn { flex: 1; justify-content: center; }
+        .med-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+
         /* ── Medication List Cards ────────────────── */
         .med-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; transition: box-shadow 0.2s; }
         .med-card:hover { box-shadow: var(--shadow-md); }
@@ -552,6 +562,15 @@
             .med-card-delete { align-self: flex-end; font-size: 18px; padding: 8px 10px; }
             #view-medication .card-body .form-input { font-size: 16px; }
             #view-medication .card-body select { font-size: 16px; }
+
+            /* Medication action areas mobile */
+            .med-top-actions { gap: 10px; }
+            .med-top-actions .btn-outline { font-size: 15px; padding: 14px 16px; }
+            .btn-clear-meds { min-height: 50px; font-size: 14px !important; padding: 10px 14px !important; }
+            .med-action-buttons { flex-direction: column; }
+            .med-action-buttons .btn { width: 100%; }
+            .med-form-actions { flex-direction: column; align-items: stretch; }
+            .med-form-actions .btn-primary { width: 100%; }
 
             /* Med sub-tabs mobile */
             .med-sub-tab { padding: 10px 16px; font-size: 13px; }
@@ -1630,12 +1649,12 @@
             </div>
 
             <div id="med-current-view">
-            <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:8px;">
-                <button class="btn btn-sm" style="border:1.5px solid var(--gray-200); background:transparent; color:var(--gray-400); font-weight:500;" onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-400)';" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
+            <div class="med-top-actions">
+                <button class="btn btn-outline" id="bulk-med-btn" onclick="startBulkMedRecording()">🎤 Record Full Med List</button>
+                <button class="btn btn-sm btn-clear-meds" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
             </div>
 
-            <div id="bulk-med-section" style="margin-bottom:20px;">
-                <button class="btn btn-outline" id="bulk-med-btn" onclick="startBulkMedRecording()" style="width:100%; justify-content:center; gap:10px; padding:14px 20px; font-size:15px;">🎤 Record Full Med List</button>
+            <div id="bulk-med-section" style="margin-bottom:20px; display:none;">
                 <div id="bulk-med-recording" style="display:none;">
                     <button class="btn btn-stop" id="bulk-med-stop-btn" onclick="stopBulkMedRecording()" style="width:100%; justify-content:center; gap:10px; padding:14px 20px; font-size:15px;">■ Stop &amp; Process</button>
                     <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px;">
@@ -1691,15 +1710,17 @@
                         <label class="form-label">Notes / Instructions</label>
                         <input type="text" class="form-input" id="med-notes" placeholder="e.g. Take with food">
                     </div>
-                    <div style="display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap;">
-                        <button class="btn btn-record" id="med-mic-btn" onclick="startMedRecording()">🎤 Voice Input</button>
-                        <button class="btn btn-stop" id="med-mic-stop-btn" onclick="stopMedRecording()" style="display:none;">■ Stop</button>
-                        <div class="recording-status" id="med-recording-status" style="display:none;">
-                            <div class="recording-dot"></div>
-                            Listening...
+                    <div class="med-form-actions">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-record" id="med-mic-btn" onclick="startMedRecording()">🎤 Voice Input</button>
+                            <button class="btn btn-stop" id="med-mic-stop-btn" onclick="stopMedRecording()" style="display:none;">■ Stop</button>
+                            <div class="recording-status" id="med-recording-status" style="display:none;">
+                                <div class="recording-dot"></div>
+                                Listening...
+                            </div>
+                            <span id="med-voice-status" style="font-size:13px; color:var(--green); display:none;"></span>
                         </div>
-                        <span id="med-voice-status" style="font-size:13px; color:var(--green); display:none;"></span>
-                        <button class="btn btn-primary" onclick="addMedication()" style="margin-left:auto;">+ Add Medication</button>
+                        <button class="btn btn-primary" onclick="addMedication()">+ Add Medication</button>
                     </div>
                 </div>
             </div>
@@ -1712,23 +1733,23 @@
                 <div id="med-list-items"></div>
             </div>
 
-            <div id="med-export-row" style="display:none; margin-top:16px;">
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <div class="label-input-wrapper" style="min-width:0;">
-                        <div class="label-input-container" id="labels-med" onclick="this.querySelector('.label-input').focus()">
-                            <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
-                        </div>
-                        <div class="label-suggestions" id="suggestions-med"></div>
+            <div id="med-export-row" class="med-action-area" style="display:none;">
+                <div class="label-input-wrapper" style="min-width:0; max-width:100%;">
+                    <div class="label-input-container" id="labels-med" onclick="this.querySelector('.label-input').focus()">
+                        <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
                     </div>
-                    <div class="export-wrapper">
-                        <button class="btn btn-primary" onclick="toggleExport(this)">📤 Export Med List</button>
+                    <div class="label-suggestions" id="suggestions-med"></div>
+                </div>
+                <div class="med-action-buttons">
+                    <div class="export-wrapper" style="flex:1;">
+                        <button class="btn btn-primary" onclick="toggleExport(this)" style="width:100%;">📤 Export Med List</button>
                         <div class="export-dropdown">
                             <button class="export-option" onclick="downloadMedPdf(); closeExport()">📥 Download PDF</button>
                             <button class="export-option" onclick="emailMedList(); closeExport()">✉️ Email</button>
                             <button class="export-option" onclick="printMedList(); closeExport()">🖨️ Print</button>
                         </div>
                     </div>
-                    <button class="btn btn-outline" onclick="saveMedListToHistory()" style="gap:6px;">📋 Save to History</button>
+                    <button class="btn btn-outline" onclick="saveMedListToHistory()" style="flex:1;">📋 Save to History</button>
                 </div>
             </div>
             </div><!-- end med-current-view -->
@@ -5078,7 +5099,7 @@
         }
 
         emptyEl.style.display = 'none';
-        exportRow.style.display = 'block';
+        exportRow.style.display = 'flex';
 
         listEl.innerHTML = meds.map(med => {
             const details = [med.dose, med.frequency, med.route].filter(Boolean).join('<span class="med-detail-sep">·</span>');
@@ -5220,6 +5241,7 @@
                 bulkMedRecorder.start();
 
                 document.getElementById('bulk-med-btn').style.display = 'none';
+                document.getElementById('bulk-med-section').style.display = 'block';
                 document.getElementById('bulk-med-recording').style.display = 'block';
                 document.getElementById('bulk-med-stop-btn').style.display = 'flex';
                 document.getElementById('bulk-med-processing-btn').style.display = 'none';
@@ -5239,6 +5261,7 @@
 
     function resetBulkMedUI() {
         document.getElementById('bulk-med-btn').style.display = 'flex';
+        document.getElementById('bulk-med-section').style.display = 'none';
         document.getElementById('bulk-med-recording').style.display = 'none';
         document.getElementById('bulk-med-stop-btn').style.display = 'none';
         document.getElementById('bulk-med-processing-btn').style.display = 'none';
