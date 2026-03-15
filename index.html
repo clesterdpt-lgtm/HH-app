@@ -390,6 +390,30 @@
         .med-review-item-delete:hover { background: var(--red-light); color: var(--red); }
         .med-review-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
+        /* ── Med Sub-Tabs ────────────────── */
+        .med-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
+        .med-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+        .med-sub-tab:hover { color: var(--gray-600); }
+        .med-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+        /* ── Med History Cards ────────────────── */
+        .med-history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; background: var(--white); }
+        .med-history-item:hover { box-shadow: var(--shadow-md); }
+        .med-history-item-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; gap: 12px; }
+        .med-history-item-header:hover { background: var(--gray-100); }
+        .med-history-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; flex-wrap: wrap; }
+        .med-history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .med-history-title { font-weight: 600; font-size: 14px; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .med-history-count { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+        .med-history-time { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+        .med-history-chevron { font-size: 10px; color: var(--gray-400); transition: transform 0.2s; }
+        .med-history-chevron.open { transform: rotate(180deg); }
+        .med-history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
+        .med-history-item-body.open { display: block; }
+        .med-history-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .med-history-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .med-history-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
@@ -528,6 +552,15 @@
             .med-card-delete { align-self: flex-end; font-size: 18px; padding: 8px 10px; }
             #view-medication .card-body .form-input { font-size: 16px; }
             #view-medication .card-body select { font-size: 16px; }
+
+            /* Med sub-tabs mobile */
+            .med-sub-tab { padding: 10px 16px; font-size: 13px; }
+            .med-history-item-header { padding: 14px 16px; gap: 10px; }
+            .med-history-item-left { gap: 6px; }
+            .med-history-title { max-width: 140px; font-size: 13px; }
+            .med-history-item-body { padding: 0 16px 16px; }
+            .med-history-actions { flex-direction: column; }
+            .med-history-actions .btn { width: 100%; justify-content: center; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -1587,8 +1620,17 @@
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <div>
                     <div class="page-title">Medication List</div>
-                    <div class="page-subtitle">Build a medication list for the visit.</div>
+                    <div class="page-subtitle">Build and manage medication lists for visits.</div>
                 </div>
+            </div>
+
+            <div class="med-sub-tabs">
+                <button class="med-sub-tab active" onclick="switchMedSubTab('current')">💊 Current List</button>
+                <button class="med-sub-tab" onclick="switchMedSubTab('history')">📋 History</button>
+            </div>
+
+            <div id="med-current-view">
+            <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:8px;">
                 <button class="btn btn-sm" style="border:1.5px solid var(--gray-200); background:transparent; color:var(--gray-400); font-weight:500;" onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-400)';" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
             </div>
 
@@ -1672,6 +1714,12 @@
 
             <div id="med-export-row" style="display:none; margin-top:16px;">
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div class="label-input-wrapper" style="min-width:0;">
+                        <div class="label-input-container" id="labels-med" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-med"></div>
+                    </div>
                     <div class="export-wrapper">
                         <button class="btn btn-primary" onclick="toggleExport(this)">📤 Export Med List</button>
                         <div class="export-dropdown">
@@ -1679,6 +1727,27 @@
                             <button class="export-option" onclick="emailMedList(); closeExport()">✉️ Email</button>
                             <button class="export-option" onclick="printMedList(); closeExport()">🖨️ Print</button>
                         </div>
+                    </div>
+                    <button class="btn btn-outline" onclick="saveMedListToHistory()" style="gap:6px;">📋 Save to History</button>
+                </div>
+            </div>
+            </div><!-- end med-current-view -->
+
+            <div id="med-history-view" style="display:none;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <input type="text" class="form-input history-search" id="med-history-search" placeholder="Search by title or medication..." oninput="applyMedHistoryFilters()" style="flex:1; max-width:360px;">
+                    <div class="select-wrapper" style="min-width:160px;">
+                        <select id="med-history-label-filter" onchange="applyMedHistoryFilters()">
+                            <option value="">All Labels</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllMedHistory()" style="margin-left:auto;">🗑️ Clear All</button>
+                </div>
+                <div id="med-history-list">
+                    <div class="med-history-empty">
+                        <div class="med-history-empty-icon">📋</div>
+                        <p>No saved medication lists yet</p>
+                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save snapshots</p>
                     </div>
                 </div>
             </div>
@@ -1906,7 +1975,14 @@
             moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
             // Show selected module view
             document.getElementById(`view-${module}`).style.display = 'block';
-            if (module === 'medication') renderMedList();
+            if (module === 'medication') {
+                renderMedList();
+                // Initialize label input if not already initialized
+                if (!document.getElementById('labels-med').dataset.initialized) {
+                    initLabelInput('labels-med');
+                    document.getElementById('labels-med').dataset.initialized = 'true';
+                }
+            }
         }
     }
 
@@ -1920,7 +1996,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 5);
+            const req = indexedDB.open('carenote', 6);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -1937,6 +2013,9 @@
                 }
                 if (!db.objectStoreNames.contains('medLists')) {
                     db.createObjectStore('medLists', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains('medHistory')) {
+                    db.createObjectStore('medHistory', { keyPath: 'id', autoIncrement: true });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -5395,6 +5474,379 @@
         document.body.appendChild(printArea);
         window.print();
         setTimeout(() => printArea.remove(), 1000);
+    }
+
+    // ── Med Sub-Tab Switching ──────────────────────────────
+    function switchMedSubTab(tab) {
+        document.querySelectorAll('.med-sub-tab').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.med-sub-tab[onclick="switchMedSubTab('${tab}')"]`).classList.add('active');
+        document.getElementById('med-current-view').style.display = tab === 'current' ? 'block' : 'none';
+        document.getElementById('med-history-view').style.display = tab === 'history' ? 'block' : 'none';
+        if (tab === 'history') {
+            loadMedHistory().then(() => renderMedHistory());
+        }
+    }
+
+    // ── Med History (IndexedDB) ──────────────────────────────
+    let medHistoryData = [];
+
+    async function loadMedHistory() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medHistory', 'readonly');
+            const store = tx.objectStore('medHistory');
+            const req = store.getAll();
+            req.onsuccess = () => {
+                medHistoryData = (req.result || []).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+                resolve(medHistoryData);
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function saveMedHistoryEntry(entry) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medHistory', 'readwrite');
+            const store = tx.objectStore('medHistory');
+            const req = store.add(entry);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function deleteMedHistoryEntry(id) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medHistory', 'readwrite');
+            const store = tx.objectStore('medHistory');
+            const req = store.delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function clearAllMedHistory() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medHistory', 'readwrite');
+            const store = tx.objectStore('medHistory');
+            const req = store.clear();
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // ── Save to History ──────────────────────────────
+    async function saveMedListToHistory() {
+        const meds = await loadMedsFromDB();
+        if (meds.length === 0) {
+            alert('No medications to save. Add medications to the list first.');
+            return;
+        }
+
+        const labels = getLabels('labels-med');
+        const now = new Date();
+        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const title = prompt('Name this medication list (or leave blank for date):', '') || defaultTitle;
+
+        const entry = {
+            title: title.trim(),
+            medications: meds.map(m => ({ name: m.name, dose: m.dose, frequency: m.frequency, route: m.route, notes: m.notes })),
+            labels: labels,
+            savedAt: now.toISOString()
+        };
+
+        await saveMedHistoryEntry(entry);
+
+        // Show brief success feedback
+        const btn = document.querySelector('[onclick="saveMedListToHistory()"]');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Saved!';
+            btn.style.color = 'var(--green)';
+            btn.style.borderColor = 'var(--green)';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }, 2000);
+        }
+    }
+
+    // ── Render Med History ──────────────────────────────
+    function renderMedHistory(searchQuery, filterLabel) {
+        const listEl = document.getElementById('med-history-list');
+        let filtered = [...medHistoryData];
+
+        // Apply search filter
+        if (searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(entry => {
+                if (entry.title.toLowerCase().includes(q)) return true;
+                return entry.medications.some(m => m.name.toLowerCase().includes(q));
+            });
+        }
+
+        // Apply label filter
+        if (filterLabel) {
+            filtered = filtered.filter(entry => entry.labels && entry.labels.includes(filterLabel));
+        }
+
+        if (filtered.length === 0) {
+            const msg = (searchQuery || filterLabel) ? 'No matching medication lists found' : 'No saved medication lists yet';
+            listEl.innerHTML = `<div class="med-history-empty"><div class="med-history-empty-icon">📋</div><p>${msg}</p>${!(searchQuery || filterLabel) ? '<p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save snapshots</p>' : ''}</div>`;
+            return;
+        }
+
+        // Group by day
+        const groups = {};
+        filtered.forEach(entry => {
+            const dateKey = new Date(entry.savedAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(entry);
+        });
+
+        listEl.innerHTML = '';
+        Object.entries(groups).forEach(([dateLabel, entries]) => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'day-group';
+            const count = entries.length;
+            groupEl.innerHTML = `
+                <div class="day-group-header">
+                    <div>
+                        <div class="day-group-title">${dateLabel}</div>
+                        <div class="day-group-count">${count} ${count === 1 ? 'list' : 'lists'}</div>
+                    </div>
+                </div>`;
+
+            entries.forEach(entry => {
+                const time = new Date(entry.savedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const medCount = entry.medications.length;
+                const item = document.createElement('div');
+                item.className = 'med-history-item';
+                item.id = `med-hist-${entry.id}`;
+                item.innerHTML = `
+                    <div class="med-history-item-header" onclick="toggleMedHistory(${entry.id})">
+                        <div class="med-history-item-left">
+                            <span class="med-history-title">${escapeHtml(entry.title)}</span>
+                            <span class="med-history-count">${medCount} med${medCount !== 1 ? 's' : ''}</span>
+                            ${renderLabelBadges(entry.labels, 'history-label-badge')}
+                        </div>
+                        <div class="med-history-item-right">
+                            <span class="med-history-time">${time}</span>
+                            <span class="med-history-chevron" id="med-chevron-${entry.id}">▼</span>
+                        </div>
+                    </div>
+                    <div class="med-history-item-body" id="med-body-${entry.id}">
+                        ${entry.medications.map(med => {
+                            const details = [med.dose, med.frequency, med.route].filter(Boolean).join('<span class="med-detail-sep">·</span>');
+                            return `<div class="med-card" style="margin-bottom:8px;">
+                                <div class="med-card-info">
+                                    <div class="med-card-name">${escapeHtml(med.name)}</div>
+                                    ${details ? `<div class="med-card-details">${details}</div>` : ''}
+                                    ${med.notes ? `<div class="med-card-notes">${escapeHtml(med.notes)}</div>` : ''}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                        <div class="med-history-actions">
+                            <button class="btn btn-primary btn-sm" onclick="loadMedHistoryEntry(${entry.id})">📥 Load to Current</button>
+                            <button class="btn btn-outline btn-sm" onclick="exportMedHistoryPdf(${entry.id})">📄 PDF</button>
+                            <button class="btn btn-danger btn-sm" onclick="confirmDeleteMedHistory(${entry.id})">🗑️ Delete</button>
+                        </div>
+                    </div>`;
+                groupEl.appendChild(item);
+            });
+            listEl.appendChild(groupEl);
+        });
+
+        // Refresh label filter dropdown
+        refreshMedHistoryLabelFilter();
+    }
+
+    function applyMedHistoryFilters() {
+        const search = document.getElementById('med-history-search').value.trim();
+        const label = document.getElementById('med-history-label-filter').value;
+        renderMedHistory(search, label);
+    }
+
+    function toggleMedHistory(id) {
+        const body = document.getElementById(`med-body-${id}`);
+        body.classList.toggle('open');
+        document.getElementById(`med-chevron-${id}`).classList.toggle('open');
+    }
+
+    async function loadMedHistoryEntry(id) {
+        const entry = medHistoryData.find(e => e.id === id);
+        if (!entry) return;
+
+        showConfirm('Load Medication List', `Replace the current medication list with "${escapeHtml(entry.title)}"? This will clear all current medications.`, async () => {
+            // Clear current list
+            await clearAllMedsFromDB();
+            // Add each medication from history
+            for (const med of entry.medications) {
+                await saveMedToDB({
+                    name: med.name || '',
+                    dose: med.dose || '',
+                    frequency: med.frequency || '',
+                    route: med.route || 'Oral',
+                    notes: med.notes || '',
+                    createdAt: new Date().toISOString()
+                });
+            }
+            // Load labels
+            clearLabels('labels-med');
+            if (entry.labels && entry.labels.length > 0) {
+                entry.labels.forEach(l => addLabel('labels-med', l));
+            }
+            // Switch to current tab and render
+            switchMedSubTab('current');
+            await renderMedList();
+        });
+    }
+
+    function confirmDeleteMedHistory(id) {
+        const entry = medHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        showConfirm('Delete Medication List', `Delete "${escapeHtml(entry.title)}" from history? This cannot be undone.`, async () => {
+            await deleteMedHistoryEntry(id);
+            await loadMedHistory();
+            renderMedHistory(
+                document.getElementById('med-history-search').value.trim(),
+                document.getElementById('med-history-label-filter').value
+            );
+        });
+    }
+
+    function confirmDeleteAllMedHistory() {
+        showConfirm('Clear All History', 'Delete all saved medication lists from history? This cannot be undone.', async () => {
+            await clearAllMedHistory();
+            medHistoryData = [];
+            renderMedHistory();
+        });
+    }
+
+    async function exportMedHistoryPdf(id) {
+        const entry = medHistoryData.find(e => e.id === id);
+        if (!entry) return;
+
+        if (!window.jspdf) {
+            alert('PDF library is still loading. Please try again in a moment.');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) {
+                doc.addPage();
+                y = margin;
+            }
+        }
+
+        // Header
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text('Medication List', pageWidth - margin, 12, { align: 'right' });
+        y = 28;
+
+        // Title and date
+        doc.setFontSize(12);
+        doc.setTextColor(15, 39, 68);
+        doc.text(entry.title, margin, y);
+        y += 6;
+
+        const savedDate = new Date(entry.savedAt);
+        const dateStr = savedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const timeStr = savedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text('Saved: ' + dateStr + ' at ' + timeStr, margin, y);
+        y += 4;
+
+        if (entry.labels && entry.labels.length > 0) {
+            doc.text('Labels: ' + entry.labels.join(', '), margin, y);
+            y += 4;
+        }
+        y += 6;
+
+        // Medications
+        entry.medications.forEach((med, i) => {
+            checkPageBreak(18);
+            if (i > 0) {
+                doc.setDrawColor(220);
+                doc.setLineDashPattern([2, 2], 0);
+                doc.line(margin, y, pageWidth - margin, y);
+                doc.setLineDashPattern([], 0);
+                y += 5;
+            }
+
+            doc.setFontSize(11);
+            doc.setTextColor(15, 39, 68);
+            doc.text(med.name, margin, y);
+            y += 5;
+
+            const details = [med.dose, med.frequency, med.route].filter(Boolean).join(' · ');
+            if (details) {
+                doc.setFontSize(10);
+                doc.setTextColor(80);
+                doc.text(details, margin, y);
+                y += 5;
+            }
+
+            if (med.notes) {
+                doc.setFontSize(9);
+                doc.setTextColor(120);
+                const noteLines = doc.splitTextToSize('Notes: ' + med.notes, maxWidth);
+                noteLines.forEach(line => {
+                    checkPageBreak(4.5);
+                    doc.text(line, margin, y);
+                    y += 4.5;
+                });
+            }
+            y += 3;
+        });
+
+        // Page numbers
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        doc.save('CareNote-MedHistory-' + entry.title.replace(/[^a-zA-Z0-9]/g, '-') + '.pdf');
+    }
+
+    function refreshMedHistoryLabelFilter() {
+        const select = document.getElementById('med-history-label-filter');
+        const currentVal = select.value;
+        const labelSet = new Set();
+        medHistoryData.forEach(entry => {
+            if (entry.labels) entry.labels.forEach(l => labelSet.add(l));
+        });
+        const labels = [...labelSet].sort();
+
+        // Preserve current selection
+        select.innerHTML = '<option value="">All Labels</option>';
+        labels.forEach(label => {
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            if (label === currentVal) opt.selected = true;
+            select.appendChild(opt);
+        });
     }
 
     // ── PDF Generation ──────────────────────────────────────────────
