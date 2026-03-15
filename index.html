@@ -1895,6 +1895,8 @@
         loadSmartPhrases(); // load phrases for dot-prefix expansion (no await, non-blocking)
         // Restore draft after templates are loaded (so dropdown values are available)
         await loadDraft();
+        // Restore last active view AFTER auth + data loading to avoid race conditions
+        restoreActiveView();
     }
 
     function switchTab(tab) {
@@ -2855,7 +2857,8 @@
     initLabelInput('labels-note');
 
     // ── Restore last active module/tab on page load ──────
-    (function restoreActiveView() {
+    // Called from showApp() AFTER auth + templates are loaded to avoid race conditions
+    function restoreActiveView() {
         const savedModule = localStorage.getItem('carenote-active-module');
         const savedTab = localStorage.getItem('carenote-active-tab');
         if (savedModule && savedModule !== 'notes') {
@@ -2878,7 +2881,7 @@
         } else if (savedTab && savedTab !== 'new') {
             showTab(savedTab);
         }
-    })();
+    }
 
     // ── Note Generation ───────────────────────────────────
     async function generateNote() {
