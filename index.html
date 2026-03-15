@@ -1735,8 +1735,8 @@
 
             <div id="med-history-view" style="display:none;">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                    <input type="text" class="form-input history-search" id="med-history-search" placeholder="Search by title or medication..." oninput="applyMedHistoryFilters()" style="flex:1; max-width:360px;">
-                    <div class="select-wrapper" style="min-width:160px;">
+                    <input type="text" class="form-input history-search" id="med-history-search" placeholder="Search by title or medication..." oninput="applyMedHistoryFilters()" style="flex:1; min-width:180px; max-width:360px;">
+                    <div class="select-wrapper" style="min-width:140px; flex:1; max-width:200px;">
                         <select id="med-history-label-filter" onchange="applyMedHistoryFilters()">
                             <option value="">All Labels</option>
                         </select>
@@ -5517,58 +5517,43 @@
         }
     }
 
-    // ── Med History (IndexedDB) ──────────────────────────────
+    // ── Med History (Supabase) ──────────────────────────────
     let medHistoryData = [];
 
     async function loadMedHistory() {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction('medHistory', 'readonly');
-            const store = tx.objectStore('medHistory');
-            const req = store.getAll();
-            req.onsuccess = () => {
-                medHistoryData = (req.result || []).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                resolve(medHistoryData);
-            };
-            req.onerror = () => reject(req.error);
-        });
+        if (!currentUser) { medHistoryData = []; return medHistoryData; }
+        const { data, error } = await sb.from('med_history')
+            .select('*')
+            .order('saved_at', { ascending: false });
+        if (error) { console.log('Med history load error:', error.message); medHistoryData = []; return medHistoryData; }
+        medHistoryData = data || [];
+        return medHistoryData;
     }
 
     async function saveMedHistoryEntry(entry) {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction('medHistory', 'readwrite');
-            const store = tx.objectStore('medHistory');
-            const req = store.add(entry);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
+        if (!currentUser) { alert('Please sign in to save medication history.'); return null; }
+        const { data, error } = await sb.from('med_history')
+            .insert(entry)
+            .select()
+            .single();
+        if (error) { console.log('Med history save error:', error.message); return null; }
+        return data;
     }
 
     async function deleteMedHistoryEntry(id) {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction('medHistory', 'readwrite');
-            const store = tx.objectStore('medHistory');
-            const req = store.delete(id);
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
-        });
+        const { error } = await sb.from('med_history').delete().eq('id', id);
+        if (error) console.log('Med history delete error:', error.message);
     }
 
     async function clearAllMedHistory() {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction('medHistory', 'readwrite');
-            const store = tx.objectStore('medHistory');
-            const req = store.clear();
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
-        });
+        if (!currentUser) return;
+        const { error } = await sb.from('med_history').delete().eq('user_id', currentUser.id);
+        if (error) console.log('Med history clear error:', error.message);
     }
 
     // ── Save to History ──────────────────────────────
     async function saveMedListToHistory() {
+        if (!currentUser) { alert('Please sign in to save medication history.'); return; }
         const meds = await loadMedsFromDB();
         if (meds.length === 0) {
             alert('No medications to save. Add medications to the list first.');
@@ -5581,10 +5566,11 @@
         const title = prompt('Name this medication list (or leave blank for date):', '') || defaultTitle;
 
         const entry = {
+            user_id: currentUser.id,
             title: title.trim(),
             medications: meds.map(m => ({ name: m.name, dose: m.dose, frequency: m.frequency, route: m.route, notes: m.notes })),
             labels: labels,
-            savedAt: now.toISOString()
+            saved_at: now.toISOString()
         };
 
         await saveMedHistoryEntry(entry);
@@ -5632,7 +5618,7 @@
         // Group by day
         const groups = {};
         filtered.forEach(entry => {
-            const dateKey = new Date(entry.savedAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            const dateKey = new Date(entry.saved_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             if (!groups[dateKey]) groups[dateKey] = [];
             groups[dateKey].push(entry);
         });
@@ -5651,7 +5637,7 @@
                 </div>`;
 
             entries.forEach(entry => {
-                const time = new Date(entry.savedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const medCount = entry.medications.length;
                 const item = document.createElement('div');
                 item.className = 'med-history-item';
@@ -5795,7 +5781,7 @@
         doc.text(entry.title, margin, y);
         y += 6;
 
-        const savedDate = new Date(entry.savedAt);
+        const savedDate = new Date(entry.saved_at);
         const dateStr = savedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         const timeStr = savedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         doc.setFontSize(10);
