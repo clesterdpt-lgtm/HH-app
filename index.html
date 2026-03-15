@@ -375,6 +375,21 @@
         .med-card-delete { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; flex-shrink: 0; }
         .med-card-delete:hover { background: var(--red-light); color: var(--red); }
 
+        .med-review-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+        .med-review-box { background: var(--white); border-radius: 16px; padding: 28px; max-width: 540px; width: 100%; box-shadow: var(--shadow-lg); max-height: 80vh; display: flex; flex-direction: column; }
+        .med-review-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 6px; }
+        .med-review-subtitle { font-size: 13px; color: var(--gray-400); margin-bottom: 16px; }
+        .med-review-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
+        .med-review-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-200); }
+        .med-review-item:last-child { border-bottom: none; }
+        .med-review-item-info { flex: 1; min-width: 0; }
+        .med-review-item-name { font-weight: 600; font-size: 14px; color: var(--navy); }
+        .med-review-item-details { font-size: 13px; color: var(--gray-600); margin-top: 2px; }
+        .med-review-item-notes { font-size: 12px; color: var(--gray-500); margin-top: 2px; font-style: italic; }
+        .med-review-item-delete { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; flex-shrink: 0; }
+        .med-review-item-delete:hover { background: var(--red-light); color: var(--red); }
+        .med-review-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
@@ -1575,6 +1590,22 @@
                     <div class="page-subtitle">Build a medication list for the visit.</div>
                 </div>
                 <button class="btn btn-sm" style="border:1.5px solid var(--gray-200); background:transparent; color:var(--gray-400); font-weight:500;" onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-400)';" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
+            </div>
+
+            <div id="bulk-med-section" style="margin-bottom:20px;">
+                <button class="btn btn-outline" id="bulk-med-btn" onclick="startBulkMedRecording()" style="width:100%; justify-content:center; gap:10px; padding:14px 20px; font-size:15px;">🎤 Record Full Med List</button>
+                <div id="bulk-med-recording" style="display:none;">
+                    <button class="btn btn-stop" id="bulk-med-stop-btn" onclick="stopBulkMedRecording()" style="width:100%; justify-content:center; gap:10px; padding:14px 20px; font-size:15px;">■ Stop &amp; Process</button>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px;">
+                        <div class="recording-status" style="display:flex;">
+                            <div class="recording-dot"></div>
+                            Recording... <span id="bulk-med-timer">0:00</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" id="bulk-med-processing-btn" disabled style="display:none; width:100%; justify-content:center; gap:10px; padding:14px 20px; font-size:15px; background:var(--gray-200); color:var(--gray-500); cursor:not-allowed;">
+                    <div class="spinner" style="width:16px; height:16px; border-width:2px;"></div> Processing...
+                </button>
             </div>
 
             <div class="card">
@@ -5062,6 +5093,163 @@
             }
         };
         medRecorder.stop();
+    }
+
+    // ── Bulk Med List Recording ────────────────────────────
+    let bulkMedRecorder = null;
+    let bulkMedAudioChunks = [];
+    let bulkMedTimerInterval = null;
+    let bulkMedStartTime = 0;
+
+    function startBulkMedRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                bulkMedRecorder = new MediaRecorder(stream);
+                bulkMedAudioChunks = [];
+                bulkMedRecorder.ondataavailable = e => { if (e.data.size > 0) bulkMedAudioChunks.push(e.data); };
+                bulkMedRecorder.start();
+
+                document.getElementById('bulk-med-btn').style.display = 'none';
+                document.getElementById('bulk-med-recording').style.display = 'block';
+                document.getElementById('bulk-med-processing-btn').style.display = 'none';
+
+                // Start timer
+                bulkMedStartTime = Date.now();
+                document.getElementById('bulk-med-timer').innerText = '0:00';
+                bulkMedTimerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - bulkMedStartTime) / 1000);
+                    const mins = Math.floor(elapsed / 60);
+                    const secs = String(elapsed % 60).padStart(2, '0');
+                    document.getElementById('bulk-med-timer').innerText = `${mins}:${secs}`;
+                }, 1000);
+            })
+            .catch(() => alert('Could not access microphone. Please check permissions.'));
+    }
+
+    function resetBulkMedUI() {
+        document.getElementById('bulk-med-btn').style.display = 'flex';
+        document.getElementById('bulk-med-recording').style.display = 'none';
+        document.getElementById('bulk-med-processing-btn').style.display = 'none';
+    }
+
+    async function stopBulkMedRecording() {
+        if (!bulkMedRecorder || bulkMedRecorder.state === 'inactive') return;
+        clearInterval(bulkMedTimerInterval);
+
+        bulkMedRecorder.onstop = async () => {
+            const blob = new Blob(bulkMedAudioChunks, { type: 'audio/webm' });
+            bulkMedRecorder.stream.getTracks().forEach(t => t.stop());
+
+            // Show processing state
+            document.getElementById('bulk-med-recording').style.display = 'none';
+            document.getElementById('bulk-med-processing-btn').style.display = 'flex';
+
+            try {
+                // Step 1: Transcribe
+                const formData = new FormData();
+                formData.append('audio', blob, 'recording.webm');
+                const { data: transcribeData, error: transcribeError } = await sb.functions.invoke('transcribe', { body: formData });
+                if (transcribeError) throw new Error('Transcription failed. Please try again.');
+                const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
+                if (!transcript || !transcript.trim()) throw new Error('No speech detected. Please try again.');
+
+                // Step 2: Parse bulk medications
+                const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+                    body: { transcript, bulk: true }
+                });
+                if (parseError) throw new Error('Could not interpret recording. Please try again or add medications manually.');
+
+                const parsed = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
+                const meds = parsed.medications || parsed;
+
+                if (!Array.isArray(meds) || meds.length === 0) {
+                    throw new Error('No medications found in recording. Please try again.');
+                }
+
+                // Step 3: Show review modal
+                resetBulkMedUI();
+                showBulkMedReview(meds);
+
+            } catch (err) {
+                alert(err.message);
+                resetBulkMedUI();
+            }
+        };
+        bulkMedRecorder.stop();
+    }
+
+    function showBulkMedReview(meds) {
+        let reviewMeds = [...meds];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'med-review-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        function renderReview() {
+            overlay.innerHTML = `
+                <div class="med-review-box">
+                    <div class="med-review-title">Review Medications</div>
+                    <div class="med-review-subtitle">${reviewMeds.length} medication${reviewMeds.length !== 1 ? 's' : ''} found — remove any incorrect entries before adding</div>
+                    <div class="med-review-list">
+                        ${reviewMeds.length === 0 ? '<div style="text-align:center; padding:20px; color:var(--gray-400);">No medications to add</div>' :
+                        reviewMeds.map((med, i) => {
+                            const details = [med.dose, med.frequency, med.route].filter(Boolean).join(' · ');
+                            return `<div class="med-review-item">
+                                <div class="med-review-item-info">
+                                    <div class="med-review-item-name">${escapeHtml(med.name || 'Unknown')}</div>
+                                    ${details ? `<div class="med-review-item-details">${escapeHtml(details)}</div>` : ''}
+                                    ${med.notes ? `<div class="med-review-item-notes">${escapeHtml(med.notes)}</div>` : ''}
+                                </div>
+                                <button class="med-review-item-delete" data-index="${i}" title="Remove">🗑️</button>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                    <div class="med-review-actions">
+                        <button class="btn btn-outline" id="bulk-med-cancel">Cancel</button>
+                        <button class="btn btn-primary" id="bulk-med-add-all" ${reviewMeds.length === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>Add All to List</button>
+                    </div>
+                </div>`;
+
+            // Bind events
+            overlay.querySelector('#bulk-med-cancel').onclick = () => overlay.remove();
+            const addBtn = overlay.querySelector('#bulk-med-add-all');
+            if (reviewMeds.length > 0) {
+                addBtn.onclick = async () => {
+                    addBtn.disabled = true;
+                    addBtn.innerText = 'Adding...';
+                    for (const med of reviewMeds) {
+                        await saveMedToDB({
+                            name: med.name || '',
+                            dose: med.dose || '',
+                            frequency: med.frequency || '',
+                            route: med.route || 'Oral',
+                            notes: med.notes || '',
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                    await renderMedList();
+                    overlay.remove();
+                };
+            }
+            overlay.querySelectorAll('.med-review-item-delete').forEach(btn => {
+                btn.onclick = () => {
+                    reviewMeds.splice(parseInt(btn.dataset.index), 1);
+                    renderReview();
+                };
+            });
+        }
+
+        renderReview();
+        document.body.appendChild(overlay);
+
+        // Dismiss on Escape
+        const escHandler = (e) => {
+            if (e.key === 'Escape' && document.body.contains(overlay)) {
+                overlay.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
     }
 
     // ── Med List PDF Export ──────────────────────────────
