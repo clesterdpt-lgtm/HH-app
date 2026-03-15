@@ -5033,8 +5033,7 @@
                 // Step 2: Parse medication from transcript
                 statusEl.innerText = 'Parsing medication...';
                 const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
-                    body: JSON.stringify({ transcript }),
-                    headers: { 'Content-Type': 'application/json' }
+                    body: { transcript }
                 });
                 if (parseError) throw new Error(parseError.message || 'Parse failed');
 
