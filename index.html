@@ -363,6 +363,31 @@
 
         footer { text-align: center; padding: 24px; color: var(--gray-400); font-size: 12px; }
 
+        /* ── Medication List Cards ────────────────── */
+        .med-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; transition: box-shadow 0.2s; }
+        .med-card:hover { box-shadow: var(--shadow-md); }
+        .med-card-info { flex: 1; min-width: 0; }
+        .med-card-name { font-weight: 600; font-size: 15px; color: var(--navy); margin-bottom: 4px; }
+        .med-card-details { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+        .med-card-details span { display: inline; }
+        .med-card-details .med-detail-sep { color: var(--gray-400); margin: 0 6px; }
+        .med-card-notes { font-size: 13px; color: var(--gray-500); margin-top: 4px; font-style: italic; }
+        .med-card-delete { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; flex-shrink: 0; }
+        .med-card-delete:hover { background: var(--red-light); color: var(--red); }
+
+        @media print {
+            body * { visibility: hidden; }
+            #med-print-area, #med-print-area * { visibility: visible; }
+            #med-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            .med-print-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 4px; }
+            .med-print-date { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
+            .med-print-item { padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
+            .med-print-item:last-child { border-bottom: none; }
+            .med-print-name { font-weight: 600; font-size: 14px; color: var(--navy); }
+            .med-print-details { font-size: 13px; color: var(--gray-600); margin-top: 2px; }
+            .med-print-notes { font-size: 12px; color: var(--gray-500); margin-top: 2px; font-style: italic; }
+        }
+
         @media (max-width: 600px) {
             /* Header */
             header { padding: 0 14px; height: 56px; }
@@ -480,6 +505,14 @@
             .template-list-name { font-size: 16px; }
             .template-list-meta { font-size: 14px; }
             .template-list-actions { justify-content: stretch; }
+
+            /* Medication cards */
+            .med-card { flex-direction: column; align-items: stretch; padding: 16px 18px; }
+            .med-card-name { font-size: 16px; }
+            .med-card-details { font-size: 14px; }
+            .med-card-delete { align-self: flex-end; font-size: 18px; padding: 8px 10px; }
+            #view-medication .card-body .form-input { font-size: 16px; }
+            #view-medication .card-body select { font-size: 16px; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -1534,13 +1567,89 @@
             </div>
         </div>
 
-        <!-- Module Placeholder Views -->
+        <!-- Module Views -->
         <div id="view-medication" style="display:none;">
-            <div class="module-placeholder">
-                <div class="module-placeholder-icon">💊</div>
-                <div class="module-placeholder-title">Medication Manager</div>
-                <div class="module-placeholder-subtitle">Coming Soon</div>
-                <div class="module-placeholder-desc">Track patient medications, dosages, schedules, and interactions. Manage med lists and reconciliation for home health visits.</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div class="page-title">Medication List</div>
+                    <div class="page-subtitle">Build a medication list for the visit.</div>
+                </div>
+                <button class="btn btn-sm" style="border:1.5px solid var(--gray-200); background:transparent; color:var(--gray-400); font-weight:500;" onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-400)';" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">💊</div>
+                    <div class="card-header-text">
+                        <h2>Add Medication</h2>
+                        <p>Enter medication details or use voice input</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Medication Name *</label>
+                        <input type="text" class="form-input" id="med-name" placeholder="e.g. Metformin" required>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Dose</label>
+                            <input type="text" class="form-input" id="med-dose" placeholder="e.g. 500mg">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Frequency</label>
+                            <input type="text" class="form-input" id="med-frequency" placeholder="e.g. Twice daily">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Route</label>
+                        <div class="select-wrapper">
+                            <select id="med-route">
+                                <option value="Oral">Oral</option>
+                                <option value="Topical">Topical</option>
+                                <option value="Inhaled">Inhaled</option>
+                                <option value="Injection">Injection</option>
+                                <option value="Sublingual">Sublingual</option>
+                                <option value="Transdermal">Transdermal</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes / Instructions</label>
+                        <input type="text" class="form-input" id="med-notes" placeholder="e.g. Take with food">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap;">
+                        <button class="btn btn-record" id="med-mic-btn" onclick="startMedRecording()">🎤 Voice Input</button>
+                        <button class="btn btn-stop" id="med-mic-stop-btn" onclick="stopMedRecording()" style="display:none;">■ Stop</button>
+                        <div class="recording-status" id="med-recording-status" style="display:none;">
+                            <div class="recording-dot"></div>
+                            Listening...
+                        </div>
+                        <span id="med-voice-status" style="font-size:13px; color:var(--green); display:none;"></span>
+                        <button class="btn btn-primary" onclick="addMedication()" style="margin-left:auto;">+ Add Medication</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="med-list-container">
+                <div id="med-list-empty" style="text-align:center; padding:48px 20px; color:var(--gray-400);">
+                    <div style="font-size:40px; margin-bottom:12px;">💊</div>
+                    <p style="font-size:15px;">No medications added yet</p>
+                </div>
+                <div id="med-list-items"></div>
+            </div>
+
+            <div id="med-export-row" style="display:none; margin-top:16px;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div class="export-wrapper">
+                        <button class="btn btn-primary" onclick="toggleExport(this)">📤 Export Med List</button>
+                        <div class="export-dropdown">
+                            <button class="export-option" onclick="downloadMedPdf(); closeExport()">📥 Download PDF</button>
+                            <button class="export-option" onclick="emailMedList(); closeExport()">✉️ Email</button>
+                            <button class="export-option" onclick="printMedList(); closeExport()">🖨️ Print</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1764,8 +1873,9 @@
             document.querySelector('.nav-tabs').style.display = 'none';
             notesViews.forEach(t => document.getElementById(`view-${t}`).style.display = 'none');
             moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
-            // Show selected module placeholder
+            // Show selected module view
             document.getElementById(`view-${module}`).style.display = 'block';
+            if (module === 'medication') renderMedList();
         }
     }
 
@@ -1779,7 +1889,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 4);
+            const req = indexedDB.open('carenote', 5);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -1793,6 +1903,9 @@
                 }
                 if (!db.objectStoreNames.contains('drafts')) {
                     db.createObjectStore('drafts', { keyPath: 'key' });
+                }
+                if (!db.objectStoreNames.contains('medLists')) {
+                    db.createObjectStore('medLists', { keyPath: 'id', autoIncrement: true });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -4756,6 +4869,346 @@
             closeNoteMenu();
         }
     });
+
+    // ── Medication List ──────────────────────────────────────────────
+    let medRecorder = null;
+    let medAudioChunks = [];
+
+    async function getMedDB() {
+        const db = await openDB();
+        return db;
+    }
+
+    async function loadMedsFromDB() {
+        const db = await getMedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medLists', 'readonly');
+            const store = tx.objectStore('medLists');
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function saveMedToDB(med) {
+        const db = await getMedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medLists', 'readwrite');
+            const store = tx.objectStore('medLists');
+            const req = store.add(med);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function deleteMedFromDB(id) {
+        const db = await getMedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medLists', 'readwrite');
+            const store = tx.objectStore('medLists');
+            const req = store.delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function clearAllMedsFromDB() {
+        const db = await getMedDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('medLists', 'readwrite');
+            const store = tx.objectStore('medLists');
+            const req = store.clear();
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function renderMedList() {
+        const meds = await loadMedsFromDB();
+        const listEl = document.getElementById('med-list-items');
+        const emptyEl = document.getElementById('med-list-empty');
+        const exportRow = document.getElementById('med-export-row');
+
+        if (meds.length === 0) {
+            emptyEl.style.display = 'block';
+            listEl.innerHTML = '';
+            exportRow.style.display = 'none';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        exportRow.style.display = 'block';
+
+        listEl.innerHTML = meds.map(med => {
+            const details = [med.dose, med.frequency, med.route].filter(Boolean).join('<span class="med-detail-sep">·</span>');
+            return `<div class="med-card">
+                <div class="med-card-info">
+                    <div class="med-card-name">${escapeHtml(med.name)}</div>
+                    ${details ? `<div class="med-card-details">${details}</div>` : ''}
+                    ${med.notes ? `<div class="med-card-notes">${escapeHtml(med.notes)}</div>` : ''}
+                </div>
+                <button class="med-card-delete" onclick="deleteMed(${med.id})" title="Remove medication">🗑️</button>
+            </div>`;
+        }).join('');
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    async function addMedication() {
+        const name = document.getElementById('med-name').value.trim();
+        if (!name) { alert('Please enter a medication name.'); return; }
+        const med = {
+            name,
+            dose: document.getElementById('med-dose').value.trim(),
+            frequency: document.getElementById('med-frequency').value.trim(),
+            route: document.getElementById('med-route').value,
+            notes: document.getElementById('med-notes').value.trim(),
+            createdAt: new Date().toISOString()
+        };
+        await saveMedToDB(med);
+        // Clear form
+        document.getElementById('med-name').value = '';
+        document.getElementById('med-dose').value = '';
+        document.getElementById('med-frequency').value = '';
+        document.getElementById('med-route').value = 'Oral';
+        document.getElementById('med-notes').value = '';
+        await renderMedList();
+    }
+
+    async function deleteMed(id) {
+        await deleteMedFromDB(id);
+        await renderMedList();
+    }
+
+    function confirmClearMeds() {
+        showConfirm('Clear All Medications', 'Delete all medications from the list? This cannot be undone.', async () => {
+            await clearAllMedsFromDB();
+            await renderMedList();
+        });
+    }
+
+    // ── Med Voice Input ──────────────────────────────────
+    function startMedRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                medRecorder = new MediaRecorder(stream);
+                medAudioChunks = [];
+                medRecorder.ondataavailable = e => { if (e.data.size > 0) medAudioChunks.push(e.data); };
+                medRecorder.start();
+                document.getElementById('med-mic-btn').style.display = 'none';
+                document.getElementById('med-mic-stop-btn').style.display = 'inline-flex';
+                document.getElementById('med-recording-status').style.display = 'flex';
+                document.getElementById('med-voice-status').style.display = 'none';
+            })
+            .catch(() => alert('Could not access microphone. Please check permissions.'));
+    }
+
+    async function stopMedRecording() {
+        if (!medRecorder || medRecorder.state === 'inactive') return;
+        medRecorder.onstop = async () => {
+            const blob = new Blob(medAudioChunks, { type: 'audio/webm' });
+            medRecorder.stream.getTracks().forEach(t => t.stop());
+            document.getElementById('med-mic-btn').style.display = 'inline-flex';
+            document.getElementById('med-mic-stop-btn').style.display = 'none';
+            document.getElementById('med-recording-status').style.display = 'none';
+
+            const statusEl = document.getElementById('med-voice-status');
+            statusEl.style.display = 'inline';
+            statusEl.style.color = 'var(--orange)';
+            statusEl.innerText = 'Transcribing...';
+
+            try {
+                // Step 1: Transcribe audio
+                const formData = new FormData();
+                formData.append('audio', blob, 'recording.webm');
+                const { data: transcribeData, error: transcribeError } = await sb.functions.invoke('transcribe', { body: formData });
+                if (transcribeError) throw new Error(transcribeError.message || 'Transcription failed');
+                const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
+                if (!transcript || !transcript.trim()) throw new Error('No speech detected');
+
+                // Step 2: Parse medication from transcript
+                statusEl.innerText = 'Parsing medication...';
+                const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+                    body: JSON.stringify({ transcript }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (parseError) throw new Error(parseError.message || 'Parse failed');
+
+                const med = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
+                const medObj = med.medication || med;
+
+                // Auto-populate form fields
+                if (medObj.name) document.getElementById('med-name').value = medObj.name;
+                if (medObj.dose) document.getElementById('med-dose').value = medObj.dose;
+                if (medObj.frequency) document.getElementById('med-frequency').value = medObj.frequency;
+                if (medObj.route) {
+                    const routeSelect = document.getElementById('med-route');
+                    const routeVal = medObj.route;
+                    const option = [...routeSelect.options].find(o => o.value.toLowerCase() === routeVal.toLowerCase());
+                    if (option) routeSelect.value = option.value;
+                }
+                if (medObj.notes) document.getElementById('med-notes').value = medObj.notes;
+
+                statusEl.style.color = 'var(--green)';
+                statusEl.innerText = '✓ Fields populated — review and click Add';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            } catch (err) {
+                statusEl.style.color = 'var(--red)';
+                statusEl.innerText = 'Voice input failed: ' + err.message;
+                setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            }
+        };
+        medRecorder.stop();
+    }
+
+    // ── Med List PDF Export ──────────────────────────────
+    async function downloadMedPdf() {
+        const meds = await loadMedsFromDB();
+        if (meds.length === 0) return;
+
+        if (!window.jspdf) {
+            alert('PDF library is still loading. Please try again in a moment.');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) {
+                doc.addPage();
+                y = margin;
+            }
+        }
+
+        // Header
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text('Medication List', pageWidth - margin, 12, { align: 'right' });
+        y = 28;
+
+        // Date
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text('Generated: ' + dateStr + ' at ' + timeStr, margin, y);
+        y += 10;
+
+        // Medications
+        meds.forEach((med, i) => {
+            checkPageBreak(18);
+            if (i > 0) {
+                doc.setDrawColor(220);
+                doc.setLineDashPattern([2, 2], 0);
+                doc.line(margin, y, pageWidth - margin, y);
+                doc.setLineDashPattern([], 0);
+                y += 5;
+            }
+
+            // Name
+            doc.setFontSize(11);
+            doc.setTextColor(15, 39, 68);
+            doc.text(med.name, margin, y);
+            y += 5;
+
+            // Details line
+            const details = [med.dose, med.frequency, med.route].filter(Boolean).join(' · ');
+            if (details) {
+                doc.setFontSize(10);
+                doc.setTextColor(80);
+                doc.text(details, margin, y);
+                y += 5;
+            }
+
+            // Notes
+            if (med.notes) {
+                doc.setFontSize(9);
+                doc.setTextColor(120);
+                const noteLines = doc.splitTextToSize('Notes: ' + med.notes, maxWidth);
+                noteLines.forEach(line => {
+                    checkPageBreak(4.5);
+                    doc.text(line, margin, y);
+                    y += 4.5;
+                });
+            }
+
+            y += 3;
+        });
+
+        // Page numbers
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        doc.save('CareNote-Medication-List-' + now.toISOString().slice(0, 10) + '.pdf');
+    }
+
+    // ── Med List Email Export ──────────────────────────────
+    async function emailMedList() {
+        const meds = await loadMedsFromDB();
+        if (meds.length === 0) return;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const lines = meds.map(med => {
+            const parts = [med.name, med.dose, med.frequency, med.route].filter(Boolean);
+            let line = parts.join(' | ');
+            if (med.notes) line += ' | ' + med.notes;
+            return line;
+        }).join('\n');
+        const subject = encodeURIComponent('Medication List — ' + dateStr);
+        const body = encodeURIComponent('Medication List\nGenerated: ' + dateStr + '\n\n' + lines);
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    }
+
+    // ── Med List Print ──────────────────────────────
+    async function printMedList() {
+        const meds = await loadMedsFromDB();
+        if (meds.length === 0) return;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        // Create print area
+        let printArea = document.getElementById('med-print-area');
+        if (printArea) printArea.remove();
+        printArea = document.createElement('div');
+        printArea.id = 'med-print-area';
+        printArea.innerHTML = `
+            <div class="med-print-title">Medication List</div>
+            <div class="med-print-date">${dateStr} at ${timeStr}</div>
+            ${meds.map(med => {
+                const details = [med.dose, med.frequency, med.route].filter(Boolean).join(' · ');
+                return `<div class="med-print-item">
+                    <div class="med-print-name">${escapeHtml(med.name)}</div>
+                    ${details ? `<div class="med-print-details">${details}</div>` : ''}
+                    ${med.notes ? `<div class="med-print-notes">${escapeHtml(med.notes)}</div>` : ''}
+                </div>`;
+            }).join('')}
+        `;
+        document.body.appendChild(printArea);
+        window.print();
+        setTimeout(() => printArea.remove(), 1000);
+    }
 
     // ── PDF Generation ──────────────────────────────────────────────
     function buildPdf(title, sections) {
