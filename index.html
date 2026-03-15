@@ -1939,6 +1939,7 @@
         if (tab === 'history') loadHistory();
         if (tab === 'pending') { renderPendingList(); renderPendingNotesList(); }
         if (tab === 'templates') loadTemplates();
+        localStorage.setItem('carenote-active-tab', tab);
     }
 
     // ── Sidebar Navigation ──────────────────────────────────
@@ -1953,6 +1954,7 @@
 
     function switchModule(module) {
         currentModule = module;
+        localStorage.setItem('carenote-active-module', module);
         // Update sidebar active state
         document.querySelectorAll('.sidebar-item').forEach(el => {
             el.classList.toggle('active', el.dataset.module === module);
@@ -2851,6 +2853,32 @@
 
     // Initialize label input on page load
     initLabelInput('labels-note');
+
+    // ── Restore last active module/tab on page load ──────
+    (function restoreActiveView() {
+        const savedModule = localStorage.getItem('carenote-active-module');
+        const savedTab = localStorage.getItem('carenote-active-tab');
+        if (savedModule && savedModule !== 'notes') {
+            // Switch to non-notes module without toggling sidebar
+            currentModule = savedModule;
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.module === savedModule);
+            });
+            document.querySelector('.nav-tabs').style.display = 'none';
+            notesViews.forEach(t => document.getElementById(`view-${t}`).style.display = 'none');
+            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
+            document.getElementById(`view-${savedModule}`).style.display = 'block';
+            if (savedModule === 'medication') {
+                renderMedList();
+                if (!document.getElementById('labels-med').dataset.initialized) {
+                    initLabelInput('labels-med');
+                    document.getElementById('labels-med').dataset.initialized = 'true';
+                }
+            }
+        } else if (savedTab && savedTab !== 'new') {
+            showTab(savedTab);
+        }
+    })();
 
     // ── Note Generation ───────────────────────────────────
     async function generateNote() {
