@@ -2124,7 +2124,7 @@
     function savePendingRecording(blob, durationSec) {
         const id = Date.now();
         const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const rec = { id, blob, timestamp, durationSec };
+        const rec = { id, blob, timestamp, durationSec, type: 'clinical' };
         pendingRecordings.push(rec);
         saveRecordingToDB(rec);
         loadPendingBadge();
@@ -2147,36 +2147,56 @@
         countBadge.innerText = pendingRecordings.length;
         countBadge.style.display = 'inline';
 
-        // Show bulk toolbar when 2+ recordings
-        bulkToolbar.style.display = pendingRecordings.length >= 2 ? 'flex' : 'none';
+        // Bulk toolbar only for clinical recordings (not medList)
+        const clinicalRecordings = pendingRecordings.filter(r => r.type !== 'medList');
+        bulkToolbar.style.display = clinicalRecordings.length >= 2 ? 'flex' : 'none';
         document.getElementById('select-all-checkbox').checked = false;
         document.getElementById('bulk-transcribe-btn').style.display = 'none';
         document.getElementById('bulk-progress').style.display = 'none';
 
         listEl.innerHTML = '';
         pendingRecordings.forEach(rec => {
-            const useTranscriptBtn = rec.transcribed && rec.transcript
-                ? `<button class="btn-use-transcript" onclick="useTranscript(${rec.id})">Use Transcript →</button>`
-                : '';
             const item = document.createElement('div');
             item.className = 'pending-item';
             item.id = `pending-${rec.id}`;
-            item.innerHTML = `
-                ${pendingRecordings.length >= 2 ? `<input type="checkbox" class="pending-checkbox" id="check-${rec.id}" onchange="updateBulkSelection()">` : ''}
-                <div class="pending-item-info">
-                    <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
-                    <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
-                    <div class="transcribing-status" id="transcribing-${rec.id}">
-                        <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
-                        Transcribing with Whisper...
+
+            if (rec.type === 'medList') {
+                // Medication list recording — different UI
+                item.innerHTML = `
+                    <div class="pending-item-info">
+                        <div class="pending-item-title">💊 Medication List Recording — ${rec.timestamp}</div>
+                        <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
+                        <div class="transcribing-status" id="processing-med-${rec.id}" style="display:none;">
+                            <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                            Transcribing with Whisper...
+                        </div>
                     </div>
-                </div>
-                <div class="pending-item-actions">
-                    ${useTranscriptBtn}
-                    <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
-                    <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
-                    <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
-                </div>`;
+                    <div class="pending-item-actions">
+                        <button class="btn btn-orange btn-sm" onclick="processPendingMedRecording(${rec.id})" id="process-med-btn-${rec.id}">Process Med List</button>
+                        <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
+                    </div>`;
+            } else {
+                // Clinical recording — existing rendering
+                const useTranscriptBtn = rec.transcribed && rec.transcript
+                    ? `<button class="btn-use-transcript" onclick="useTranscript(${rec.id})">Use Transcript →</button>`
+                    : '';
+                item.innerHTML = `
+                    ${clinicalRecordings.length >= 2 ? `<input type="checkbox" class="pending-checkbox" id="check-${rec.id}" onchange="updateBulkSelection()">` : ''}
+                    <div class="pending-item-info">
+                        <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
+                        <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
+                        <div class="transcribing-status" id="transcribing-${rec.id}">
+                            <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                            Transcribing with Whisper...
+                        </div>
+                    </div>
+                    <div class="pending-item-actions">
+                        ${useTranscriptBtn}
+                        <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
+                        <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
+                        <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
+                    </div>`;
+            }
             listEl.appendChild(item);
         });
         populateNoteTypeDropdowns();
@@ -2192,8 +2212,8 @@
         document.getElementById(`pending-${id}`)?.remove();
         loadPendingBadge();
         if (pendingRecordings.length === 0) renderPendingList();
-        // Re-check bulk toolbar visibility after delete
-        if (pendingRecordings.length < 2) {
+        // Re-check bulk toolbar visibility after delete (only counts clinical recordings)
+        if (pendingRecordings.filter(r => r.type !== 'medList').length < 2) {
             document.getElementById('bulk-toolbar').style.display = 'none';
             document.querySelectorAll('.pending-checkbox').forEach(cb => cb.remove());
         }
@@ -2738,7 +2758,7 @@
             // Always save to IndexedDB first so audio is never lost
             const id = Date.now();
             const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            const rec = { id, blob, timestamp, durationSec };
+            const rec = { id, blob, timestamp, durationSec, type: 'clinical' };
             pendingRecordings.push(rec);
             await saveRecordingToDB(rec);
             loadPendingBadge();
@@ -5272,10 +5292,26 @@
         clearInterval(bulkMedTimerInterval);
 
         bulkMedRecorder.onstop = async () => {
+            const durationSec = (Date.now() - bulkMedStartTime) / 1000;
             const blob = new Blob(bulkMedAudioChunks, { type: 'audio/webm' });
             bulkMedRecorder.stream.getTracks().forEach(t => t.stop());
 
-            // Show processing state
+            // Always save to pending first (safety net — audio is never lost)
+            const id = Date.now();
+            const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const rec = { id, blob, timestamp, durationSec, type: 'medList' };
+            pendingRecordings.push(rec);
+            await saveRecordingToDB(rec);
+            loadPendingBadge();
+            if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+
+            if (!isOnline) {
+                resetBulkMedUI();
+                alert(`Recording saved locally (${Math.round(durationSec)}s). Go to the Pending tab when online to process your medication list.`);
+                return;
+            }
+
+            // Online — show processing state and attempt full pipeline
             document.getElementById('bulk-med-recording').style.display = 'none';
             document.getElementById('bulk-med-processing-btn').style.display = 'flex';
 
@@ -5301,19 +5337,69 @@
                     throw new Error('No medications found in recording. Please try again.');
                 }
 
-                // Step 3: Show review modal
+                // Step 3: Show review modal (pass pending ID for cleanup on success)
                 resetBulkMedUI();
-                showBulkMedReview(meds);
+                showBulkMedReview(meds, id);
 
             } catch (err) {
-                alert(err.message);
                 resetBulkMedUI();
+                alert(err.message + '\n\nYour recording has been saved to Pending — you can retry from there.');
             }
         };
         bulkMedRecorder.stop();
     }
 
-    function showBulkMedReview(meds) {
+    async function processPendingMedRecording(id) {
+        if (!isOnline) {
+            alert('You need to be online to process medication recordings.');
+            return;
+        }
+
+        const rec = pendingRecordings.find(r => r.id === id);
+        if (!rec) return;
+
+        const btn = document.getElementById(`process-med-btn-${id}`);
+        const statusEl = document.getElementById(`processing-med-${id}`);
+        if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }
+        if (statusEl) statusEl.style.display = 'flex';
+
+        try {
+            // Step 1: Transcribe
+            if (statusEl) {
+                statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Transcribing with Whisper...`;
+            }
+            const transcript = await transcribeBlob(rec.blob);
+
+            // Step 2: Parse bulk medications
+            if (statusEl) {
+                statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Parsing medications...`;
+            }
+            const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+                body: { transcript, bulk: true }
+            });
+            if (parseError) throw new Error('Could not interpret recording. Please try again.');
+
+            const parsed = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
+            const meds = parsed.medications || parsed;
+
+            if (!Array.isArray(meds) || meds.length === 0) {
+                throw new Error('No medications found in recording.');
+            }
+
+            // Step 3: Switch to Medication module and show review modal
+            if (statusEl) statusEl.style.display = 'none';
+            if (btn) { btn.disabled = false; btn.innerText = 'Process Med List'; }
+            switchModule('medication');
+            showBulkMedReview(meds, id);
+
+        } catch (err) {
+            if (statusEl) statusEl.style.display = 'none';
+            if (btn) { btn.disabled = false; btn.innerText = 'Process Med List'; }
+            alert('Processing failed: ' + err.message + '\n\nYour recording is still saved — you can retry anytime.');
+        }
+    }
+
+    function showBulkMedReview(meds, pendingRecordingId) {
         let reviewMeds = [...meds];
 
         const overlay = document.createElement('div');
@@ -5364,6 +5450,14 @@
                     }
                     await renderMedList();
                     overlay.remove();
+
+                    // Clean up pending recording if this came from one
+                    if (pendingRecordingId) {
+                        pendingRecordings = pendingRecordings.filter(r => r.id !== pendingRecordingId);
+                        deleteRecordingFromDB(pendingRecordingId);
+                        loadPendingBadge();
+                        if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+                    }
                 };
             }
             overlay.querySelectorAll('.med-review-item-delete').forEach(btn => {
