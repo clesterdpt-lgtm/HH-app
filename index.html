@@ -405,6 +405,7 @@
         .med-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
         .med-sub-tab:hover { color: var(--gray-600); }
         .med-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+        .med-pending-badge { background: var(--orange); color: var(--white); font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
 
         /* ── Med History Cards ────────────────── */
         .med-history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; background: var(--white); }
@@ -1645,6 +1646,7 @@
 
             <div class="med-sub-tabs">
                 <button class="med-sub-tab active" onclick="switchMedSubTab('current')">💊 Current List</button>
+                <button class="med-sub-tab" onclick="switchMedSubTab('pending')">⏳ Pending <span class="med-pending-badge" id="med-pending-badge" style="display:none;"></span></button>
                 <button class="med-sub-tab" onclick="switchMedSubTab('history')">📋 History</button>
             </div>
 
@@ -1753,6 +1755,21 @@
                 </div>
             </div>
             </div><!-- end med-current-view -->
+
+            <div id="med-pending-view" style="display:none;">
+                <div class="pending-section pending-section-recordings">
+                    <div class="pending-section-header">
+                        <div class="pending-section-icon">🎤</div>
+                        <div>
+                            <div class="pending-section-title">Pending Med Recordings</div>
+                            <div class="pending-section-subtitle">Process when online to add to your medication list</div>
+                        </div>
+                        <span class="pending-section-count" id="med-pending-count-badge" style="display:none;"></span>
+                        <button class="btn btn-danger btn-sm" id="med-pending-delete-all" onclick="confirmDeleteAllMedPending()" style="margin-left:8px; display:none;">🗑️ Delete All</button>
+                    </div>
+                    <div id="med-pending-list"></div>
+                </div>
+            </div><!-- end med-pending-view -->
 
             <div id="med-history-view" style="display:none;">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
@@ -2115,7 +2132,9 @@
 
     // ── Pending recordings ────────────────────────────────
     function loadPendingBadge() {
-        const count = pendingRecordings.length + pendingNoteQueue.length;
+        // Only count clinical recordings + queued notes (med recordings have their own badge)
+        const clinicalCount = pendingRecordings.filter(r => r.type !== 'medList').length;
+        const count = clinicalCount + pendingNoteQueue.length;
         const badge = document.getElementById('pending-badge');
         badge.innerText = count;
         badge.style.display = count > 0 ? 'inline' : 'none';
@@ -2137,69 +2156,121 @@
         const bulkToolbar = document.getElementById('bulk-toolbar');
         const countBadge = document.getElementById('recordings-count-badge');
 
-        if (pendingRecordings.length === 0) {
+        // Only show clinical recordings here — med recordings have their own tab
+        const clinicalRecordings = pendingRecordings.filter(r => r.type !== 'medList');
+
+        if (clinicalRecordings.length === 0) {
             bulkToolbar.style.display = 'none';
             countBadge.style.display = 'none';
             listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎙️</div><p style="font-size:15px; color:var(--gray-400);">No pending recordings. Record audio offline and it will appear here.</p></div>`;
             return;
         }
 
-        countBadge.innerText = pendingRecordings.length;
+        countBadge.innerText = clinicalRecordings.length;
         countBadge.style.display = 'inline';
 
-        // Bulk toolbar only for clinical recordings (not medList)
-        const clinicalRecordings = pendingRecordings.filter(r => r.type !== 'medList');
         bulkToolbar.style.display = clinicalRecordings.length >= 2 ? 'flex' : 'none';
         document.getElementById('select-all-checkbox').checked = false;
         document.getElementById('bulk-transcribe-btn').style.display = 'none';
         document.getElementById('bulk-progress').style.display = 'none';
 
         listEl.innerHTML = '';
-        pendingRecordings.forEach(rec => {
+        clinicalRecordings.forEach(rec => {
+            const useTranscriptBtn = rec.transcribed && rec.transcript
+                ? `<button class="btn-use-transcript" onclick="useTranscript(${rec.id})">Use Transcript →</button>`
+                : '';
             const item = document.createElement('div');
             item.className = 'pending-item';
             item.id = `pending-${rec.id}`;
-
-            if (rec.type === 'medList') {
-                // Medication list recording — different UI
-                item.innerHTML = `
-                    <div class="pending-item-info">
-                        <div class="pending-item-title">💊 Medication List Recording — ${rec.timestamp}</div>
-                        <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
-                        <div class="transcribing-status" id="processing-med-${rec.id}" style="display:none;">
-                            <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
-                            Transcribing with Whisper...
-                        </div>
+            item.innerHTML = `
+                ${clinicalRecordings.length >= 2 ? `<input type="checkbox" class="pending-checkbox" id="check-${rec.id}" onchange="updateBulkSelection()">` : ''}
+                <div class="pending-item-info">
+                    <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
+                    <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
+                    <div class="transcribing-status" id="transcribing-${rec.id}">
+                        <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                        Transcribing with Whisper...
                     </div>
-                    <div class="pending-item-actions">
-                        <button class="btn btn-orange btn-sm" onclick="processPendingMedRecording(${rec.id})" id="process-med-btn-${rec.id}">Process Med List</button>
-                        <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
-                    </div>`;
-            } else {
-                // Clinical recording — existing rendering
-                const useTranscriptBtn = rec.transcribed && rec.transcript
-                    ? `<button class="btn-use-transcript" onclick="useTranscript(${rec.id})">Use Transcript →</button>`
-                    : '';
-                item.innerHTML = `
-                    ${clinicalRecordings.length >= 2 ? `<input type="checkbox" class="pending-checkbox" id="check-${rec.id}" onchange="updateBulkSelection()">` : ''}
-                    <div class="pending-item-info">
-                        <div class="pending-item-title">🎙️ Recording — ${rec.timestamp}${rec.transcribed ? ' <span class="transcribed-badge">Transcribed</span>' : ''}</div>
-                        <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
-                        <div class="transcribing-status" id="transcribing-${rec.id}">
-                            <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
-                            Transcribing with Whisper...
-                        </div>
-                    </div>
-                    <div class="pending-item-actions">
-                        ${useTranscriptBtn}
-                        <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
-                        <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
-                        <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
-                    </div>`;
-            }
+                </div>
+                <div class="pending-item-actions">
+                    ${useTranscriptBtn}
+                    <select class="pending-select note-type-select" id="pending-type-${rec.id}"></select>
+                    <button class="btn btn-orange btn-sm" onclick="transcribePending(${rec.id})" id="transcribe-btn-${rec.id}">${rec.transcribed ? 'Re-transcribe →' : 'Transcribe →'}</button>
+                    <button class="btn-delete-single" onclick="confirmDeletePending(${rec.id})" title="Remove recording">🗑️</button>
+                </div>`;
             listEl.appendChild(item);
         });
         populateNoteTypeDropdowns();
+    }
+
+    // ── Medication Pending List (in Medication Manager) ──────
+    function renderMedPendingList() {
+        const listEl = document.getElementById('med-pending-list');
+        const countBadge = document.getElementById('med-pending-count-badge');
+        const deleteAllBtn = document.getElementById('med-pending-delete-all');
+        const medPendings = pendingRecordings.filter(r => r.type === 'medList');
+
+        if (medPendings.length === 0) {
+            countBadge.style.display = 'none';
+            deleteAllBtn.style.display = 'none';
+            listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎤</div><p style="font-size:15px; color:var(--gray-400);">No pending medication recordings. Record a med list offline and it will appear here.</p></div>`;
+            updateMedPendingBadge();
+            return;
+        }
+
+        countBadge.innerText = medPendings.length;
+        countBadge.style.display = 'inline';
+        deleteAllBtn.style.display = 'inline-flex';
+
+        listEl.innerHTML = '';
+        medPendings.forEach(rec => {
+            const item = document.createElement('div');
+            item.className = 'pending-item';
+            item.id = `med-pending-${rec.id}`;
+            item.innerHTML = `
+                <div class="pending-item-info">
+                    <div class="pending-item-title">💊 Medication List Recording — ${rec.timestamp}</div>
+                    <div class="pending-item-meta">Duration: ~${Math.round(rec.durationSec)} seconds · Saved locally on this device</div>
+                    <div class="transcribing-status" id="processing-med-${rec.id}" style="display:none;">
+                        <div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>
+                        Transcribing with Whisper...
+                    </div>
+                </div>
+                <div class="pending-item-actions">
+                    <button class="btn btn-orange btn-sm" onclick="processPendingMedRecording(${rec.id})" id="process-med-btn-${rec.id}">Process Med List</button>
+                    <button class="btn-delete-single" onclick="deleteMedPending(${rec.id})" title="Remove recording">🗑️</button>
+                </div>`;
+            listEl.appendChild(item);
+        });
+        updateMedPendingBadge();
+    }
+
+    function updateMedPendingBadge() {
+        const count = pendingRecordings.filter(r => r.type === 'medList').length;
+        const badge = document.getElementById('med-pending-badge');
+        badge.innerText = count;
+        badge.style.display = count > 0 ? 'inline' : 'none';
+    }
+
+    function deleteMedPending(id) {
+        showConfirm('Delete Recording', 'Are you sure you want to delete this recording? This cannot be undone.', () => {
+            pendingRecordings = pendingRecordings.filter(r => r.id !== id);
+            deleteRecordingFromDB(id);
+            loadPendingBadge();
+            updateMedPendingBadge();
+            renderMedPendingList();
+        });
+    }
+
+    function confirmDeleteAllMedPending() {
+        const medPendings = pendingRecordings.filter(r => r.type === 'medList');
+        showConfirm('Delete All Med Recordings', `Delete all ${medPendings.length} pending medication recordings? This cannot be undone.`, () => {
+            medPendings.forEach(r => deleteRecordingFromDB(r.id));
+            pendingRecordings = pendingRecordings.filter(r => r.type !== 'medList');
+            loadPendingBadge();
+            updateMedPendingBadge();
+            renderMedPendingList();
+        });
     }
 
     function confirmDeletePending(id) {
@@ -5303,11 +5374,12 @@
             pendingRecordings.push(rec);
             await saveRecordingToDB(rec);
             loadPendingBadge();
-            if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+            updateMedPendingBadge();
+            if (document.getElementById('med-pending-view').style.display !== 'none') renderMedPendingList();
 
             if (!isOnline) {
                 resetBulkMedUI();
-                alert(`Recording saved locally (${Math.round(durationSec)}s). Go to the Pending tab when online to process your medication list.`);
+                alert(`Recording saved locally (${Math.round(durationSec)}s). Switch to the Pending tab above when online to process your medication list.`);
                 return;
             }
 
@@ -5343,7 +5415,7 @@
 
             } catch (err) {
                 resetBulkMedUI();
-                alert(err.message + '\n\nYour recording has been saved to Pending — you can retry from there.');
+                alert(err.message + '\n\nYour recording has been saved to the Pending tab — you can retry from there.');
             }
         };
         bulkMedRecorder.stop();
@@ -5386,10 +5458,10 @@
                 throw new Error('No medications found in recording.');
             }
 
-            // Step 3: Switch to Medication module and show review modal
+            // Step 3: Switch to Current List sub-tab and show review modal
             if (statusEl) statusEl.style.display = 'none';
             if (btn) { btn.disabled = false; btn.innerText = 'Process Med List'; }
-            switchModule('medication');
+            switchMedSubTab('current');
             showBulkMedReview(meds, id);
 
         } catch (err) {
@@ -5456,7 +5528,8 @@
                         pendingRecordings = pendingRecordings.filter(r => r.id !== pendingRecordingId);
                         deleteRecordingFromDB(pendingRecordingId);
                         loadPendingBadge();
-                        if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
+                        updateMedPendingBadge();
+                        if (document.getElementById('med-pending-view').style.display !== 'none') renderMedPendingList();
                     }
                 };
             }
@@ -5631,10 +5704,10 @@
         document.querySelectorAll('.med-sub-tab').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`.med-sub-tab[onclick="switchMedSubTab('${tab}')"]`).classList.add('active');
         document.getElementById('med-current-view').style.display = tab === 'current' ? 'block' : 'none';
+        document.getElementById('med-pending-view').style.display = tab === 'pending' ? 'block' : 'none';
         document.getElementById('med-history-view').style.display = tab === 'history' ? 'block' : 'none';
-        if (tab === 'history') {
-            loadMedHistory().then(() => renderMedHistory());
-        }
+        if (tab === 'pending') renderMedPendingList();
+        if (tab === 'history') loadMedHistory().then(() => renderMedHistory());
     }
 
     // ── Med History (Supabase) ──────────────────────────────
