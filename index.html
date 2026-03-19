@@ -139,6 +139,8 @@
         .btn-stop:hover { background: #ef4444; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(220,38,38,0.3); }
         .btn-dim { background: #1e293b; color: #e2e8f0; display: none; padding: 7px 16px; font-size: 13px; font-weight: 500; border-radius: 20px; letter-spacing: 0; }
         .btn-dim:hover { background: #0f172a; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+        .btn-sort-toggle { background: transparent; border: 1.5px solid var(--gray-300); color: var(--gray-500); padding: 4px 10px; font-size: 12px; font-weight: 500; border-radius: 14px; cursor: pointer; white-space: nowrap; transition: all 0.15s ease; }
+        .btn-sort-toggle:hover { border-color: var(--teal); color: var(--teal); }
         .btn-copy { background: var(--navy); color: var(--white); display: none; }
         .btn-copy:hover { background: var(--navy-mid); transform: translateY(-1px); }
         .btn-outline { background: transparent; color: var(--teal); border: 2px solid var(--teal); padding: 8px 16px; font-size: 13px; }
@@ -1489,6 +1491,7 @@
                         <div class="pending-section-subtitle">Transcribe with Whisper when online</div>
                     </div>
                     <span class="pending-section-count" id="recordings-count-badge"></span>
+                    <button class="btn-sort-toggle" id="sort-toggle-clinical-pending" onclick="toggleSortOrder('clinicalPending', renderPendingList)">Newest ↓</button>
                     <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllRecordings()" style="margin-left:8px;">🗑️ Delete All</button>
                 </div>
                 <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
@@ -1545,6 +1548,7 @@
                         <option value="">All Labels</option>
                     </select>
                 </div>
+                <button class="btn-sort-toggle" id="sort-toggle-clinical-history" onclick="toggleSortOrder('clinicalHistory', () => applyHistoryFilters())">Newest ↓</button>
             </div>
             <div id="history-loading">
                 <div class="spinner"></div>
@@ -1769,6 +1773,7 @@
                             <div class="pending-section-subtitle">Process when online to add to your medication list</div>
                         </div>
                         <span class="pending-section-count" id="med-pending-count-badge" style="display:none;"></span>
+                        <button class="btn-sort-toggle" id="sort-toggle-med-pending" onclick="toggleSortOrder('medPending', renderMedPendingList)">Newest ↓</button>
                         <button class="btn btn-danger btn-sm" id="med-pending-delete-all" onclick="confirmDeleteAllMedPending()" style="margin-left:8px; display:none;">🗑️ Delete All</button>
                     </div>
                     <div id="med-pending-list"></div>
@@ -1783,6 +1788,7 @@
                             <option value="">All Labels</option>
                         </select>
                     </div>
+                    <button class="btn-sort-toggle" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
                     <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllMedHistory()" style="margin-left:auto;">🗑️ Clear All</button>
                 </div>
                 <div id="med-history-list">
@@ -1863,6 +1869,21 @@
     let isOnline = navigator.onLine;
     let pendingRecordings = [];
     let pendingNoteQueue = [];
+
+    // ── Sort Order State ──────────────────────────────
+    let sortOrders = JSON.parse(localStorage.getItem('sortOrders') || '{}');
+    function getSortOrder(key) { return sortOrders[key] || 'desc'; }
+    function toggleSortOrder(key, renderFn) {
+        sortOrders[key] = getSortOrder(key) === 'desc' ? 'asc' : 'desc';
+        localStorage.setItem('sortOrders', JSON.stringify(sortOrders));
+        renderFn();
+    }
+    function updateSortToggleBtn(id, key) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const isDesc = getSortOrder(key) === 'desc';
+        btn.textContent = isDesc ? 'Newest ↓' : 'Oldest ↑';
+    }
     let currentNoteId = null;
     let currentGoals = [];
 
@@ -2162,6 +2183,8 @@
 
         // Only show clinical recordings here — med recordings have their own tab
         const clinicalRecordings = pendingRecordings.filter(r => r.type !== 'medList');
+        clinicalRecordings.sort((a, b) => getSortOrder('clinicalPending') === 'desc' ? b.id - a.id : a.id - b.id);
+        updateSortToggleBtn('sort-toggle-clinical-pending', 'clinicalPending');
 
         if (clinicalRecordings.length === 0) {
             bulkToolbar.style.display = 'none';
@@ -2213,6 +2236,8 @@
         const countBadge = document.getElementById('med-pending-count-badge');
         const deleteAllBtn = document.getElementById('med-pending-delete-all');
         const medPendings = pendingRecordings.filter(r => r.type === 'medList');
+        medPendings.sort((a, b) => getSortOrder('medPending') === 'desc' ? b.id - a.id : a.id - b.id);
+        updateSortToggleBtn('sort-toggle-med-pending', 'medPending');
 
         if (medPendings.length === 0) {
             countBadge.style.display = 'none';
@@ -3393,6 +3418,12 @@
                 ((n.labels || []).some(l => l.toLowerCase().includes(q)))
             );
         }
+
+        // Sort by created_at based on user preference
+        filtered = [...filtered].sort((a, b) => getSortOrder('clinicalHistory') === 'desc'
+            ? new Date(b.created_at) - new Date(a.created_at)
+            : new Date(a.created_at) - new Date(b.created_at));
+        updateSortToggleBtn('sort-toggle-clinical-history', 'clinicalHistory');
 
         if (filtered.length === 0) {
             const msg = 'No notes match your search.';
@@ -5808,6 +5839,12 @@
         if (filterLabel) {
             filtered = filtered.filter(entry => entry.labels && entry.labels.includes(filterLabel));
         }
+
+        // Sort by saved_at based on user preference
+        filtered.sort((a, b) => getSortOrder('medHistory') === 'desc'
+            ? new Date(b.saved_at) - new Date(a.saved_at)
+            : new Date(a.saved_at) - new Date(b.saved_at));
+        updateSortToggleBtn('sort-toggle-med-history', 'medHistory');
 
         if (filtered.length === 0) {
             const msg = (searchQuery || filterLabel) ? 'No matching medication lists found' : 'No saved medication lists yet';
