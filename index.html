@@ -137,6 +137,8 @@
         .btn-record:hover { background: #10b981; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(5,150,105,0.3); }
         .btn-stop { background: var(--red); color: var(--white); display: none; padding: 7px 16px; font-size: 13px; font-weight: 500; border-radius: 20px; letter-spacing: 0; }
         .btn-stop:hover { background: #ef4444; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(220,38,38,0.3); }
+        .btn-dim { background: #1e293b; color: #e2e8f0; display: none; padding: 7px 16px; font-size: 13px; font-weight: 500; border-radius: 20px; letter-spacing: 0; }
+        .btn-dim:hover { background: #0f172a; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
         .btn-copy { background: var(--navy); color: var(--white); display: none; }
         .btn-copy:hover { background: var(--navy-mid); transform: translateY(-1px); }
         .btn-outline { background: transparent; color: var(--teal); border: 2px solid var(--teal); padding: 8px 16px; font-size: 13px; }
@@ -475,6 +477,7 @@
             .btn-sm { min-height: 44px; font-size: 14px; padding: 10px 16px; }
             .btn-record { font-size: 16px; min-height: 50px; }
             .btn-stop { font-size: 16px; min-height: 50px; }
+            .btn-dim { font-size: 16px; min-height: 50px; }
 
             /* Recording */
             .recording-status { font-size: 15px; padding: 10px 16px; }
@@ -1372,6 +1375,7 @@
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                         <button class="btn btn-record" id="record-btn" onclick="startRecording()">● Start Recording</button>
                         <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()">■ Stop Recording</button>
+                        <button class="btn btn-dim" id="dim-btn" onclick="showDimOverlay()">🌙 Go Dark</button>
                         <div class="recording-status" id="recording-status">
                             <div class="recording-dot"></div>
                             Recording in progress
@@ -2716,6 +2720,7 @@
 
     function showDimOverlay() {
         if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+        clearDimTimer();
         const overlay = document.getElementById('recording-dim-overlay');
         overlay.style.display = 'flex';
         isDimmed = true;
@@ -2811,6 +2816,7 @@
 
                 document.getElementById('recording-status').style.display = 'flex';
                 document.getElementById('stop-btn').style.display = 'inline-flex';
+                document.getElementById('dim-btn').style.display = 'inline-flex';
                 document.getElementById('record-btn').style.display = 'none';
             })
             .catch(() => alert('Could not access microphone. Please check permissions.'));
@@ -2874,6 +2880,7 @@
         mediaRecorder.stop();
         document.getElementById('recording-status').style.display = 'none';
         document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('dim-btn').style.display = 'none';
         document.getElementById('record-btn').style.display = 'inline-flex';
     }
 
