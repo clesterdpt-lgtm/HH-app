@@ -429,6 +429,37 @@
         .med-history-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .med-history-empty-icon { font-size: 40px; margin-bottom: 12px; }
 
+        /* Calendar Module */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-day-header { text-align: center; font-size: 12px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0; }
+        .cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 6px 2px; border-radius: 10px; cursor: pointer; transition: background 0.15s; position: relative; min-height: 48px; }
+        .cal-cell:hover { background: var(--gray-100); }
+        .cal-cell.today { background: rgba(13,148,136,0.08); box-shadow: inset 0 0 0 2px var(--teal); }
+        .cal-cell.selected { background: var(--teal); color: var(--white); }
+        .cal-cell.selected .cal-day-num { color: var(--white); }
+        .cal-cell.selected .cal-dot { box-shadow: 0 0 0 1px var(--white); }
+        .cal-cell.other-month { opacity: 0.3; }
+        .cal-day-num { font-size: 14px; font-weight: 500; color: var(--gray-800); line-height: 1; }
+        .cal-dots { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+        .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .cal-dot.notes { background: var(--teal); }
+        .cal-dot.meds { background: var(--orange); }
+        .cal-dot.pending { background: var(--red); }
+        .cal-nav-btns { margin-left: auto; display: flex; gap: 6px; }
+        .cal-nav-btns .btn { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+        .cal-item { border: 1px solid var(--gray-200); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; background: var(--white); transition: box-shadow 0.2s; }
+        .cal-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .cal-item-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .cal-item-type { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 6px; }
+        .cal-item-type.note-type { background: rgba(13,148,136,0.12); color: var(--teal); }
+        .cal-item-type.med-type { background: var(--orange-light); color: var(--orange); }
+        .cal-item-type.pending-type { background: var(--red-light); color: var(--red); }
+        .cal-item-time { font-size: 13px; color: var(--gray-400); margin-left: auto; }
+        .cal-item-preview { margin-top: 6px; font-size: 14px; color: var(--gray-600); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .cal-legend { display: flex; gap: 16px; align-items: center; margin-top: 12px; }
+        .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-500); }
+        .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
@@ -587,6 +618,15 @@
             .med-history-item-body { padding: 0 16px 16px; }
             .med-history-actions { flex-direction: column; }
             .med-history-actions .btn { width: 100%; justify-content: center; }
+
+            /* Calendar */
+            .cal-cell { min-height: 40px; padding: 4px 1px; }
+            .cal-day-num { font-size: 12px; }
+            .cal-dot { width: 5px; height: 5px; }
+            .cal-day-header { font-size: 10px; padding: 6px 0; }
+            .cal-item { padding: 12px 14px; }
+            #view-calendar .card-header { flex-wrap: wrap; gap: 10px; }
+            .cal-nav-btns { width: 100%; justify-content: space-between; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -1283,6 +1323,9 @@
         <div class="sidebar-item" data-module="medication" onclick="switchModule('medication')">
             <span class="sidebar-item-icon">💊</span> Medication Manager
         </div>
+        <div class="sidebar-item" data-module="calendar" onclick="switchModule('calendar')">
+            <span class="sidebar-item-icon">📅</span> Calendar
+        </div>
         <div class="sidebar-item" data-module="hep" onclick="switchModule('hep')">
             <span class="sidebar-item-icon">🏋️</span> Home Exercise Program
         </div>
@@ -1828,6 +1871,44 @@
                 <div class="module-placeholder-desc">Log mileage between patient visits for reimbursement. Track routes, distances, and generate mileage reports.</div>
             </div>
         </div>
+
+        <div id="view-calendar" style="display:none;">
+            <div class="page-title">Calendar</div>
+            <div class="page-subtitle">View notes, medications, and recordings by date.</div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">📅</div>
+                    <div class="card-header-text">
+                        <h2 id="cal-month-title">March 2026</h2>
+                        <p>Click a day to see its items</p>
+                    </div>
+                    <div class="cal-nav-btns">
+                        <button class="btn btn-outline" onclick="calPrevMonth()">&larr; Prev</button>
+                        <button class="btn btn-outline" onclick="calToday()">Today</button>
+                        <button class="btn btn-outline" onclick="calNextMonth()">Next &rarr;</button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding:16px;">
+                    <div class="cal-grid" id="cal-grid"></div>
+                    <div class="cal-legend">
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
+                    </div>
+                </div>
+            </div>
+            <div id="cal-day-detail" style="display:none; margin-top:16px;">
+                <div class="day-group" style="margin-bottom:0;">
+                    <div class="day-group-header">
+                        <div>
+                            <div class="day-group-title" id="cal-detail-title"></div>
+                            <div class="day-group-count" id="cal-detail-count"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cal-detail-list" style="margin-top:8px;"></div>
+            </div>
+        </div>
     </main>
 
     <!-- Assist Panel Overlay (mobile backdrop) -->
@@ -2010,7 +2091,7 @@
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'notes';
-    const moduleViews = ['medication', 'hep', 'education', 'vehicle'];
+    const moduleViews = ['medication', 'calendar', 'hep', 'education', 'vehicle'];
     const notesViews = ['new', 'pending', 'history', 'templates'];
 
     function toggleSidebar() {
@@ -2050,6 +2131,9 @@
                     initLabelInput('labels-med');
                     document.getElementById('labels-med').dataset.initialized = 'true';
                 }
+            }
+            if (module === 'calendar') {
+                loadCalendarData();
             }
         }
     }
@@ -3023,9 +3107,254 @@
                     document.getElementById('labels-med').dataset.initialized = 'true';
                 }
             }
+            if (savedModule === 'calendar') {
+                loadCalendarData();
+            }
         } else if (savedTab && savedTab !== 'new') {
             showTab(savedTab);
         }
+    }
+
+    // ── Calendar Module ──────────────────────────────────
+    let calYear, calMonth, calSelectedDate = null;
+    let calDataMap = {};
+
+    (function initCalendar() {
+        const now = new Date();
+        calYear = now.getFullYear();
+        calMonth = now.getMonth();
+    })();
+
+    function calPrevMonth() {
+        calMonth--;
+        if (calMonth < 0) { calMonth = 11; calYear--; }
+        renderCalendar();
+    }
+    function calNextMonth() {
+        calMonth++;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        renderCalendar();
+    }
+    function calToday() {
+        const now = new Date();
+        calYear = now.getFullYear();
+        calMonth = now.getMonth();
+        calSelectedDate = toDateKey(now);
+        renderCalendar();
+        showCalDayDetail(calSelectedDate);
+    }
+
+    function toDateKey(d) {
+        const dt = new Date(d);
+        return dt.getFullYear() + '-' +
+            String(dt.getMonth() + 1).padStart(2, '0') + '-' +
+            String(dt.getDate()).padStart(2, '0');
+    }
+
+    async function loadCalendarData() {
+        calDataMap = {};
+
+        // Load notes if not already loaded
+        if (!historyNotes || historyNotes.length === 0) {
+            const { data } = await sb.from('notes').select('*').order('created_at', { ascending: false });
+            historyNotes = data || [];
+        }
+        historyNotes.forEach(note => {
+            const key = toDateKey(note.created_at);
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            calDataMap[key].notes.push(note);
+        });
+
+        // Load med history if not already loaded
+        if (!medHistoryData || medHistoryData.length === 0) {
+            await loadMedHistory();
+        }
+        (medHistoryData || []).forEach(entry => {
+            const key = toDateKey(entry.saved_at);
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            calDataMap[key].meds.push(entry);
+        });
+
+        // Pending recordings from IndexedDB global
+        (pendingRecordings || []).forEach(rec => {
+            const key = toDateKey(new Date(rec.id));
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            calDataMap[key].pendingRec.push(rec);
+        });
+
+        // Pending notes from IndexedDB global
+        (pendingNoteQueue || []).forEach(note => {
+            const key = toDateKey(new Date(note.id));
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            calDataMap[key].pendingNotes.push(note);
+        });
+
+        renderCalendar();
+        if (calSelectedDate) showCalDayDetail(calSelectedDate);
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('cal-grid');
+        const titleEl = document.getElementById('cal-month-title');
+        const monthNames = ['January','February','March','April','May','June',
+                            'July','August','September','October','November','December'];
+        titleEl.textContent = `${monthNames[calMonth]} ${calYear}`;
+        grid.innerHTML = '';
+
+        // Day headers
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+            const hdr = document.createElement('div');
+            hdr.className = 'cal-day-header';
+            hdr.textContent = d;
+            grid.appendChild(hdr);
+        });
+
+        const firstDay = new Date(calYear, calMonth, 1).getDay();
+        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+        const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+        const todayKey = toDateKey(new Date());
+
+        // Previous month trailing days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const dayNum = prevMonthDays - i;
+            const pm = calMonth === 0 ? 11 : calMonth - 1;
+            const py = calMonth === 0 ? calYear - 1 : calYear;
+            const key = toDateKey(new Date(py, pm, dayNum));
+            grid.appendChild(createCalCell(dayNum, key, true, todayKey));
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const key = toDateKey(new Date(calYear, calMonth, d));
+            grid.appendChild(createCalCell(d, key, false, todayKey));
+        }
+
+        // Next month leading days
+        const totalCells = firstDay + daysInMonth;
+        const remaining = (totalCells <= 35 ? 35 : 42) - totalCells;
+        for (let d = 1; d <= remaining; d++) {
+            const nm = calMonth === 11 ? 0 : calMonth + 1;
+            const ny = calMonth === 11 ? calYear + 1 : calYear;
+            const key = toDateKey(new Date(ny, nm, d));
+            grid.appendChild(createCalCell(d, key, true, todayKey));
+        }
+    }
+
+    function createCalCell(dayNum, dateKey, isOtherMonth, todayKey) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        if (isOtherMonth) cell.classList.add('other-month');
+        if (dateKey === todayKey) cell.classList.add('today');
+        if (dateKey === calSelectedDate) cell.classList.add('selected');
+
+        cell.onclick = () => {
+            calSelectedDate = dateKey;
+            document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+            cell.classList.add('selected');
+            showCalDayDetail(dateKey);
+        };
+
+        const num = document.createElement('div');
+        num.className = 'cal-day-num';
+        num.textContent = dayNum;
+        cell.appendChild(num);
+
+        const data = calDataMap[dateKey];
+        if (data) {
+            const dots = document.createElement('div');
+            dots.className = 'cal-dots';
+            if (data.notes.length > 0) dots.innerHTML += '<div class="cal-dot notes"></div>';
+            if (data.meds.length > 0) dots.innerHTML += '<div class="cal-dot meds"></div>';
+            if (data.pendingRec.length > 0 || data.pendingNotes.length > 0) dots.innerHTML += '<div class="cal-dot pending"></div>';
+            if (dots.innerHTML) cell.appendChild(dots);
+        }
+
+        return cell;
+    }
+
+    function showCalDayDetail(dateKey) {
+        const detailEl = document.getElementById('cal-day-detail');
+        const listEl = document.getElementById('cal-detail-list');
+        const titleEl = document.getElementById('cal-detail-title');
+        const countEl = document.getElementById('cal-detail-count');
+
+        const d = new Date(dateKey + 'T12:00:00');
+        titleEl.textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+        const data = calDataMap[dateKey];
+        if (!data) {
+            detailEl.style.display = 'block';
+            countEl.textContent = 'No items';
+            listEl.innerHTML = '<div style="text-align:center; padding:32px; color:var(--gray-400);">No notes, medications, or recordings on this day.</div>';
+            return;
+        }
+
+        const totalItems = data.notes.length + data.meds.length + data.pendingRec.length + data.pendingNotes.length;
+        countEl.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
+
+        listEl.innerHTML = '';
+        detailEl.style.display = 'block';
+
+        // Notes
+        data.notes.forEach(note => {
+            const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const typeName = (note.note_type || '').replace(/\b\w/g, l => l.toUpperCase());
+            const preview = note.generated_note ? note.generated_note.substring(0, 120).replace(/</g, '&lt;') + '...' : '';
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type note-type">${typeName}</span>
+                    ${renderLabelBadges(note.labels, 'history-label-badge')}
+                    <span class="cal-item-time">${time}</span>
+                </div>
+                ${preview ? `<div class="cal-item-preview">${preview}</div>` : ''}`;
+            listEl.appendChild(el);
+        });
+
+        // Medications
+        data.meds.forEach(entry => {
+            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const medCount = entry.medications ? entry.medications.length : 0;
+            const medNames = entry.medications ? entry.medications.map(m => m.name).join(', ') : '';
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type med-type">Med List</span>
+                    <span style="font-size:13px; color:var(--gray-600);">${medCount} medication${medCount !== 1 ? 's' : ''}</span>
+                    <span class="cal-item-time">${time}</span>
+                </div>
+                ${medNames ? `<div class="cal-item-preview">${medNames}</div>` : ''}`;
+            listEl.appendChild(el);
+        });
+
+        // Pending recordings
+        data.pendingRec.forEach(rec => {
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type pending-type">Recording</span>
+                    <span style="font-size:13px; color:var(--gray-600);">~${Math.round(rec.durationSec)}s</span>
+                    <span class="cal-item-time">${rec.timestamp}</span>
+                </div>
+                <div class="cal-item-preview">${rec.transcribed ? 'Transcribed' : 'Awaiting transcription'}</div>`;
+            listEl.appendChild(el);
+        });
+
+        // Pending notes
+        data.pendingNotes.forEach(note => {
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type pending-type">Queued Note</span>
+                    <span class="cal-item-time">${note.timestamp}</span>
+                </div>
+                <div class="cal-item-preview">${note.notes ? note.notes.substring(0, 120).replace(/</g, '&lt;') + '...' : 'Queued for generation'}</div>`;
+            listEl.appendChild(el);
+        });
     }
 
     // ── Note Generation ───────────────────────────────────

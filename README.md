@@ -14,6 +14,12 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 
 ## Features
 
+### Modular Architecture
+- Sidebar navigation with collapsible module menu
+- **Clinical Notes (CareNote)**: Primary documentation module
+- **Medication Manager**: Medication tracking and history
+- Active module and tab persist across page refreshes
+
 ### Note Generation
 - Record audio or type notes manually
 - Select from built-in note types: Initial Evaluation, Start of Care, Discharge, Reassessment, Recertification, Routine Visit
@@ -41,7 +47,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Chunked transcription**: Recordings exceeding 24MB are automatically split into chunks to stay within Whisper's 25MB limit
 - **Audio preservation**: Recordings are always saved to IndexedDB before transcription, so audio is never lost if transcription fails
 - Screen Wake Lock to prevent recording from stopping when screen turns off
-- **Dim screen mode**: After 8 seconds of inactivity during recording, the screen dims to near-black showing a recording timer — saves battery and adds privacy. Requires double-tap to dismiss (prevents pocket wakes)
+- **Dim screen mode**: After 8 seconds of inactivity during recording, the screen dims to near-black showing a recording timer — saves battery and adds privacy. "Go Dark" button allows instant dimming without waiting. Requires double-tap to dismiss (prevents pocket wakes)
 - Pending Recordings tab for retry after failures
 
 ### Settings
@@ -51,6 +57,12 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Smart Phrases**: Save abbreviation/expansion pairs (e.g., `.bp` → "Blood pressure within normal limits"). Type `.abbreviation` in the note textarea to trigger inline suggestions
 - **Help tooltips**: Each settings section has a ? button explaining the feature
 - Template sections flow into both note generation (for structure) and the assist feature (for gap tracking)
+
+### Care Plan Goals
+- AI generates 3-5 SMART goals based on the generated clinical note
+- Goals include timeframes and measurable milestones
+- Editable inline after generation
+- Goals persist with notes in Supabase
 
 ### Export
 - Combined Export button (dropdown on desktop, popup on mobile)
@@ -75,10 +87,20 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Auto-processes queue when back online
 - Templates cached locally for offline use
 
+### Medication Manager
+- Add/edit medications (name, dose, frequency, route, notes)
+- **Bulk voice recording**: Read full medication list aloud; Claude AI parses all medications from the transcript
+- Medication review modal before saving
+- **Pending sub-tab**: Offline queue for bulk recordings with auto-retry
+- **History tab**: Date-grouped medication snapshots with labels
+- Syncs to Supabase for cross-device access
+- Print medication list
+
 ### History
 - All generated notes saved to Supabase
 - Grouped by date with expandable items
 - Search and filter by label
+- **Sort order toggle**: Switch between newest-first and oldest-first in both pending and history sections (persists via localStorage)
 - Copy, email, or PDF export any note
 - **Unified Edit**: Edit note text, change note type, and manage labels all in one inline editor via the ⋮ overflow menu
 - **3-dot overflow menu**: Consolidates all note actions (Copy, Edit, Email, PDF, Delete) into a clean ⋮ button
@@ -97,6 +119,8 @@ supabase/
     generate-note/index.ts          # Note generation edge function
     assist-note/index.ts            # Assist chat edge function
     transcribe/index.ts             # Whisper transcription edge function
+    generate-goals/index.ts         # Care plan goals edge function
+    parse-medication/index.ts       # Medication extraction from audio
   migrations/                       # Database migration SQL files
 ```
 
@@ -106,6 +130,8 @@ supabase/
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
 - **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email)
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
+- **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
+- **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
 
 ## Edge Functions
 
@@ -114,6 +140,8 @@ supabase/
 | `generate-note` | Takes raw notes + note type + output format + optional sections/custom prompt, returns formatted clinical note via Claude API |
 | `assist-note` | Chat mode (category-aware review/clarify notes) and rewrite mode (update notes with new details). Tracks required sections and prioritizes missing ones. |
 | `transcribe` | Accepts audio blob, sends to OpenAI Whisper, returns transcript |
+| `generate-goals` | Takes a clinical note and generates 3-5 SMART care plan goals via Claude API |
+| `parse-medication` | Extracts structured medication data from audio transcripts (single or bulk) via Claude API |
 
 ## Deployment
 
@@ -124,6 +152,8 @@ supabase/
 supabase functions deploy generate-note
 supabase functions deploy assist-note
 supabase functions deploy transcribe
+supabase functions deploy generate-goals
+supabase functions deploy parse-medication
 ```
 
 **Database migrations**: Run SQL files in Supabase Dashboard > SQL Editor.
