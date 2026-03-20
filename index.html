@@ -1991,7 +1991,10 @@
                 <div id="hep-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
                     <div class="form-group" style="margin-bottom:14px;">
                         <label class="form-label">Labels</label>
-                        <div id="labels-hep" class="label-input-container"></div>
+                        <div id="labels-hep" class="label-input-container" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-hep"></div>
                     </div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                         <button class="btn btn-primary" onclick="saveHepToHistory()">💾 Save to History</button>
