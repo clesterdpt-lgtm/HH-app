@@ -18,6 +18,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Sidebar navigation with collapsible module menu
 - **Clinical Notes (CareNote)**: Primary documentation module
 - **Medication Manager**: Medication tracking and history
+- **Calendar**: Unified date-based view across all modules
 - Active module and tab persist across page refreshes
 
 ### Note Generation
@@ -96,6 +97,23 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Syncs to Supabase for cross-device access
 - Print medication list
 
+### Home Exercise Program (HEP)
+- **Exercise Library**: 34 built-in exercises across 6 categories (Upper Body, Lower Body, Core, Balance, Stretching, Breathing)
+- Each exercise has a semi-realistic cartoon SVG illustration, detailed instructions, and category badge
+- **Search and filter** by name, keyword, or category
+- **Custom exercises**: Create and save custom exercises to your library (syncs via Supabase)
+- **Current HEP builder**: Add exercises, set per-exercise sets/reps/hold time/frequency, reorder or remove
+- **Export**: PDF (single-column list or two-column grid layout), email via mailto, or print
+- **History tab**: Saved HEPs with labels, search, sort, expandable detail view, load-to-current, and per-entry export
+- Integrated into Calendar with purple dot indicators
+
+### Calendar
+- Monthly grid view with prev/next/today navigation
+- **Colored dot indicators** on days with activity: teal for notes, orange for medications, purple for HEPs, red for pending items
+- Click any day to see all items for that date grouped by type
+- Day detail shows type badges, timestamps, labels, and text previews
+- Aggregates data from Supabase notes, medication history, HEP history, and IndexedDB pending recordings/notes
+
 ### History
 - All generated notes saved to Supabase
 - Grouped by date with expandable items
@@ -132,6 +150,8 @@ supabase/
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 - **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
+- **exercise_library**: User-created custom exercises (id, user_id, name, category, instructions, svg_key)
+- **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
 
 ## Edge Functions
 
@@ -162,7 +182,7 @@ supabase functions deploy parse-medication
 
 - **Single HTML file**: No build step, no framework — keeps deployment simple via GitHub Pages
 - **Supabase Edge Functions**: Keeps API keys server-side (Anthropic, OpenAI)
-- **IndexedDB v4**: Four stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`
+- **IndexedDB v7**: Seven stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`, `medLists`, `medHistory`, `hepCurrent`
 - **Audio-first safety**: Recordings always persist to IndexedDB before transcription attempts, preventing data loss on network or API failures
 - **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
 - **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates

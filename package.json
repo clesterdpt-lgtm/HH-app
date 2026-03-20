@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/clesterdpt-lgtm/HH-app/issues"
   },
-  "homepage": "https://github.com/clesterdpt-lgtm/HH-app#readme"
+  "homepage": "https://github.com/clesterdpt-lgtm/HH-app#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
 }

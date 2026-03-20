@@ -445,6 +445,7 @@
         .cal-dot.notes { background: var(--teal); }
         .cal-dot.meds { background: var(--orange); }
         .cal-dot.pending { background: var(--red); }
+        .cal-dot.hep { background: #8b5cf6; }
         .cal-nav-btns { margin-left: auto; display: flex; gap: 6px; }
         .cal-nav-btns .btn { min-height: 36px; padding: 6px 14px; font-size: 13px; }
         .cal-item { border: 1px solid var(--gray-200); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; background: var(--white); transition: box-shadow 0.2s; }
@@ -460,10 +461,78 @@
         .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-500); }
         .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
+        /* ── HEP Module ──────────────────────── */
+        .hep-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
+        .hep-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+        .hep-sub-tab:hover { color: var(--gray-600); }
+        .hep-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+        .hep-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .hep-lib-card { border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; background: var(--white); transition: box-shadow 0.2s, transform 0.15s; cursor: pointer; display: flex; flex-direction: column; }
+        .hep-lib-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .hep-lib-card-svg { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--gray-100); padding: 16px; }
+        .hep-lib-card-svg svg { width: 80%; height: 80%; }
+        .hep-lib-card-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .hep-lib-card-name { font-weight: 600; font-size: 13px; color: var(--navy); line-height: 1.3; }
+        .hep-lib-card-cat { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 6px; background: rgba(13,148,136,0.1); color: var(--teal); width: fit-content; }
+        .hep-lib-card-desc { font-size: 12px; color: var(--gray-500); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .hep-lib-card-btn { margin-top: auto; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--teal); background: rgba(13,148,136,0.06); border-top: 1px solid var(--gray-200); transition: background 0.15s; }
+        .hep-lib-card-btn:hover { background: rgba(13,148,136,0.14); }
+        .hep-custom-form { background: var(--white); border: 2px solid var(--teal); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .hep-custom-form .form-group { margin-bottom: 12px; }
+        .hep-svg-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hep-svg-option { width: 56px; height: 56px; border: 2px solid var(--gray-200); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--gray-100); transition: border-color 0.15s; padding: 6px; }
+        .hep-svg-option:hover { border-color: var(--gray-400); }
+        .hep-svg-option.selected { border-color: var(--teal); background: rgba(13,148,136,0.08); }
+        .hep-svg-option svg { width: 100%; height: 100%; }
+        .hep-current-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; background: var(--white); transition: box-shadow 0.2s; overflow: hidden; }
+        .hep-current-item:hover { box-shadow: var(--shadow-md); }
+        .hep-current-item-top { display: flex; gap: 14px; padding: 14px 18px; align-items: flex-start; }
+        .hep-current-item-svg { width: 72px; height: 72px; flex-shrink: 0; background: var(--gray-100); border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+        .hep-current-item-svg svg { width: 100%; height: 100%; }
+        .hep-current-item-info { flex: 1; min-width: 0; }
+        .hep-current-item-name { font-weight: 600; font-size: 15px; color: var(--navy); margin-bottom: 4px; }
+        .hep-current-item-instructions { font-size: 13px; color: var(--gray-500); line-height: 1.5; margin-bottom: 8px; }
+        .hep-current-item-fields { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .hep-current-item-fields label { font-size: 12px; font-weight: 600; color: var(--gray-500); display: flex; align-items: center; gap: 4px; }
+        .hep-current-item-fields input, .hep-current-item-fields select { width: 64px; padding: 5px 8px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--white); }
+        .hep-current-item-fields select { width: auto; }
+        .hep-current-item-fields .hep-hold-field input { width: 50px; }
+        .hep-current-item-actions { display: flex; gap: 4px; flex-shrink: 0; flex-direction: column; }
+        .hep-current-item-actions button { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; color: var(--gray-400); transition: background 0.15s, color 0.15s; }
+        .hep-current-item-actions button:hover { background: var(--gray-100); color: var(--navy); }
+        .hep-current-item-actions .hep-remove-btn:hover { color: var(--red); }
+        .hep-current-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .hep-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
+        .hep-history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; background: var(--white); }
+        .hep-history-item:hover { box-shadow: var(--shadow-md); }
+        .hep-history-item-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; gap: 12px; }
+        .hep-history-item-header:hover { background: var(--gray-100); }
+        .hep-history-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; flex-wrap: wrap; }
+        .hep-history-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .hep-history-title { font-weight: 600; font-size: 14px; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .hep-history-count { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+        .hep-history-time { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+        .hep-history-chevron { font-size: 10px; color: var(--gray-400); transition: transform 0.2s; }
+        .hep-history-chevron.open { transform: rotate(180deg); }
+        .hep-history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
+        .hep-history-item-body.open { display: block; }
+        .hep-history-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .hep-history-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .hep-history-empty-icon { font-size: 40px; margin-bottom: 12px; }
+        .hep-history-exercise { padding: 10px 0; border-bottom: 1px solid var(--gray-100); display: flex; gap: 12px; align-items: flex-start; }
+        .hep-history-exercise:last-child { border-bottom: none; }
+        .hep-history-exercise-svg { width: 48px; height: 48px; flex-shrink: 0; background: var(--gray-100); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 6px; }
+        .hep-history-exercise-svg svg { width: 100%; height: 100%; }
+        .hep-history-exercise-info { flex: 1; }
+        .hep-history-exercise-name { font-weight: 600; font-size: 13px; color: var(--navy); }
+        .hep-history-exercise-details { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+        .hep-history-exercise-instructions { font-size: 12px; color: var(--gray-400); margin-top: 4px; line-height: 1.4; }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
-            #med-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            #hep-print-area, #hep-print-area * { visibility: visible; }
+            #med-print-area, #hep-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
             .med-print-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 4px; }
             .med-print-date { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
             .med-print-item { padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
@@ -627,6 +696,19 @@
             .cal-item { padding: 12px 14px; }
             #view-calendar .card-header { flex-wrap: wrap; gap: 10px; }
             .cal-nav-btns { width: 100%; justify-content: space-between; }
+
+            /* HEP */
+            .hep-sub-tab { padding: 10px 16px; font-size: 13px; }
+            .hep-lib-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+            .hep-current-item-top { flex-direction: column; gap: 10px; }
+            .hep-current-item-svg { width: 60px; height: 60px; }
+            .hep-current-item-fields { gap: 8px; }
+            .hep-current-item-actions { flex-direction: row; }
+            .hep-history-item-header { padding: 14px 16px; gap: 10px; }
+            .hep-history-title { max-width: 140px; font-size: 13px; }
+            .hep-history-item-body { padding: 0 16px 16px; }
+            .hep-history-actions { flex-direction: column; }
+            .hep-history-actions .btn { width: 100%; justify-content: center; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -1846,12 +1928,103 @@
         </div>
 
         <div id="view-hep" style="display:none;">
-            <div class="module-placeholder">
-                <div class="module-placeholder-icon">🏋️</div>
-                <div class="module-placeholder-title">Home Exercise Program</div>
-                <div class="module-placeholder-subtitle">Coming Soon</div>
-                <div class="module-placeholder-desc">Create and manage personalized exercise programs for patients. Build routines, track progress, and generate printable handouts.</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div class="page-title">Home Exercise Program</div>
+                    <div class="page-subtitle">Build personalized exercise programs for patients.</div>
+                </div>
             </div>
+
+            <div class="hep-sub-tabs">
+                <button class="hep-sub-tab active" onclick="switchHepSubTab('library')">📚 Library</button>
+                <button class="hep-sub-tab" onclick="switchHepSubTab('current')">🏋️ Current HEP</button>
+                <button class="hep-sub-tab" onclick="switchHepSubTab('history')">📋 History</button>
+            </div>
+
+            <!-- LIBRARY TAB -->
+            <div id="hep-library-view">
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="form-input" id="hep-lib-search" placeholder="Search exercises..." oninput="renderHepLibrary()" style="flex:1; min-width:180px;">
+                    <div class="select-wrapper" style="min-width:160px;">
+                        <select id="hep-lib-category" onchange="renderHepLibrary()">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" onclick="showAddCustomExercise()">+ Custom Exercise</button>
+                </div>
+                <div id="hep-custom-form" class="hep-custom-form" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <h3 style="margin:0; font-size:16px; color:var(--navy);">Create Custom Exercise</h3>
+                        <button class="btn btn-outline" onclick="hideAddCustomExercise()" style="padding:6px 12px; font-size:13px;">✕ Cancel</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Exercise Name *</label>
+                        <input type="text" class="form-input" id="hep-custom-name" placeholder="e.g. Seated Row with Band">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <div class="select-wrapper">
+                            <select id="hep-custom-category"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instructions *</label>
+                        <textarea class="form-input" id="hep-custom-instructions" rows="3" placeholder="Step-by-step instructions for performing this exercise..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Illustration</label>
+                        <div class="hep-svg-picker" id="hep-svg-picker"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCustomExercise()">Save to Library</button>
+                </div>
+                <div id="hep-library-grid" class="hep-lib-grid"></div>
+            </div>
+
+            <!-- CURRENT HEP TAB -->
+            <div id="hep-current-view" style="display:none;">
+                <div id="hep-current-empty" class="hep-current-empty">
+                    <div class="hep-current-empty-icon">🏋️</div>
+                    <p>No exercises added yet</p>
+                    <p style="font-size:13px; margin-top:4px;">Go to the Library tab to add exercises to your program</p>
+                </div>
+                <div id="hep-current-items"></div>
+                <div id="hep-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label">Labels</label>
+                        <div id="labels-hep" class="label-input-container"></div>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <button class="btn btn-primary" onclick="saveHepToHistory()">💾 Save to History</button>
+                        <button class="btn btn-outline" onclick="downloadHepPdf('single')">📄 PDF (List)</button>
+                        <button class="btn btn-outline" onclick="downloadHepPdf('grid')">📄 PDF (Grid)</button>
+                        <button class="btn btn-outline" onclick="emailHep()">✉️ Email</button>
+                        <button class="btn btn-outline" onclick="printHep()">🖨️ Print</button>
+                        <button class="btn btn-outline" style="margin-left:auto; color:var(--red); border-color:var(--red);" onclick="clearCurrentHep()">🗑️ Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY TAB -->
+            <div id="hep-history-view" style="display:none;">
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="form-input" id="hep-history-search" placeholder="Search HEP history..." oninput="applyHepHistoryFilters()" style="flex:1; min-width:180px;">
+                    <div class="select-wrapper" style="min-width:140px;">
+                        <select id="hep-history-label-filter" onchange="applyHepHistoryFilters()">
+                            <option value="">All Labels</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" id="sort-toggle-hep-history" onclick="toggleSortOrder('hepHistory', () => renderHepHistory(document.getElementById('hep-history-search').value, document.getElementById('hep-history-label-filter').value))">Newest ↓</button>
+                </div>
+                <div id="hep-history-list">
+                    <div class="hep-history-empty">
+                        <div class="hep-history-empty-icon">📋</div>
+                        <p>No saved exercise programs yet</p>
+                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current HEP tab to save programs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hep-print-area" style="display:none;"></div>
         </div>
 
         <div id="view-education" style="display:none;">
@@ -1893,6 +2066,7 @@
                     <div class="cal-legend">
                         <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
                         <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#8b5cf6;"></div> HEP</div>
                         <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
                     </div>
                 </div>
@@ -2135,6 +2309,20 @@
             if (module === 'calendar') {
                 loadCalendarData();
             }
+            if (module === 'hep') {
+                loadCustomExercises().then(() => {
+                    populateHepCategoryDropdowns();
+                    renderHepLibrary();
+                });
+                loadHepCurrentFromDB().then(data => {
+                    hepCurrentExercises = data;
+                    renderHepCurrent();
+                });
+                if (!hepLabelInitialized) {
+                    initLabelInput('labels-hep');
+                    hepLabelInitialized = true;
+                }
+            }
         }
     }
 
@@ -2148,7 +2336,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 6);
+            const req = indexedDB.open('carenote', 7);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -2168,6 +2356,9 @@
                 }
                 if (!db.objectStoreNames.contains('medHistory')) {
                     db.createObjectStore('medHistory', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains('hepCurrent')) {
+                    db.createObjectStore('hepCurrent', { keyPath: 'id', autoIncrement: true });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -3110,6 +3301,20 @@
             if (savedModule === 'calendar') {
                 loadCalendarData();
             }
+            if (savedModule === 'hep') {
+                loadCustomExercises().then(() => {
+                    populateHepCategoryDropdowns();
+                    renderHepLibrary();
+                });
+                loadHepCurrentFromDB().then(data => {
+                    hepCurrentExercises = data;
+                    renderHepCurrent();
+                });
+                if (!hepLabelInitialized) {
+                    initLabelInput('labels-hep');
+                    hepLabelInitialized = true;
+                }
+            }
         } else if (savedTab && savedTab !== 'new') {
             showTab(savedTab);
         }
@@ -3175,17 +3380,28 @@
             calDataMap[key].meds.push(entry);
         });
 
+        // Load HEP history
+        if (!hepHistoryData || hepHistoryData.length === 0) {
+            await loadHepHistory();
+        }
+        (hepHistoryData || []).forEach(entry => {
+            const key = toDateKey(entry.saved_at);
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], heps: [], pendingRec: [], pendingNotes: [] };
+            if (!calDataMap[key].heps) calDataMap[key].heps = [];
+            calDataMap[key].heps.push(entry);
+        });
+
         // Pending recordings from IndexedDB global
         (pendingRecordings || []).forEach(rec => {
             const key = toDateKey(new Date(rec.id));
-            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], heps: [], pendingRec: [], pendingNotes: [] };
             calDataMap[key].pendingRec.push(rec);
         });
 
         // Pending notes from IndexedDB global
         (pendingNoteQueue || []).forEach(note => {
             const key = toDateKey(new Date(note.id));
-            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], pendingRec: [], pendingNotes: [] };
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], heps: [], pendingRec: [], pendingNotes: [] };
             calDataMap[key].pendingNotes.push(note);
         });
 
@@ -3265,6 +3481,7 @@
             dots.className = 'cal-dots';
             if (data.notes.length > 0) dots.innerHTML += '<div class="cal-dot notes"></div>';
             if (data.meds.length > 0) dots.innerHTML += '<div class="cal-dot meds"></div>';
+            if (data.heps && data.heps.length > 0) dots.innerHTML += '<div class="cal-dot hep"></div>';
             if (data.pendingRec.length > 0 || data.pendingNotes.length > 0) dots.innerHTML += '<div class="cal-dot pending"></div>';
             if (dots.innerHTML) cell.appendChild(dots);
         }
@@ -3289,7 +3506,7 @@
             return;
         }
 
-        const totalItems = data.notes.length + data.meds.length + data.pendingRec.length + data.pendingNotes.length;
+        const totalItems = data.notes.length + data.meds.length + (data.heps || []).length + data.pendingRec.length + data.pendingNotes.length;
         countEl.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
 
         listEl.innerHTML = '';
@@ -3326,6 +3543,24 @@
                     <span class="cal-item-time">${time}</span>
                 </div>
                 ${medNames ? `<div class="cal-item-preview">${medNames}</div>` : ''}`;
+            listEl.appendChild(el);
+        });
+
+        // HEP entries
+        (data.heps || []).forEach(entry => {
+            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const exCount = entry.exercises ? entry.exercises.length : 0;
+            const exNames = entry.exercises ? entry.exercises.map(e => e.name).join(', ') : '';
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type" style="background:rgba(139,92,246,0.12); color:#8b5cf6;">HEP</span>
+                    <span style="font-size:13px; color:var(--gray-600);">${exCount} exercise${exCount !== 1 ? 's' : ''}</span>
+                    ${renderLabelBadges(entry.labels, 'history-label-badge')}
+                    <span class="cal-item-time">${time}</span>
+                </div>
+                ${exNames ? `<div class="cal-item-preview">${exNames}</div>` : ''}`;
             listEl.appendChild(el);
         });
 
@@ -6430,6 +6665,817 @@
             if (label === currentVal) opt.selected = true;
             select.appendChild(opt);
         });
+    }
+
+    // ── HEP Module ──────────────────────────────────────────────────
+
+    // SVG illustrations for exercises - semi-realistic cartoon style
+    const HEP_SVGS = {
+        wall_slide: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="88" y="10" width="8" height="100" rx="2" fill="#b0bec5"/><rect x="86" y="10" width="4" height="100" fill="#cfd8dc"/><circle cx="58" cy="24" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M54 33 Q58 30 62 33 L64 55 Q58 58 52 55 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M52 55 L48 82 Q50 84 54 82 L56 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 55 L68 82 Q66 84 62 82 L60 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M48 82 L44 95 L50 96" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M68 82 L72 95 L66 96" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M62 36 L78 28 Q82 26 86 24" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M62 36 L78 28 Q82 26 86 24" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M54 36 L42 48 L40 52" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M54 36 L42 48 L40 52" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M86 24 C88 20 90 36 86 40" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        table_slide: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="24" y="52" width="68" height="5" rx="2" fill="#90a4ae"/><rect x="24" y="57" width="5" height="28" rx="1" fill="#78909c"/><rect x="87" y="57" width="5" height="28" rx="1" fill="#78909c"/><circle cx="46" cy="28" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M42 37 Q46 34 50 37 L52 54 Q46 56 40 54 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M40 54 L36 80 Q38 82 42 80 L44 56" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M52 54 L56 80 Q54 82 50 80 L48 56" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M50 40 L56 48 Q60 51 64 52" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M50 40 L56 48 Q60 51 64 52" fill="none" stroke="#c4977f" stroke-width="1"/><ellipse cx="66" cy="52" rx="3" ry="2" fill="#e8beac" stroke="#c4977f" stroke-width="0.8"/><path d="M66 52 L82 52" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        supine_shoulder_flexion: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="8" y="62" width="104" height="8" rx="4" fill="#b0bec5"/><circle cx="28" cy="54" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M28 54 L72 54" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M28 54 L72 54" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M34 49 Q28 46 22 49" fill="#546e7a"/><path d="M72 54 L88 62 L84 64 L70 58" fill="#e8beac" stroke="#c4977f" stroke-width="0.8"/><path d="M72 54 L80 62 L76 64 L66 58" fill="#e8beac" stroke="#c4977f" stroke-width="0.8"/><path d="M38 54 L42 36 L44 28" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M38 54 L42 36 L44 28" fill="none" stroke="#c4977f" stroke-width="1"/><ellipse cx="45" cy="26" rx="3" ry="2.5" fill="#e8beac" stroke="#c4977f" stroke-width="0.8"/><path d="M44 28 L44 16" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        bicep_curls: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 88 Q52 90 56 88 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 88 Q68 90 64 88 L62 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 38 L76 50 L74 36" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 50 L74 36" fill="none" stroke="#c4977f" stroke-width="1"/><rect x="70" y="32" width="10" height="5" rx="2.5" fill="#607d8b"/><path d="M56 38 L44 50 L42 56" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 38 L44 50 L42 56" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M74 42 C80 40 78 34 74 36" stroke="#2196F3" stroke-width="2" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        band_pull_apart: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 88 Q52 90 56 88 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 88 Q68 90 64 88 L62 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 40 L26 44" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 40 L26 44" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M64 40 L94 44" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 40 L94 44" fill="none" stroke="#c4977f" stroke-width="1"/><line x1="26" y1="44" x2="94" y2="44" stroke="#0d9488" stroke-width="3" stroke-linecap="round"/><path d="M42 44 L30 44" stroke="#2196F3" stroke-width="2.5" marker-end="url(#ha)"/><path d="M78 44 L90 44" stroke="#2196F3" stroke-width="2.5" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        band_triceps: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 88 Q52 90 56 88 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 88 Q68 90 64 88 L62 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 36 L66 24 L68 20" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 36 L66 24 L68 20" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M68 20 L72 50" fill="none" stroke="#e8beac" stroke-width="5" stroke-linecap="round"/><path d="M68 20 L72 50" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M56 36 L46 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 36 L46 48" fill="none" stroke="#c4977f" stroke-width="1"/><line x1="68" y1="20" x2="72" y2="50" stroke="#0d9488" stroke-width="2" stroke-dasharray="3 2"/><path d="M72 42 L72 54" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        ball_grip: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><path d="M40 42 L48 46 Q52 48 56 50 L56 56 Q52 58 48 56 L38 50 Z" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 42 L72 46 Q76 48 80 50 L80 56 Q76 58 72 56 L62 50 Z" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><circle cx="52" cy="58" r="12" fill="#8bc34a" opacity="0.6" stroke="#689f38" stroke-width="1.5"/><circle cx="76" cy="58" r="12" fill="#8bc34a" opacity="0.6" stroke="#689f38" stroke-width="1.5"/><path d="M48 46 Q52 42 56 46" fill="none" stroke="#c4977f" stroke-width="1.2"/><path d="M46 50 Q52 44 58 50" fill="none" stroke="#c4977f" stroke-width="1.2"/><path d="M72 46 Q76 42 80 46" fill="none" stroke="#c4977f" stroke-width="1.2"/><path d="M70 50 Q76 44 82 50" fill="none" stroke="#c4977f" stroke-width="1.2"/><path d="M52 52 C50 46 54 46 52 52" stroke="#2196F3" stroke-width="2" fill="none"/><path d="M76 52 C74 46 78 46 76 52" stroke="#2196F3" stroke-width="2" fill="none"/><text x="60" y="90" text-anchor="middle" font-size="10" fill="#2196F3" font-weight="bold">SQUEEZE</text><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        seated_knee_ext: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="22" y="52" width="38" height="6" rx="3" fill="#90a4ae"/><rect x="22" y="58" width="5" height="24" rx="1" fill="#78909c"/><rect x="55" y="58" width="5" height="24" rx="1" fill="#78909c"/><circle cx="44" cy="32" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M40 41 Q44 38 48 41 L50 56 Q44 58 38 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M48 56 L56 56 Q58 56 58 58" fill="none" stroke="#607d8b" stroke-width="7" stroke-linecap="round"/><path d="M58 58 L68 80" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M58 58 L68 80" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M58 58 L86 54" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round" opacity="0.5"/><path d="M58 58 L86 54" fill="none" stroke="#c4977f" stroke-width="1" opacity="0.5"/><path d="M68 80 Q78 66 86 54" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        seated_hip_flexion: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="22" y="52" width="38" height="6" rx="3" fill="#90a4ae"/><rect x="22" y="58" width="5" height="24" rx="1" fill="#78909c"/><circle cx="44" cy="32" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M40 41 Q44 38 48 41 L50 56 Q44 58 38 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M48 56 L56 56" fill="none" stroke="#607d8b" stroke-width="7" stroke-linecap="round"/><path d="M56 56 L64 78" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M56 56 L64 78" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M44 44 L34 54" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 56 L62 38" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        ankle_pumps: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="12" y="48" width="80" height="8" rx="4" fill="#b0bec5"/><path d="M24 48 L82 48" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M24 48 L82 48" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M82 48 L96 38" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M82 48 L96 38" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M82 48 L96 58" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round" opacity="0.4"/><path d="M82 48 L96 58" fill="none" stroke="#c4977f" stroke-width="1" opacity="0.4"/><path d="M96 58 C100 50 100 44 96 38" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M96 38 C100 44 100 50 96 58" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#hb)" opacity="0.5"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker><marker id="hb" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3" opacity="0.5"/></marker></defs></svg>`,
+        standing_hip_flexion: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="54" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M50 25 Q54 22 58 25 L60 56 Q54 59 48 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M48 56 L46 92 Q48 94 52 92 L54 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M60 56 L72 68 L76 84" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M60 56 L72 68 L76 84" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M72 68 L68 44" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M54 36 L42 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M58 36 L68 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        heel_raises: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="20" y="100" width="80" height="5" rx="2" fill="#b0bec5"/><circle cx="60" cy="18" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 27 Q60 24 64 27 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 86 Q52 88 56 86 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 86 Q68 88 64 86 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M50 86 L46 94 Q50 96 54 94" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M70 86 L74 94 Q70 96 66 94" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M60 18 L60 8" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        toe_raises: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="20" y="100" width="80" height="5" rx="2" fill="#b0bec5"/><circle cx="60" cy="18" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 27 Q60 24 64 27 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 86 Q52 88 56 86 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 86 Q68 88 64 86 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M50 86 L46 100" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M70 86 L74 100" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><ellipse cx="46" cy="100" rx="6" ry="3" fill="#2196F3" opacity="0.25"/><ellipse cx="74" cy="100" rx="6" ry="3" fill="#2196F3" opacity="0.25"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M60 18 L60 8" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        hamstring_curls: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="54" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M50 25 Q54 22 58 25 L60 56 Q54 59 48 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M48 56 L46 92 Q48 94 52 92 L54 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M60 56 L66 78" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M60 56 L66 78" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M66 78 L72 62" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round" opacity="0.5"/><path d="M66 78 L72 62" fill="none" stroke="#c4977f" stroke-width="1" opacity="0.5"/><path d="M66 78 L70 64" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M54 36 L42 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M58 36 L68 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        hip_abduction: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="54" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M50 25 Q54 22 58 25 L60 56 Q54 59 48 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M48 56 L44 92 Q46 94 50 92 L52 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M60 56 L74 78" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M60 56 L74 78" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M74 78 L88 62" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M54 36 L42 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M58 36 L68 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        hip_extension: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="58" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M54 25 Q58 22 62 25 L64 56 Q58 59 52 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M52 56 L50 92 Q52 94 56 92 L58 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 56 L68 78 L72 92" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M64 56 L68 78 L72 92" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M68 78 L78 92" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M58 36 L46 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M62 36 L72 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        mini_squat: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 52 Q60 55 54 52 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 52 L42 72 L42 98" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M54 52 L42 72 L42 98" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M66 52 L78 72 L78 98" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M66 52 L78 72 L78 98" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M60 31 L60 42" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M56 38 L44 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        sit_to_stand: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="14" y="54" width="32" height="6" rx="3" fill="#90a4ae"/><rect x="14" y="60" width="5" height="22" rx="1" fill="#78909c"/><circle cx="34" cy="34" r="8" fill="#e8beac" stroke="#c4977f" stroke-width="1" opacity="0.4"/><path d="M30 42 Q34 40 38 42 L40 58 Q34 60 28 58 Z" fill="#546e7a" opacity="0.35"/><circle cx="82" cy="18" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M78 27 Q82 24 86 27 L88 56 Q82 59 76 56 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M76 56 L72 86 Q74 88 78 86 L80 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M88 56 L92 86 Q90 88 86 86 L84 58" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M48 34 L72 22" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        quad_sets: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="12" y="58" width="96" height="8" rx="4" fill="#b0bec5"/><circle cx="28" cy="46" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M28 46 L68 48" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M28 46 L68 48" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M34 42 Q28 38 22 42" fill="#546e7a"/><path d="M68 48 L92 50" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M68 48 L92 50" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M92 50 L98 60" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><ellipse cx="76" cy="44" rx="14" ry="5" fill="#2196F3" opacity="0.15"/><text x="76" y="78" text-anchor="middle" font-size="10" fill="#2196F3" font-weight="bold">PUSH</text><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        heel_slide: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="12" y="62" width="96" height="8" rx="4" fill="#b0bec5"/><circle cx="28" cy="50" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M28 50 L64 52" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M28 50 L64 52" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M34 46 Q28 42 22 46" fill="#546e7a"/><path d="M64 52 L84 54" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M84 54 L90 62" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M64 52 L68 38 L56 62" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round" opacity="0.4"/><path d="M90 62 L76 62" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        pelvic_tilts: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="8" y="68" width="104" height="8" rx="4" fill="#b0bec5"/><circle cx="24" cy="58" r="8" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M24 58 L68 56" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M24 58 L68 56" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M30 53 Q24 50 18 54" fill="#546e7a"/><path d="M68 56 L86 68" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M68 56 L86 68" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M86 68 L92 78" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M48 50 L48 42" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M48 64 L48 72" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        bridges: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="8" y="82" width="104" height="8" rx="4" fill="#b0bec5"/><circle cx="22" cy="68" r="8" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M28 66 L58 46" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M28 66 L58 46" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M28 62 Q22 58 16 62" fill="#546e7a"/><path d="M58 46 L76 46" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M76 46 L86 82" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M76 46 L86 82" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M58 46 L66 82" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M46 54 L46 38" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        trunk_rotation: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="26" y="56" width="38" height="6" rx="3" fill="#90a4ae"/><circle cx="48" cy="34" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M44 43 Q48 40 52 43 L54 60 Q48 62 42 60 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M42 60 L36 86 Q38 88 42 86 L44 62" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M54 60 L60 86 Q58 88 54 86 L52 62" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M44 48 L32 56" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M52 48 L72 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M42 38 Q30 32 36 24" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M54 38 Q66 32 60 24" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        knee_to_chest: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="8" y="68" width="104" height="8" rx="4" fill="#b0bec5"/><circle cx="24" cy="56" r="8" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M30 54 L66 54" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M30 54 L66 54" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M30 50 Q24 46 18 50" fill="#546e7a"/><path d="M66 54 L62 38 L50 42" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M66 54 L62 38 L50 42" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M66 54 L82 68" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M50 54 L56 42" fill="none" stroke="#e8beac" stroke-width="5" stroke-linecap="round"/><path d="M62 38 L52 46" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        single_leg_stance: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="20" y="102" width="80" height="5" rx="2" fill="#b0bec5"/><circle cx="60" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 25 Q60 22 64 25 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L52 96 Q54 98 58 96 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L74 70 L72 80" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M66 58 L74 70 L72 80" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M52 96 L48 102" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><text x="60" y="116" text-anchor="middle" font-size="10" fill="#2196F3" font-weight="bold">HOLD</text></svg>`,
+        tandem_stance: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="20" y="102" width="80" height="5" rx="2" fill="#b0bec5"/><circle cx="60" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 25 Q60 22 64 25 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L52 96 Q54 98 58 96 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L64 86 Q62 88 58 96" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M66 58 L64 86 Q62 88 58 96" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M52 96 L48 102" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M58 96 L54 102" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><ellipse cx="48" cy="102" rx="6" ry="3" fill="#2196F3" opacity="0.2"/><ellipse cx="54" cy="96" rx="6" ry="3" fill="#2196F3" opacity="0.2"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/></svg>`,
+        heel_to_toe: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 25 Q60 22 64 25 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L48 86 Q50 88 54 86 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L72 78 L70 86" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M66 58 L72 78 L70 86" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M56 38 L44 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M30 104 L90 104" stroke="#2196F3" stroke-width="1.5" stroke-dasharray="4 3"/><ellipse cx="46" cy="104" rx="10" ry="4" fill="#e8beac" opacity="0.5" stroke="#c4977f" stroke-width="0.8"/><ellipse cx="68" cy="104" rx="10" ry="4" fill="#e8beac" opacity="0.5" stroke="#c4977f" stroke-width="0.8"/><path d="M56 104 L58 104" stroke="#2196F3" stroke-width="2"/></svg>`,
+        weight_shifting: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="16" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 25 Q60 22 64 25 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L46 96 Q48 98 52 96 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L74 96 Q72 98 68 96 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M30 58 L22 58" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M90 58 L98 58" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><path d="M30 58 L90 58" stroke="#2196F3" stroke-width="1.5" stroke-dasharray="4 3"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        hamstring_stretch: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="12" y="68" width="80" height="8" rx="4" fill="#b0bec5"/><circle cx="40" cy="44" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M40 53 L46 68" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M40 53 L46 68" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M46 50 Q40 46 34 50" fill="#546e7a"/><path d="M46 68 L80 62" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><path d="M46 68 L80 62" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M80 62 L88 72" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M40 54 L64 54" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 54 L82 56" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        calf_stretch: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="90" y="10" width="8" height="100" rx="2" fill="#b0bec5"/><rect x="88" y="10" width="4" height="100" fill="#cfd8dc"/><circle cx="66" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M62 31 Q66 28 70 31 L72 58 Q66 61 60 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M60 58 L58 88 Q60 90 64 88 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M72 58 L42 96" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M72 58 L42 96" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M42 96 L36 100" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M66 38 L88 42" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M70 38 L88 38" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M48 90 L38 102" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        shoulder_pendulums: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L62 58 Q58 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M52 58 L46 92 Q48 94 52 92 L54 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M62 58 L66 92 Q64 94 60 92 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M64 38 L76 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 38 L42 82" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M56 38 L42 82" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M34 78 Q42 92 50 78" stroke="#2196F3" stroke-width="2.5" fill="none"/><path d="M34 78 L30 80" stroke="#2196F3" stroke-width="2" fill="none"/><path d="M50 78 L54 80" stroke="#2196F3" stroke-width="2" fill="none"/></svg>`,
+        neck_stretches: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="28" r="11" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 39 Q60 36 64 39 L66 66 Q60 69 54 66 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 66 L50 98 Q52 100 56 98 L58 68" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 66 L70 98 Q68 100 64 98 L62 68" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 50 L40 60" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 50 L80 60" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><circle cx="44" cy="24" r="10" fill="none" stroke="#2196F3" stroke-width="2" stroke-dasharray="4 3" opacity="0.5"/><path d="M60 22 L50 20" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        diaphragmatic_breathing: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><rect x="8" y="68" width="104" height="8" rx="4" fill="#b0bec5"/><circle cx="34" cy="56" r="8" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M34 56 L72 56" fill="none" stroke="#e8beac" stroke-width="10" stroke-linecap="round"/><path d="M34 56 L72 56" fill="none" stroke="#c4977f" stroke-width="1"/><path d="M40 52 Q34 48 28 52" fill="#546e7a"/><path d="M72 56 L88 68" fill="none" stroke="#e8beac" stroke-width="8" stroke-linecap="round"/><ellipse cx="56" cy="46" rx="12" ry="7" fill="none" stroke="#2196F3" stroke-width="2" stroke-dasharray="4 3"/><ellipse cx="56" cy="46" rx="18" ry="11" fill="none" stroke="#2196F3" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"/><path d="M56 36 L56 28" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        pursed_lip: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="34" r="14" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 48 Q60 45 64 48 L66 72 Q60 75 54 72 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 72 L50 100 Q52 102 56 100 L58 74" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 72 L70 100 Q68 102 64 100 L62 74" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 58 L44 66" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 58 L76 66" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><ellipse cx="64" cy="32" rx="2.5" ry="2" fill="#c4977f" opacity="0.5"/><path d="M74 30 Q80 26 86 30" stroke="#2196F3" stroke-width="2.5" fill="none"/><path d="M86 30 Q92 26 96 30" stroke="#2196F3" stroke-width="2" fill="none" opacity="0.5"/><path d="M96 30 Q100 26 102 30" stroke="#2196F3" stroke-width="1.5" fill="none" opacity="0.25"/></svg>`,
+        // Generic fallbacks for custom exercises
+        generic_upper: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L50 92 Q52 94 56 92 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L70 92 Q68 94 64 92 L62 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 38 L36 46" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L84 32" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><circle cx="84" cy="32" r="5" fill="#2196F3" opacity="0.2"/></svg>`,
+        generic_lower: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="18" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 27 Q60 24 64 27 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L48 92 Q50 94 54 92 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L76 86 Q74 88 70 86 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><circle cx="76" cy="86" r="5" fill="#2196F3" opacity="0.2"/><path d="M56 38 L44 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L76 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/></svg>`,
+        generic_core: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="22" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 31 Q60 28 64 31 L66 62 Q60 65 54 62 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><ellipse cx="60" cy="52" rx="14" ry="8" fill="#2196F3" opacity="0.1"/><path d="M54 62 L50 94 Q52 96 56 94 L58 64" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 62 L70 94 Q68 96 64 94 L62 64" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 42 L42 52" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 42 L78 52" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/></svg>`,
+        generic_balance: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="18" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 27 Q60 24 64 27 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L52 96 Q54 98 58 96 L58 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L76 76 L74 84" fill="none" stroke="#e8beac" stroke-width="7" stroke-linecap="round"/><path d="M56 38 L36 44" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 38 L84 44" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><line x1="40" y1="100" x2="80" y2="100" stroke="#2196F3" stroke-width="2.5"/></svg>`,
+        generic_stretch: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="50" cy="24" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M46 33 Q50 30 54 33 L58 60 Q52 63 46 60 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M46 60 L42 94 Q44 96 48 94 L50 62" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M58 60 L66 94 Q64 96 60 94 L56 62" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M52 42 L82 48" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M82 48 L94 42" stroke="#2196F3" stroke-width="2.5" fill="none" marker-end="url(#ha)"/><defs><marker id="ha" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2196F3"/></marker></defs></svg>`,
+        generic_breathing: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="30" r="10" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 40 Q60 37 64 40 L66 66 Q60 69 54 66 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 66 L50 96 Q52 98 56 96 L58 68" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 66 L70 96 Q68 98 64 96 L62 68" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 52 L42 60" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 52 L78 60" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><ellipse cx="60" cy="54" rx="16" ry="9" fill="none" stroke="#2196F3" stroke-width="2" stroke-dasharray="4 3"/></svg>`,
+        generic_exercise: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" fill="#e8f4f8"/><circle cx="60" cy="20" r="9" fill="#e8beac" stroke="#c4977f" stroke-width="1.5"/><path d="M56 29 Q60 26 64 29 L66 58 Q60 61 54 58 Z" fill="#546e7a" stroke="#455a64" stroke-width="0.5"/><path d="M54 58 L48 94 Q50 96 54 94 L56 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M66 58 L72 94 Q70 96 66 94 L64 60" fill="#e8beac" stroke="#c4977f" stroke-width="1"/><path d="M56 40 L40 50" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/><path d="M64 40 L80 50" fill="none" stroke="#e8beac" stroke-width="6" stroke-linecap="round"/></svg>`,
+    };
+
+    const HEP_CATEGORIES = [
+        { key: 'upper_body', label: 'Upper Body', icon: '💪', generic_svg: 'generic_upper' },
+        { key: 'lower_body', label: 'Lower Body', icon: '🦵', generic_svg: 'generic_lower' },
+        { key: 'core', label: 'Core / Trunk', icon: '🧘', generic_svg: 'generic_core' },
+        { key: 'balance', label: 'Balance', icon: '⚖️', generic_svg: 'generic_balance' },
+        { key: 'stretching', label: 'Stretching', icon: '🤸', generic_svg: 'generic_stretch' },
+        { key: 'breathing', label: 'Breathing', icon: '🌬️', generic_svg: 'generic_breathing' },
+    ];
+
+    const BUILTIN_EXERCISES = [
+        // Upper Body
+        { id: 'b_wall_slide', name: 'Wall Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'wall_slide', instructions: 'Stand facing a wall with arms raised. Slide hands up the wall as far as comfortable, keeping elbows straight. Slowly slide back down. Repeat.', is_builtin: true },
+        { id: 'b_table_slide', name: 'Table Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'table_slide', instructions: 'Sit at a table with forearm resting on a towel on the table surface. Slowly slide the towel forward, extending your arm. Slide back. Repeat.', is_builtin: true },
+        { id: 'b_supine_shoulder', name: 'Supine Shoulder Flexion AAROM', category: 'upper_body', svg_key: 'supine_shoulder_flexion', instructions: 'Lie on your back holding a cane or dowel with both hands. Use the unaffected arm to assist raising both arms overhead. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_bicep_curls', name: 'Bicep Curls (Band or Weight)', category: 'upper_body', svg_key: 'bicep_curls', instructions: 'Hold a resistance band or light weight with palm facing up. Bend elbow to curl hand toward shoulder, keeping elbow at your side. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_band_pull_apart', name: 'Band Pull Apart', category: 'upper_body', svg_key: 'band_pull_apart', instructions: 'Hold a resistance band in front of you at shoulder height with arms straight. Pull the band apart by squeezing shoulder blades together. Return slowly. Repeat.', is_builtin: true },
+        { id: 'b_band_triceps', name: 'Band Triceps Extension', category: 'upper_body', svg_key: 'band_triceps', instructions: 'Hold one end of a resistance band overhead and the other behind your back. Straighten the top arm upward against the band resistance. Lower slowly. Repeat. Switch arms.', is_builtin: true },
+        { id: 'b_ball_grip', name: 'Ball/Towel Grip', category: 'upper_body', svg_key: 'ball_grip', instructions: 'Hold a stress ball or rolled towel in your hand. Squeeze firmly and hold for 5 seconds. Release slowly. Repeat with each hand.', is_builtin: true },
+        // Lower Body
+        { id: 'b_seated_knee_ext', name: 'Seated Knee Extensions', category: 'lower_body', svg_key: 'seated_knee_ext', instructions: 'Sit in a sturdy chair with feet flat on the floor. Straighten one knee, lifting your foot until the leg is extended. Hold briefly, then lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_seated_hip_flexion', name: 'Seated Hip Flexion', category: 'lower_body', svg_key: 'seated_hip_flexion', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lift one knee toward your chest, keeping your back straight. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_ankle_pumps', name: 'Ankle Pumps', category: 'lower_body', svg_key: 'ankle_pumps', instructions: 'Sit or lie down with legs extended. Point toes away from you, then pull toes toward you. Alternate pumping motion. Repeat.', is_builtin: true },
+        { id: 'b_standing_hip_flexion', name: 'Standing Hip Flexion', category: 'lower_body', svg_key: 'standing_hip_flexion', instructions: 'Stand holding onto a stable surface for balance. Lift one knee up toward your chest. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_heel_raises', name: 'Standing Heel Raises', category: 'lower_body', svg_key: 'heel_raises', instructions: 'Stand holding onto a counter or sturdy chair for balance. Rise up on your toes, lifting heels off the ground. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_toe_raises', name: 'Standing Toe Raises', category: 'lower_body', svg_key: 'toe_raises', instructions: 'Stand holding onto a counter or sturdy chair for balance. Lift your toes off the ground, rocking back onto your heels. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_hamstring_curls', name: 'Standing Hamstring Curls', category: 'lower_body', svg_key: 'hamstring_curls', instructions: 'Stand holding onto a stable surface. Bend one knee, bringing heel toward buttocks. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_hip_abduction', name: 'Standing Hip Abduction', category: 'lower_body', svg_key: 'hip_abduction', instructions: 'Stand holding onto a stable surface. Lift one leg out to the side, keeping knee straight and toes pointing forward. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_hip_extension', name: 'Standing Hip Extension', category: 'lower_body', svg_key: 'hip_extension', instructions: 'Stand holding onto a stable surface. Extend one leg straight behind you, keeping knee straight. Squeeze glutes at the top. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_mini_squat', name: 'Standing Mini Squat', category: 'lower_body', svg_key: 'mini_squat', instructions: 'Stand with feet shoulder-width apart, holding onto a counter for support. Bend knees slightly as if sitting back, keeping weight on heels. Return to standing. Repeat.', is_builtin: true },
+        { id: 'b_sit_to_stand', name: 'Sit to Stand', category: 'lower_body', svg_key: 'sit_to_stand', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lean forward slightly and stand up, using arms only if needed. Slowly sit back down with control. Repeat.', is_builtin: true },
+        { id: 'b_quad_sets', name: 'Quad Sets', category: 'lower_body', svg_key: 'quad_sets', instructions: 'Sit or lie with leg extended. Tighten the muscle on top of your thigh by pushing the back of your knee down into the surface. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
+        { id: 'b_heel_slide', name: 'Heel Slide', category: 'lower_body', svg_key: 'heel_slide', instructions: 'Lie on your back with legs extended. Slowly bend one knee, sliding your heel along the surface toward your buttocks. Slide back to starting position. Repeat. Switch legs.', is_builtin: true },
+        // Core
+        { id: 'b_pelvic_tilts', name: 'Pelvic Tilts', category: 'core', svg_key: 'pelvic_tilts', instructions: 'Lie on your back with knees bent, feet flat on the floor. Flatten your lower back against the floor by tightening your abdominal muscles. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
+        { id: 'b_bridges', name: 'Bridges', category: 'core', svg_key: 'bridges', instructions: 'Lie on your back with knees bent, feet flat on the floor. Lift your hips off the floor by squeezing your buttocks. Hold briefly at the top. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_trunk_rotation', name: 'Seated Trunk Rotation', category: 'core', svg_key: 'trunk_rotation', instructions: 'Sit in a sturdy chair with feet flat on the floor. Cross arms over chest. Slowly rotate your upper body to one side. Return to center. Rotate to the other side. Repeat.', is_builtin: true },
+        { id: 'b_knee_to_chest', name: 'Knee to Chest', category: 'core', svg_key: 'knee_to_chest', instructions: 'Lie on your back with knees bent. Bring one knee toward your chest, grasping behind the thigh. Hold for 15-30 seconds. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        // Balance
+        { id: 'b_single_leg', name: 'Single Leg Stance', category: 'balance', svg_key: 'single_leg_stance', instructions: 'Stand near a counter or sturdy surface. Lift one foot off the ground slightly. Hold for 10-30 seconds. Switch legs. Use support as needed for safety.', is_builtin: true },
+        { id: 'b_tandem', name: 'Tandem Stance', category: 'balance', svg_key: 'tandem_stance', instructions: 'Stand with one foot directly in front of the other, heel to toe. Hold for 10-30 seconds. Switch which foot is in front. Use support as needed.', is_builtin: true },
+        { id: 'b_heel_toe_walk', name: 'Heel-to-Toe Walking', category: 'balance', svg_key: 'heel_to_toe', instructions: 'Walk in a straight line, placing the heel of one foot directly in front of the toes of the other foot. Take 10-20 steps. Walk near a wall for safety.', is_builtin: true },
+        { id: 'b_weight_shift', name: 'Weight Shifting', category: 'balance', svg_key: 'weight_shifting', instructions: 'Stand with feet shoulder-width apart. Slowly shift your weight to one side, then the other. Keep movements controlled. Repeat. Hold onto support if needed.', is_builtin: true },
+        // Stretching
+        { id: 'b_hamstring_stretch', name: 'Hamstring Stretch', category: 'stretching', svg_key: 'hamstring_stretch', instructions: 'Sit on the edge of a chair. Extend one leg out with heel on the floor, toes up. Lean forward from your hips until you feel a stretch behind your knee/thigh. Hold 15-30 seconds. Switch legs.', is_builtin: true },
+        { id: 'b_calf_stretch', name: 'Calf Stretch', category: 'stretching', svg_key: 'calf_stretch', instructions: 'Stand facing a wall with hands on the wall. Step one foot back, keeping heel on the floor and knee straight. Lean into the wall until you feel a stretch in the calf. Hold 15-30 seconds. Switch legs.', is_builtin: true },
+        { id: 'b_shoulder_pendulums', name: 'Shoulder Pendulums', category: 'stretching', svg_key: 'shoulder_pendulums', instructions: 'Bend forward at the waist, supporting yourself with one hand on a table. Let the affected arm hang freely. Gently swing the arm in small circles, forward/back, and side to side. Repeat.', is_builtin: true },
+        { id: 'b_neck_stretches', name: 'Neck Stretches', category: 'stretching', svg_key: 'neck_stretches', instructions: 'Sit or stand with good posture. Slowly tilt your head to one side, bringing ear toward shoulder. Hold for 15-30 seconds. Return to center. Repeat on the other side.', is_builtin: true },
+        // Breathing
+        { id: 'b_diaphragmatic', name: 'Diaphragmatic Breathing', category: 'breathing', svg_key: 'diaphragmatic_breathing', instructions: 'Lie on your back or sit comfortably. Place one hand on your chest, the other on your belly. Breathe in slowly through your nose, feeling your belly rise. Exhale slowly through pursed lips. The chest should move minimally. Repeat.', is_builtin: true },
+        { id: 'b_pursed_lip', name: 'Pursed Lip Breathing', category: 'breathing', svg_key: 'pursed_lip', instructions: 'Breathe in slowly through your nose for 2 counts. Pucker your lips as if whistling. Breathe out slowly through pursed lips for 4 counts. Repeat.', is_builtin: true },
+    ];
+
+    // HEP state
+    let hepCurrentExercises = [];
+    let hepCustomExercises = [];
+    let hepHistoryData = [];
+    let hepLabelInitialized = false;
+    let hepSelectedSvgKey = 'generic_exercise';
+
+    // SVG to data URL for PDF
+    function svgToDataUrl(svgString, width, height) {
+        return new Promise(resolve => {
+            const img = new Image();
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                URL.revokeObjectURL(url);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(null);
+            };
+            img.src = url;
+        });
+    }
+
+    function getExerciseSvg(svgKey) {
+        return HEP_SVGS[svgKey] || HEP_SVGS.generic_exercise;
+    }
+
+    function getCategoryLabel(catKey) {
+        const cat = HEP_CATEGORIES.find(c => c.key === catKey);
+        return cat ? cat.label : catKey;
+    }
+
+    function getGenericSvgForCategory(catKey) {
+        const cat = HEP_CATEGORIES.find(c => c.key === catKey);
+        return cat ? cat.generic_svg : 'generic_exercise';
+    }
+
+    // ── HEP Tab Switching ──────────────────────────────
+    function switchHepSubTab(tab) {
+        document.querySelectorAll('.hep-sub-tab').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`.hep-sub-tab[onclick="switchHepSubTab('${tab}')"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        document.getElementById('hep-library-view').style.display = tab === 'library' ? 'block' : 'none';
+        document.getElementById('hep-current-view').style.display = tab === 'current' ? 'block' : 'none';
+        document.getElementById('hep-history-view').style.display = tab === 'history' ? 'block' : 'none';
+        if (tab === 'library') renderHepLibrary();
+        if (tab === 'current') renderHepCurrent();
+        if (tab === 'history') loadHepHistory().then(() => renderHepHistory());
+    }
+
+    // ── Custom Exercises (Supabase) ──────────────────────────────
+    async function loadCustomExercises() {
+        if (!currentUser) { hepCustomExercises = []; return; }
+        const { data, error } = await sb.from('exercise_library').select('*').order('created_at', { ascending: false });
+        if (error) { console.log('Custom exercises load error:', error.message); hepCustomExercises = []; return; }
+        hepCustomExercises = data || [];
+    }
+
+    function getFullExerciseLibrary() {
+        const custom = hepCustomExercises.map(e => ({
+            id: e.id,
+            name: e.name,
+            category: e.category,
+            svg_key: e.svg_key || getGenericSvgForCategory(e.category),
+            instructions: e.instructions,
+            is_builtin: false,
+        }));
+        return [...BUILTIN_EXERCISES, ...custom];
+    }
+
+    // ── Library Rendering ──────────────────────────────
+    function renderHepLibrary() {
+        const grid = document.getElementById('hep-library-grid');
+        const search = (document.getElementById('hep-lib-search').value || '').toLowerCase();
+        const catFilter = document.getElementById('hep-lib-category').value;
+        const all = getFullExerciseLibrary();
+
+        let filtered = all;
+        if (search) filtered = filtered.filter(e => e.name.toLowerCase().includes(search) || e.instructions.toLowerCase().includes(search) || getCategoryLabel(e.category).toLowerCase().includes(search));
+        if (catFilter) filtered = filtered.filter(e => e.category === catFilter);
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--gray-400); grid-column:1/-1;">No exercises found.</div>';
+            return;
+        }
+
+        grid.innerHTML = filtered.map(ex => `
+            <div class="hep-lib-card" onclick="addToHep('${ex.id}')">
+                <div class="hep-lib-card-svg">${getExerciseSvg(ex.svg_key)}</div>
+                <div class="hep-lib-card-body">
+                    <div class="hep-lib-card-name">${ex.name}</div>
+                    <div class="hep-lib-card-cat">${getCategoryLabel(ex.category)}</div>
+                    <div class="hep-lib-card-desc">${ex.instructions}</div>
+                </div>
+                <div class="hep-lib-card-btn">+ Add to HEP</div>
+            </div>
+        `).join('');
+    }
+
+    function populateHepCategoryDropdowns() {
+        const libSelect = document.getElementById('hep-lib-category');
+        const customSelect = document.getElementById('hep-custom-category');
+        HEP_CATEGORIES.forEach(cat => {
+            const opt1 = document.createElement('option');
+            opt1.value = cat.key;
+            opt1.textContent = cat.icon + ' ' + cat.label;
+            libSelect.appendChild(opt1);
+            if (customSelect) {
+                const opt2 = document.createElement('option');
+                opt2.value = cat.key;
+                opt2.textContent = cat.icon + ' ' + cat.label;
+                customSelect.appendChild(opt2);
+            }
+        });
+    }
+
+    // ── Custom Exercise Form ──────────────────────────────
+    function showAddCustomExercise() {
+        document.getElementById('hep-custom-form').style.display = 'block';
+        renderSvgPicker();
+    }
+
+    function hideAddCustomExercise() {
+        document.getElementById('hep-custom-form').style.display = 'none';
+        document.getElementById('hep-custom-name').value = '';
+        document.getElementById('hep-custom-instructions').value = '';
+        hepSelectedSvgKey = 'generic_exercise';
+    }
+
+    function renderSvgPicker() {
+        const picker = document.getElementById('hep-svg-picker');
+        const genericKeys = HEP_CATEGORIES.map(c => c.generic_svg).concat(['generic_exercise']);
+        picker.innerHTML = genericKeys.map(key => `
+            <div class="hep-svg-option ${hepSelectedSvgKey === key ? 'selected' : ''}" onclick="selectHepSvg('${key}')">
+                ${HEP_SVGS[key]}
+            </div>
+        `).join('');
+    }
+
+    function selectHepSvg(key) {
+        hepSelectedSvgKey = key;
+        renderSvgPicker();
+    }
+
+    async function saveCustomExercise() {
+        const name = document.getElementById('hep-custom-name').value.trim();
+        const category = document.getElementById('hep-custom-category').value;
+        const instructions = document.getElementById('hep-custom-instructions').value.trim();
+
+        if (!name) { alert('Please enter an exercise name.'); return; }
+        if (!instructions) { alert('Please enter instructions.'); return; }
+        if (!currentUser) { alert('Please sign in to save custom exercises.'); return; }
+
+        const entry = {
+            user_id: currentUser.id,
+            name,
+            category,
+            instructions,
+            svg_key: hepSelectedSvgKey,
+        };
+
+        const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
+        if (error) { alert('Error saving exercise: ' + error.message); return; }
+
+        hepCustomExercises.unshift(data);
+        hideAddCustomExercise();
+        renderHepLibrary();
+    }
+
+    async function deleteCustomExercise(id) {
+        showConfirm('Delete Exercise', 'Remove this custom exercise from your library?', async () => {
+            const { error } = await sb.from('exercise_library').delete().eq('id', id);
+            if (error) { alert('Error deleting: ' + error.message); return; }
+            hepCustomExercises = hepCustomExercises.filter(e => e.id !== id);
+            renderHepLibrary();
+        });
+    }
+
+    // ── Current HEP ──────────────────────────────
+    function addToHep(exerciseId) {
+        const lib = getFullExerciseLibrary();
+        const ex = lib.find(e => e.id === exerciseId);
+        if (!ex) return;
+
+        // Check if already added
+        if (hepCurrentExercises.some(e => e.id === exerciseId)) {
+            // Flash the existing item
+            const idx = hepCurrentExercises.findIndex(e => e.id === exerciseId);
+            const el = document.querySelectorAll('.hep-current-item')[idx];
+            if (el) { el.style.boxShadow = '0 0 0 2px var(--teal)'; setTimeout(() => el.style.boxShadow = '', 800); }
+            switchHepSubTab('current');
+            return;
+        }
+
+        hepCurrentExercises.push({
+            id: ex.id,
+            name: ex.name,
+            category: ex.category,
+            svg_key: ex.svg_key,
+            instructions: ex.instructions,
+            sets: 1,
+            reps: 10,
+            hold_seconds: 0,
+            frequency: 'Daily',
+        });
+
+        saveHepCurrentToDB();
+        switchHepSubTab('current');
+    }
+
+    function removeFromHep(index) {
+        hepCurrentExercises.splice(index, 1);
+        saveHepCurrentToDB();
+        renderHepCurrent();
+    }
+
+    function updateHepExercise(index, field, value) {
+        if (index < 0 || index >= hepCurrentExercises.length) return;
+        if (field === 'sets' || field === 'reps' || field === 'hold_seconds') value = parseInt(value) || 0;
+        hepCurrentExercises[index][field] = value;
+        saveHepCurrentToDB();
+    }
+
+    function reorderHepExercise(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= hepCurrentExercises.length) return;
+        const temp = hepCurrentExercises[index];
+        hepCurrentExercises[index] = hepCurrentExercises[newIndex];
+        hepCurrentExercises[newIndex] = temp;
+        saveHepCurrentToDB();
+        renderHepCurrent();
+    }
+
+    function renderHepCurrent() {
+        const emptyEl = document.getElementById('hep-current-empty');
+        const itemsEl = document.getElementById('hep-current-items');
+        const exportEl = document.getElementById('hep-export-row');
+
+        if (hepCurrentExercises.length === 0) {
+            emptyEl.style.display = 'block';
+            itemsEl.innerHTML = '';
+            exportEl.style.display = 'none';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        exportEl.style.display = 'block';
+
+        itemsEl.innerHTML = hepCurrentExercises.map((ex, i) => `
+            <div class="hep-current-item">
+                <div class="hep-current-item-top">
+                    <div class="hep-current-item-svg">${getExerciseSvg(ex.svg_key)}</div>
+                    <div class="hep-current-item-info">
+                        <div class="hep-current-item-name">${ex.name}</div>
+                        <div class="hep-current-item-instructions">${ex.instructions}</div>
+                        <div class="hep-current-item-fields">
+                            <label>Sets: <input type="number" min="1" max="20" value="${ex.sets}" onchange="updateHepExercise(${i},'sets',this.value)"></label>
+                            <label>Reps: <input type="number" min="1" max="100" value="${ex.reps}" onchange="updateHepExercise(${i},'reps',this.value)"></label>
+                            <label class="hep-hold-field">Hold: <input type="number" min="0" max="120" value="${ex.hold_seconds}" onchange="updateHepExercise(${i},'hold_seconds',this.value)">s</label>
+                            <label>Freq:
+                                <select onchange="updateHepExercise(${i},'frequency',this.value)">
+                                    <option value="Daily" ${ex.frequency === 'Daily' ? 'selected' : ''}>Daily</option>
+                                    <option value="2x/day" ${ex.frequency === '2x/day' ? 'selected' : ''}>2x/day</option>
+                                    <option value="3x/day" ${ex.frequency === '3x/day' ? 'selected' : ''}>3x/day</option>
+                                    <option value="3x/week" ${ex.frequency === '3x/week' ? 'selected' : ''}>3x/week</option>
+                                    <option value="5x/week" ${ex.frequency === '5x/week' ? 'selected' : ''}>5x/week</option>
+                                    <option value="As tolerated" ${ex.frequency === 'As tolerated' ? 'selected' : ''}>As tolerated</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="hep-current-item-actions">
+                        <button onclick="reorderHepExercise(${i},-1)" title="Move up" ${i === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
+                        <button onclick="reorderHepExercise(${i},1)" title="Move down" ${i === hepCurrentExercises.length - 1 ? 'disabled style="opacity:0.3"' : ''}>▼</button>
+                        <button class="hep-remove-btn" onclick="removeFromHep(${i})" title="Remove">✕</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function clearCurrentHep() {
+        if (hepCurrentExercises.length === 0) return;
+        showConfirm('Clear HEP', 'Remove all exercises from the current program?', () => {
+            hepCurrentExercises = [];
+            saveHepCurrentToDB();
+            renderHepCurrent();
+        });
+    }
+
+    // ── IndexedDB for Current HEP ──────────────────────────────
+    async function saveHepCurrentToDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('hepCurrent', 'readwrite');
+            const store = tx.objectStore('hepCurrent');
+            store.clear();
+            hepCurrentExercises.forEach((ex, i) => store.put({ ...ex, id: i + 1 }));
+        } catch (e) { console.log('HEP save error:', e); }
+    }
+
+    async function loadHepCurrentFromDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('hepCurrent', 'readonly');
+            const store = tx.objectStore('hepCurrent');
+            const req = store.getAll();
+            return new Promise(resolve => {
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        } catch (e) { return []; }
+    }
+
+    // ── HEP History (Supabase) ──────────────────────────────
+    async function loadHepHistory() {
+        if (!currentUser) { hepHistoryData = []; return hepHistoryData; }
+        const { data, error } = await sb.from('hep_history').select('*').order('saved_at', { ascending: false });
+        if (error) { console.log('HEP history load error:', error.message); hepHistoryData = []; return hepHistoryData; }
+        hepHistoryData = data || [];
+        return hepHistoryData;
+    }
+
+    async function saveHepToHistory() {
+        if (!currentUser) { alert('Please sign in to save exercise programs.'); return; }
+        if (hepCurrentExercises.length === 0) { alert('No exercises to save. Add exercises first.'); return; }
+
+        const labels = getLabels('labels-hep');
+        const now = new Date();
+        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const title = prompt('Name this exercise program (or leave blank for date):', '') || defaultTitle;
+
+        const entry = {
+            user_id: currentUser.id,
+            title: title.trim(),
+            exercises: hepCurrentExercises.map(e => ({ name: e.name, category: e.category, svg_key: e.svg_key, instructions: e.instructions, sets: e.sets, reps: e.reps, hold_seconds: e.hold_seconds, frequency: e.frequency })),
+            labels: labels,
+            saved_at: now.toISOString(),
+        };
+
+        const { data, error } = await sb.from('hep_history').insert(entry).select().single();
+        if (error) { alert('Error saving HEP: ' + error.message); return; }
+
+        // Success feedback
+        const btn = document.querySelector('[onclick="saveHepToHistory()"]');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ Saved!';
+            btn.style.color = 'var(--green)';
+            btn.style.borderColor = 'var(--green)';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+        }
+    }
+
+    async function deleteHepHistoryEntry(id) {
+        showConfirm('Delete HEP', 'Remove this exercise program from history?', async () => {
+            const { error } = await sb.from('hep_history').delete().eq('id', id);
+            if (error) { alert('Error deleting: ' + error.message); return; }
+            hepHistoryData = hepHistoryData.filter(e => e.id !== id);
+            renderHepHistory();
+        });
+    }
+
+    function renderHepHistory(searchQuery, filterLabel) {
+        const listEl = document.getElementById('hep-history-list');
+        let filtered = [...hepHistoryData];
+
+        if (searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(entry => {
+                if (entry.title.toLowerCase().includes(q)) return true;
+                return entry.exercises.some(e => e.name.toLowerCase().includes(q));
+            });
+        }
+
+        if (filterLabel) {
+            filtered = filtered.filter(entry => entry.labels && entry.labels.includes(filterLabel));
+        }
+
+        filtered.sort((a, b) => getSortOrder('hepHistory') === 'desc'
+            ? new Date(b.saved_at) - new Date(a.saved_at)
+            : new Date(a.saved_at) - new Date(b.saved_at));
+        updateSortToggleBtn('sort-toggle-hep-history', 'hepHistory');
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div class="hep-history-empty"><div class="hep-history-empty-icon">📋</div><p>No saved exercise programs yet</p><p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current HEP tab to save programs</p></div>`;
+            return;
+        }
+
+        // Refresh label filter dropdown
+        refreshHepHistoryLabelFilter();
+
+        listEl.innerHTML = filtered.map(entry => {
+            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
+            return `
+                <div class="hep-history-item">
+                    <div class="hep-history-item-header" onclick="toggleHepHistory(${entry.id})">
+                        <div class="hep-history-item-left">
+                            <span class="hep-history-title">${entry.title}</span>
+                            <span class="hep-history-count">${entry.exercises.length} exercise${entry.exercises.length !== 1 ? 's' : ''}</span>
+                            ${labels}
+                        </div>
+                        <div class="hep-history-item-right">
+                            <span class="hep-history-time">${time}</span>
+                            <span class="hep-history-chevron" id="hep-chevron-${entry.id}">▼</span>
+                        </div>
+                    </div>
+                    <div class="hep-history-item-body" id="hep-body-${entry.id}">
+                        ${entry.exercises.map(ex => `
+                            <div class="hep-history-exercise">
+                                <div class="hep-history-exercise-svg">${getExerciseSvg(ex.svg_key)}</div>
+                                <div class="hep-history-exercise-info">
+                                    <div class="hep-history-exercise-name">${ex.name}</div>
+                                    <div class="hep-history-exercise-details">${ex.sets} set${ex.sets !== 1 ? 's' : ''} × ${ex.reps} rep${ex.reps !== 1 ? 's' : ''}${ex.hold_seconds > 0 ? ' (hold ' + ex.hold_seconds + 's)' : ''} · ${ex.frequency}</div>
+                                    <div class="hep-history-exercise-instructions">${ex.instructions}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="hep-history-actions">
+                            <button class="btn btn-outline" onclick="loadHepHistoryEntry(${entry.id})">📋 Load to Current</button>
+                            <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'single')">📄 PDF (List)</button>
+                            <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'grid')">📄 PDF (Grid)</button>
+                            <button class="btn btn-outline" onclick="emailHepHistory(${entry.id})">✉️ Email</button>
+                            <button class="btn btn-outline" style="color:var(--red); border-color:var(--red);" onclick="deleteHepHistoryEntry(${entry.id})">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleHepHistory(id) {
+        const body = document.getElementById('hep-body-' + id);
+        const chevron = document.getElementById('hep-chevron-' + id);
+        if (!body) return;
+        const isOpen = body.classList.contains('open');
+        body.classList.toggle('open');
+        if (chevron) chevron.classList.toggle('open');
+    }
+
+    function loadHepHistoryEntry(id) {
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        hepCurrentExercises = entry.exercises.map(e => ({
+            id: 'loaded_' + Math.random().toString(36).slice(2, 8),
+            name: e.name,
+            category: e.category,
+            svg_key: e.svg_key,
+            instructions: e.instructions,
+            sets: e.sets || 1,
+            reps: e.reps || 10,
+            hold_seconds: e.hold_seconds || 0,
+            frequency: e.frequency || 'Daily',
+        }));
+        saveHepCurrentToDB();
+        switchHepSubTab('current');
+    }
+
+    function applyHepHistoryFilters() {
+        const search = document.getElementById('hep-history-search').value;
+        const label = document.getElementById('hep-history-label-filter').value;
+        renderHepHistory(search, label);
+    }
+
+    function refreshHepHistoryLabelFilter() {
+        const select = document.getElementById('hep-history-label-filter');
+        const currentVal = select.value;
+        const allLabels = new Set();
+        hepHistoryData.forEach(e => (e.labels || []).forEach(l => allLabels.add(l)));
+        select.innerHTML = '<option value="">All Labels</option>';
+        [...allLabels].sort().forEach(label => {
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            if (label === currentVal) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    // ── HEP Export: PDF ──────────────────────────────
+    async function downloadHepPdf(layout, exercises, title) {
+        const exList = exercises || hepCurrentExercises;
+        if (exList.length === 0) { alert('No exercises to export.'); return; }
+
+        if (!window.jspdf) { alert('PDF library is still loading. Please try again.'); return; }
+
+        const pdfTitle = title || 'Home Exercise Program';
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        const maxWidth = pageWidth - margin * 2;
+
+        // Pre-convert all SVGs to data URLs
+        const svgImages = {};
+        for (const ex of exList) {
+            if (!svgImages[ex.svg_key]) {
+                svgImages[ex.svg_key] = await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+            }
+        }
+
+        let y = margin;
+
+        function addPageNumber() {
+            const pages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(9);
+                doc.setTextColor(160);
+                doc.text('CareNote', margin, pageHeight - 8);
+                doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 8, { align: 'right' });
+            }
+        }
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 15) {
+                doc.addPage();
+                y = margin;
+            }
+        }
+
+        // Header
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 16, 'F');
+        doc.setFontSize(13);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 11);
+        doc.setFontSize(10);
+        doc.text('Home Exercise Program', pageWidth - margin, 11, { align: 'right' });
+        y = 22;
+
+        // Title and date
+        doc.setFontSize(14);
+        doc.setTextColor(15, 39, 68);
+        doc.text(pdfTitle, margin, y);
+        y += 6;
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }), margin, y);
+        y += 4;
+        doc.text(exList.length + ' exercise' + (exList.length !== 1 ? 's' : ''), margin, y);
+        y += 8;
+
+        if (layout === 'grid') {
+            // Two-column grid layout
+            const colWidth = (maxWidth - 8) / 2;
+            const imgSize = 18;
+            let col = 0;
+
+            for (let i = 0; i < exList.length; i++) {
+                const ex = exList[i];
+                const xBase = margin + col * (colWidth + 8);
+
+                // Estimate height needed
+                const instrLines = doc.splitTextToSize(ex.instructions, colWidth - imgSize - 6);
+                const neededHeight = Math.max(imgSize + 4, 8 + 5 + instrLines.length * 3.5 + 8);
+                checkPageBreak(neededHeight + 4);
+
+                // Draw exercise card
+                doc.setDrawColor(220);
+                doc.roundedRect(xBase, y, colWidth, neededHeight, 2, 2);
+
+                // SVG image
+                const imgData = svgImages[ex.svg_key];
+                if (imgData) {
+                    try { doc.addImage(imgData, 'PNG', xBase + 2, y + 2, imgSize, imgSize); } catch(e) {}
+                }
+
+                // Text
+                const textX = xBase + imgSize + 4;
+                const textW = colWidth - imgSize - 6;
+                let ty = y + 5;
+
+                doc.setFontSize(10);
+                doc.setTextColor(15, 39, 68);
+                const nameLines = doc.splitTextToSize(ex.name, textW);
+                nameLines.forEach(line => { doc.text(line, textX, ty); ty += 4; });
+
+                doc.setFontSize(8);
+                doc.setTextColor(13, 148, 136);
+                doc.text(`${ex.sets}×${ex.reps}${ex.hold_seconds > 0 ? ' hold ' + ex.hold_seconds + 's' : ''} · ${ex.frequency}`, textX, ty);
+                ty += 4;
+
+                doc.setFontSize(7.5);
+                doc.setTextColor(100);
+                instrLines.forEach(line => { doc.text(line, textX, ty); ty += 3.5; });
+
+                if (col === 0) {
+                    col = 1;
+                } else {
+                    col = 0;
+                    y += neededHeight + 4;
+                }
+            }
+            if (col === 1) y += 30; // Finish last row if odd number
+        } else {
+            // Single column list layout
+            const imgSize = 22;
+            for (let i = 0; i < exList.length; i++) {
+                const ex = exList[i];
+                const instrLines = doc.splitTextToSize(ex.instructions, maxWidth - imgSize - 8);
+                const neededHeight = Math.max(imgSize + 4, 8 + 5 + instrLines.length * 4 + 8);
+                checkPageBreak(neededHeight + 6);
+
+                // SVG image
+                const imgData = svgImages[ex.svg_key];
+                if (imgData) {
+                    try { doc.addImage(imgData, 'PNG', margin, y, imgSize, imgSize); } catch(e) {}
+                }
+
+                const textX = margin + imgSize + 4;
+                const textW = maxWidth - imgSize - 4;
+                let ty = y + 5;
+
+                doc.setFontSize(11);
+                doc.setTextColor(15, 39, 68);
+                doc.text(ex.name, textX, ty);
+                ty += 5;
+
+                doc.setFontSize(9);
+                doc.setTextColor(13, 148, 136);
+                doc.text(`${ex.sets} set${ex.sets !== 1 ? 's' : ''} × ${ex.reps} rep${ex.reps !== 1 ? 's' : ''}${ex.hold_seconds > 0 ? ' (hold ' + ex.hold_seconds + 's)' : ''} · ${ex.frequency}`, textX, ty);
+                ty += 5;
+
+                doc.setFontSize(9);
+                doc.setTextColor(80);
+                instrLines.forEach(line => { doc.text(line, textX, ty); ty += 4; });
+
+                y += neededHeight + 2;
+
+                // Separator
+                if (i < exList.length - 1) {
+                    doc.setDrawColor(220);
+                    doc.setLineDashPattern([2, 2], 0);
+                    doc.line(margin, y, pageWidth - margin, y);
+                    doc.setLineDashPattern([], 0);
+                    y += 4;
+                }
+            }
+        }
+
+        addPageNumber();
+        doc.save(pdfTitle.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+    }
+
+    async function exportHepHistoryPdf(id, layout) {
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        await downloadHepPdf(layout, entry.exercises, entry.title);
+    }
+
+    // ── HEP Export: Email ──────────────────────────────
+    function formatHepText(exercises, title) {
+        let text = (title || 'Home Exercise Program') + '\n';
+        text += 'Generated: ' + new Date().toLocaleDateString() + '\n';
+        text += exercises.length + ' exercise' + (exercises.length !== 1 ? 's' : '') + '\n\n';
+        exercises.forEach((ex, i) => {
+            text += (i + 1) + '. ' + ex.name + '\n';
+            text += '   Sets: ' + ex.sets + ' | Reps: ' + ex.reps;
+            if (ex.hold_seconds > 0) text += ' | Hold: ' + ex.hold_seconds + 's';
+            text += ' | Frequency: ' + ex.frequency + '\n';
+            text += '   ' + ex.instructions + '\n\n';
+        });
+        return text;
+    }
+
+    function emailHep() {
+        if (hepCurrentExercises.length === 0) return;
+        const text = formatHepText(hepCurrentExercises);
+        const subject = 'Home Exercise Program - ' + new Date().toLocaleDateString();
+        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+        window.open(mailto, '_blank');
+    }
+
+    function emailHepHistory(id) {
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        const text = formatHepText(entry.exercises, entry.title);
+        const subject = entry.title + ' - Home Exercise Program';
+        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+        window.open(mailto, '_blank');
+    }
+
+    // ── HEP Export: Print ──────────────────────────────
+    function printHep() {
+        if (hepCurrentExercises.length === 0) return;
+        const area = document.getElementById('hep-print-area');
+        area.innerHTML = `
+            <div class="med-print-title">Home Exercise Program</div>
+            <div class="med-print-date">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} · ${hepCurrentExercises.length} exercises</div>
+            ${hepCurrentExercises.map(ex => `
+                <div class="med-print-item">
+                    <div class="med-print-name">${ex.name}</div>
+                    <div class="med-print-details">${ex.sets} set${ex.sets !== 1 ? 's' : ''} × ${ex.reps} rep${ex.reps !== 1 ? 's' : ''}${ex.hold_seconds > 0 ? ' (hold ' + ex.hold_seconds + 's)' : ''} · ${ex.frequency}</div>
+                    <div class="med-print-notes">${ex.instructions}</div>
+                </div>
+            `).join('')}
+        `;
+        area.style.display = 'block';
+        window.print();
+        setTimeout(() => { area.style.display = 'none'; }, 500);
     }
 
     // ── PDF Generation ──────────────────────────────────────────────
