@@ -567,11 +567,69 @@
         .hep-history-exercise-details { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
         .hep-history-exercise-instructions { font-size: 12px; color: var(--gray-400); margin-top: 4px; line-height: 1.4; }
 
+        /* ── Patient Education Module ── */
+        .edu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .edu-card { border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); cursor: pointer; transition: box-shadow 0.2s, transform 0.15s; overflow: hidden; display: flex; flex-direction: column; }
+        .edu-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .edu-card-icon-area { background: rgba(13,148,136,0.07); padding: 24px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .edu-card-icon { font-size: 36px; }
+        .edu-card-category { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 6px; background: rgba(13,148,136,0.12); color: var(--teal); }
+        .edu-card-body { padding: 14px; flex: 1; }
+        .edu-card-title { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 6px; line-height: 1.3; }
+        .edu-card-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .edu-card-footer { padding: 10px 14px; border-top: 1px solid var(--gray-100); font-size: 12px; font-weight: 600; color: var(--teal); background: rgba(13,148,136,0.04); text-align: center; transition: background 0.15s; }
+        .edu-card:hover .edu-card-footer { background: rgba(13,148,136,0.10); }
+        .edu-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; }
+        .edu-modal-overlay.open { display: block; }
+        .edu-modal { position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 620px; background: var(--white); z-index: 201; overflow-y: auto; display: none; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
+        .edu-modal.open { display: flex; }
+        .edu-modal-header { background: var(--navy); color: var(--white); padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px; position: sticky; top: 0; z-index: 2; }
+        .edu-modal-header-icon { font-size: 30px; flex-shrink: 0; }
+        .edu-modal-header-text { flex: 1; }
+        .edu-modal-header-title { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--white); line-height: 1.25; }
+        .edu-modal-header-subtitle { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .edu-modal-close { background: rgba(255,255,255,0.15); border: none; color: var(--white); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+        .edu-modal-close:hover { background: rgba(255,255,255,0.25); }
+        .edu-modal-export { display: flex; gap: 8px; padding: 12px 24px; border-bottom: 1px solid var(--gray-100); background: var(--cream); flex-wrap: wrap; }
+        .edu-modal-body { padding: 20px 24px; flex: 1; }
+        .edu-section { margin-bottom: 24px; }
+        .edu-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--teal); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .edu-section-title::after { content: ''; flex: 1; height: 1px; background: var(--gray-100); }
+        .edu-section-text { font-size: 14px; color: var(--gray-700); line-height: 1.75; }
+        .edu-key-points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        .edu-key-point { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--gray-700); line-height: 1.6; }
+        .edu-key-point-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); flex-shrink: 0; margin-top: 7px; }
+        .edu-warning-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .edu-warning-item { display: flex; align-items: flex-start; font-size: 14px; color: var(--gray-700); line-height: 1.5; padding: 9px 12px; background: rgba(239,68,68,0.05); border-left: 3px solid #f87171; border-radius: 0 6px 6px 0; }
+        .edu-warning-911 { border-left-color: #dc2626; background: rgba(220,38,38,0.08); font-weight: 600; color: #991b1b; }
+        .edu-resources { display: flex; flex-direction: column; gap: 8px; }
+        .edu-resource { padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px; }
+        .edu-resource-name { font-weight: 600; font-size: 13px; color: var(--navy); }
+        .edu-resource-desc { font-size: 12px; color: var(--gray-500); margin-top: 3px; line-height: 1.5; }
+        @media (max-width: 600px) {
+            .edu-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .edu-card-icon-area { padding: 18px 12px 12px; }
+            .edu-card-icon { font-size: 28px; }
+            .edu-modal { max-width: 100%; }
+            .edu-modal-export .btn { flex: 1; text-align: center; font-size: 12px; padding: 8px 8px; }
+        }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
             #hep-print-area, #hep-print-area * { visibility: visible; }
-            #med-print-area, #hep-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            #edu-print-area, #edu-print-area * { visibility: visible; }
+            #med-print-area, #hep-print-area, #edu-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            .edu-print-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #0f2744; }
+            .edu-print-app { font-size: 13px; font-weight: 700; color: #0f2744; }
+            .edu-print-date { font-size: 11px; color: #888; }
+            .edu-print-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #0f2744; margin-bottom: 4px; }
+            .edu-print-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0d9488; margin-bottom: 20px; }
+            .edu-print-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #0d9488; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; }
+            .edu-print-text { font-size: 13px; color: #374151; line-height: 1.7; margin: 0 0 10px; }
+            .edu-print-list { font-size: 13px; color: #374151; line-height: 1.6; padding-left: 20px; margin: 0 0 10px; }
+            .edu-print-list li { margin-bottom: 5px; }
+            .edu-print-warn911 { font-weight: 700; color: #991b1b; }
             .med-print-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); margin-bottom: 4px; }
             .med-print-date { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
             .med-print-item { padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
@@ -2127,12 +2185,55 @@
         </div>
 
         <div id="view-education" style="display:none;">
-            <div class="module-placeholder">
-                <div class="module-placeholder-icon">📚</div>
-                <div class="module-placeholder-title">Patient Education</div>
-                <div class="module-placeholder-subtitle">Coming Soon</div>
-                <div class="module-placeholder-desc">Access and share patient education materials on diagnoses, procedures, and self-management strategies for home health patients.</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+                <div>
+                    <div class="page-title">Patient Education</div>
+                    <div class="page-subtitle">Evidence-based materials for common home health conditions.</div>
+                </div>
             </div>
+
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-body" style="padding:14px;">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <input type="text" class="form-input" id="edu-search" placeholder="Search conditions..." oninput="renderEduGrid()" style="flex:1; min-width:160px;">
+                        <div class="select-wrapper" style="min-width:160px;">
+                            <select id="edu-category-filter" onchange="renderEduGrid()">
+                                <option value="">All Categories</option>
+                                <option value="Cardiac">Cardiac</option>
+                                <option value="Pulmonary">Pulmonary</option>
+                                <option value="Endocrine">Endocrine</option>
+                                <option value="Wound Care">Wound Care</option>
+                                <option value="Safety">Safety</option>
+                                <option value="Medications">Medications</option>
+                                <option value="Neurological">Neurological</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="edu-grid" class="edu-grid"></div>
+
+            <!-- Education Module Detail Panel -->
+            <div id="edu-modal-overlay" class="edu-modal-overlay" onclick="closeEduModule()"></div>
+            <div id="edu-modal" class="edu-modal" role="dialog" aria-modal="true" aria-labelledby="edu-modal-title">
+                <div class="edu-modal-header">
+                    <div class="edu-modal-header-icon" id="edu-modal-icon"></div>
+                    <div class="edu-modal-header-text">
+                        <div class="edu-modal-header-title" id="edu-modal-title"></div>
+                        <div class="edu-modal-header-subtitle" id="edu-modal-category"></div>
+                    </div>
+                    <button class="edu-modal-close" onclick="closeEduModule()" aria-label="Close">&times;</button>
+                </div>
+                <div class="edu-modal-export">
+                    <button class="btn btn-outline btn-sm" onclick="emailEduModule()">✉️ Email</button>
+                    <button class="btn btn-outline btn-sm" onclick="downloadEduPdf()">⬇️ Download PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printEduModule()">🖨️ Print</button>
+                </div>
+                <div class="edu-modal-body" id="edu-modal-body"></div>
+            </div>
+
+            <div id="edu-print-area" style="display:none;"></div>
         </div>
 
         <div id="view-vehicle" style="display:none;">
@@ -2451,6 +2552,9 @@
                     initLabelInput('labels-hep');
                     hepLabelInitialized = true;
                 }
+            }
+            if (module === 'education') {
+                renderEduGrid();
             }
         }
     }
@@ -8330,6 +8434,551 @@
                 </div>
             `).join('')}
         `;
+        area.style.display = 'block';
+        window.print();
+        setTimeout(() => { area.style.display = 'none'; }, 500);
+    }
+
+    // ── Patient Education ───────────────────────────────────────────
+
+    const EDUCATION_MODULES = [
+        {
+            id: 'chf',
+            title: 'Congestive Heart Failure (CHF)',
+            icon: '❤️',
+            category: 'Cardiac',
+            overview: 'Congestive Heart Failure (CHF) means your heart is not pumping blood as efficiently as it should. This causes fluid to build up in your lungs and body, making it harder to breathe and causing swelling. With proper self-management, many people with CHF live active, fulfilling lives.',
+            keyPoints: [
+                'Weigh yourself every morning before eating and after using the bathroom. Use the same scale each time.',
+                'Call your nurse or doctor if you gain more than 2 pounds in one day or 5 pounds in one week — this can signal fluid buildup.',
+                'Limit sodium (salt) to less than 2,000 mg per day. Avoid canned soups, deli meats, fast food, and packaged snacks.',
+                'Take all heart medications exactly as prescribed, even when you feel well. Do not skip or stop doses without talking to your doctor.',
+                'Limit fluids if your doctor has instructed you to — typically 1.5 to 2 liters (about 6–8 cups) per day.',
+                'Elevate your legs when sitting to help reduce swelling in your ankles and feet.',
+                'Rest between activities and pace yourself. Break up tasks into smaller steps with breaks in between.',
+                'Do not smoke. If you smoke, ask your doctor about cessation support — it significantly affects heart function.',
+                'Limit alcohol, as it can weaken the heart muscle and worsen symptoms.',
+                'Keep all follow-up appointments, especially with your cardiologist. Bring an updated medication list.',
+            ],
+            callDoctor: [
+                { text: 'Weight gain of 2 or more pounds in one day, or 5 or more pounds in one week', is911: false },
+                { text: 'Shortness of breath that is new or worsening, especially when lying flat or at rest', is911: false },
+                { text: 'Increased swelling in your legs, ankles, or feet', is911: false },
+                { text: 'Needing more pillows to sleep comfortably (increased orthopnea)', is911: false },
+                { text: 'Dizziness, lightheadedness, or fainting spells', is911: false },
+                { text: 'Chest pain or pressure', is911: true },
+                { text: 'Severe shortness of breath that does not improve with rest', is911: true },
+                { text: 'Sudden confusion or change in mental status', is911: true },
+            ],
+            resources: [
+                { name: 'American Heart Association', desc: 'Heart failure education, diet tools, and support resources — heart.org/heartfailure' },
+                { name: 'Heart Failure Society of America', desc: 'Patient guides and self-care action plans — hfsa.org' },
+                { name: 'DASH Diet', desc: 'Low-sodium, heart-healthy eating plans — often recommended for CHF patients — ask your care team for resources' },
+            ],
+        },
+        {
+            id: 'copd',
+            title: 'COPD',
+            icon: '🫁',
+            category: 'Pulmonary',
+            overview: 'COPD (Chronic Obstructive Pulmonary Disease) is a chronic lung disease — including emphysema and chronic bronchitis — that makes it difficult to breathe. While COPD cannot be cured, the right treatment and self-management strategies can control symptoms, slow progression, and help you stay active.',
+            keyPoints: [
+                'Use your inhalers exactly as prescribed. Know the difference: your rescue inhaler (e.g., albuterol) treats sudden symptoms; your maintenance inhaler is taken daily to prevent them.',
+                'Practice pursed-lip breathing: inhale slowly through your nose for 2 counts, then exhale through pursed lips for 4 counts. This helps empty trapped air and reduce breathlessness.',
+                'If you smoke, quitting is the single most effective step to slow COPD. Ask your doctor about cessation programs, patches, or medications.',
+                'Avoid triggers: cigarette smoke, dust, strong perfumes, cold air, and air pollution. Use an air purifier indoors when possible.',
+                'Use energy conservation techniques: sit while doing tasks, break up activities into steps, and avoid holding your breath while exerting.',
+                'If prescribed supplemental oxygen, use it exactly as directed — including during sleep and activity. Do not adjust the flow rate without your doctor\'s approval.',
+                'Oxygen safety: keep oxygen equipment away from open flames, smoking areas, and heat sources. No smoking near oxygen.',
+                'Stay current on flu and pneumonia vaccines — respiratory infections are especially dangerous with COPD.',
+                'Drink plenty of fluids (unless restricted) to help thin and loosen mucus.',
+                'Know and follow your COPD Action Plan — understand your Green, Yellow, and Red Zone symptoms and what to do in each.',
+            ],
+            callDoctor: [
+                { text: 'Increased shortness of breath that does not improve with your rescue inhaler', is911: false },
+                { text: 'Increase in mucus (sputum) or change in color to yellow, green, or brown', is911: false },
+                { text: 'Fever of 100.4°F (38°C) or higher', is911: false },
+                { text: 'Worsening cough or new wheezing not relieved by your inhaler', is911: false },
+                { text: 'New swelling in your legs or ankles', is911: false },
+                { text: 'Severe shortness of breath even at rest that does not improve', is911: true },
+                { text: 'Lips or fingernails turning blue (cyanosis)', is911: true },
+                { text: 'Sudden confusion or decreased level of alertness', is911: true },
+                { text: 'Chest pain', is911: true },
+            ],
+            resources: [
+                { name: 'COPD Foundation', desc: 'Patient support, education, and COPD Action Plan tools — copdfoundation.org' },
+                { name: 'American Lung Association', desc: 'COPD resources, support groups, and quit-smoking programs — lung.org' },
+                { name: 'Better Breathers Club', desc: 'In-person and virtual support groups for people living with lung disease — find a group at lung.org' },
+            ],
+        },
+        {
+            id: 'diabetes',
+            title: 'Diabetes Management',
+            icon: '🩸',
+            category: 'Endocrine',
+            overview: 'Diabetes is a condition in which blood sugar (glucose) levels are too high. Managing diabetes involves monitoring blood sugar, eating well, staying active, and taking medications as prescribed. Good diabetes management can prevent serious complications affecting your heart, kidneys, eyes, nerves, and feet.',
+            keyPoints: [
+                'Check your blood sugar as directed by your doctor. Record your readings and bring them to every appointment.',
+                'Ask your doctor for your personal blood sugar targets. General guidelines are 80–130 mg/dL before meals and less than 180 mg/dL two hours after meals.',
+                'Take your diabetes medications or insulin on schedule. Never skip or stop doses without talking to your doctor first.',
+                'Eat consistent meals at regular times. Focus on vegetables, lean protein, whole grains, and healthy fats. Limit sugary drinks, white bread, and processed foods.',
+                'Inspect your feet every single day. Look for cuts, blisters, sores, redness, or swelling. Never walk barefoot, even indoors.',
+                'Know the signs of low blood sugar (hypoglycemia): shakiness, sweating, confusion, rapid heartbeat, hunger. Treat with 15 grams of fast-acting carbohydrates (4 oz juice, 3–4 glucose tablets). Recheck in 15 minutes.',
+                'Know the signs of high blood sugar (hyperglycemia): increased thirst, frequent urination, blurred vision, fatigue, headache.',
+                'Stay physically active — even a 10-minute walk after meals can meaningfully lower blood sugar.',
+                'Drink plenty of water. Avoid sugary drinks including juice, soda, and sweetened coffee drinks.',
+                'Get regular eye exams, dental checkups, and kidney function tests as recommended by your doctor.',
+            ],
+            callDoctor: [
+                { text: 'Blood sugar consistently below 70 mg/dL or above 300 mg/dL', is911: false },
+                { text: 'Low blood sugar symptoms that do not resolve after eating 15 grams of carbohydrates', is911: false },
+                { text: 'A foot wound, sore, blister, or cut that is not healing', is911: false },
+                { text: 'Signs of infection: redness, warmth, swelling, fever, or drainage from any wound', is911: false },
+                { text: 'Vomiting or inability to keep food and fluids down (sick day management)', is911: false },
+                { text: 'Loss of consciousness or severe confusion due to low blood sugar', is911: true },
+                { text: 'Chest pain or difficulty breathing', is911: true },
+                { text: 'Signs of diabetic ketoacidosis (DKA): fruity-smelling breath, nausea, abdominal pain, rapid deep breathing', is911: true },
+            ],
+            resources: [
+                { name: 'American Diabetes Association', desc: 'Diabetes education, recipes, and support — diabetes.org' },
+                { name: 'CDC Diabetes Resources', desc: 'Free diabetes prevention and management tools — cdc.gov/diabetes' },
+                { name: 'National Diabetes Education Program', desc: 'Patient and family education materials — ndep.nih.gov' },
+            ],
+        },
+        {
+            id: 'wound',
+            title: 'Wound Care',
+            icon: '🩹',
+            category: 'Wound Care',
+            overview: 'Proper wound care at home is essential for healing and preventing serious infection. Whether your wound is from surgery, a pressure injury, a diabetic ulcer, or another cause, following your care team\'s instructions carefully will speed recovery and reduce the risk of complications.',
+            keyPoints: [
+                'Change your dressing exactly as your nurse has instructed — not more or less frequently unless directed.',
+                'Always wash your hands thoroughly with soap and water before and after any wound care.',
+                'Keep the wound clean. Gently clean with saline solution or as directed by your nurse.',
+                'Keep the wound moist unless specifically instructed otherwise. A moist environment supports faster healing.',
+                'Watch for signs of infection: increased redness, warmth, swelling, cloudy or foul-smelling drainage, or increasing pain.',
+                'Eat a nutritious diet — protein, vitamin C, and zinc support wound healing. Include lean meats, eggs, dairy, citrus, beans, and nuts.',
+                'Stay well-hydrated. Drink adequate fluids daily unless you have a fluid restriction.',
+                'Relieve pressure from pressure injuries. Change position in bed every 2 hours; shift weight in a wheelchair every 15–30 minutes.',
+                'Protect the wound during bathing — keep it dry and covered unless your nurse has instructed otherwise.',
+                'Do not remove dark, hard tissue (eschar) on your own. Your nurse or doctor will address it using appropriate wound care techniques.',
+            ],
+            callDoctor: [
+                { text: 'Increased redness, warmth, or swelling around the wound', is911: false },
+                { text: 'Drainage that is cloudy, green, yellow, or has a foul odor', is911: false },
+                { text: 'Wound that appears to be getting larger instead of smaller', is911: false },
+                { text: 'Fever of 100.4°F or higher', is911: false },
+                { text: 'Increasing pain or tenderness at or around the wound site', is911: false },
+                { text: 'Wound edges separating (dehiscence)', is911: false },
+                { text: 'Red streaks spreading outward from the wound (possible infection spreading)', is911: true },
+                { text: 'High fever, confusion, rapid heart rate, or feeling extremely ill (possible sepsis)', is911: true },
+            ],
+            resources: [
+                { name: 'National Pressure Injury Advisory Panel', desc: 'Pressure injury prevention and treatment information — npiap.com' },
+                { name: 'WOCN Society', desc: 'Wound care resources and wound care nurse locator — wocn.org' },
+                { name: 'Wound Care Education Institute', desc: 'Patient wound care guides — wcei.net' },
+            ],
+        },
+        {
+            id: 'fall',
+            title: 'Fall Prevention',
+            icon: '🚶',
+            category: 'Safety',
+            overview: 'Falls are the leading cause of injury in older adults and can lead to fractures, head injuries, and loss of independence. The good news is that most falls are preventable. A combination of home safety modifications, exercise, and medication awareness can significantly reduce your risk.',
+            keyPoints: [
+                'Remove tripping hazards: pick up area rugs, loose carpet edges, clutter on floors, and electrical cords from walkways.',
+                'Improve home lighting: add nightlights in hallways, bathrooms, and near stairs. Keep a lamp within easy reach of your bed.',
+                'Install grab bars in the bathroom — next to the toilet and inside the shower or tub. Use a non-slip bath mat.',
+                'Wear supportive, non-slip footwear with enclosed heels at all times, even indoors. Avoid loose slippers and walking in socks.',
+                'Use your assistive device (cane, walker, etc.) consistently — even short distances. Have it checked regularly for proper fit and condition.',
+                'Rise slowly from chairs and bed. Sit on the edge for 30 seconds before standing to allow blood pressure to adjust.',
+                'Tell your doctor or nurse about any dizziness, balance changes, unsteadiness, or near-falls right away.',
+                'Review all medications with your nurse or pharmacist. Blood pressure medications, sleep aids, pain medications, and sedatives can increase fall risk.',
+                'Do your prescribed strength and balance exercises regularly — they make a significant difference over time.',
+                'Keep a phone or call device within reach at all times, especially in the bathroom and bedroom.',
+            ],
+            callDoctor: [
+                { text: 'Any fall — even if you feel uninjured, you should report it', is911: false },
+                { text: 'Dizziness or lightheadedness, especially when standing up', is911: false },
+                { text: 'Near-falls or a feeling of increasing unsteadiness', is911: false },
+                { text: 'Changes in vision or hearing that affect your balance', is911: false },
+                { text: 'New or worsening leg weakness or difficulty walking', is911: false },
+                { text: 'Fall with head injury, loss of consciousness, or confusion', is911: true },
+                { text: 'Inability to bear weight or severe pain after a fall (possible fracture)', is911: true },
+                { text: 'Visible deformity of an arm or leg after a fall', is911: true },
+            ],
+            resources: [
+                { name: 'CDC STEADI Program', desc: 'Stopping Elderly Accidents, Deaths and Injuries — resources at cdc.gov/steadi' },
+                { name: 'National Council on Aging', desc: 'Falls prevention programs and community resources — ncoa.org/falls-prevention' },
+                { name: 'Tai Chi for Balance', desc: 'Evidence-based balance program — ask your therapist about programs available in your area' },
+            ],
+        },
+        {
+            id: 'medication',
+            title: 'Medication Management',
+            icon: '💊',
+            category: 'Medications',
+            overview: 'Taking your medications correctly and safely is one of the most important things you can do for your health. Medication errors — including missed doses, wrong doses, or harmful interactions — are a leading cause of hospital readmissions. These strategies can help you stay safe and in control.',
+            keyPoints: [
+                'Keep a current, written medication list with: medication name, dose, how often to take it, and what it is for. Bring it to every appointment and every ER or hospital visit.',
+                'Take medications at the same time every day. Use phone alarms, reminder apps, or link doses to daily habits like meals.',
+                'Use a weekly pill organizer to help track which medications you have already taken.',
+                'Never stop, skip, or change the dose of a medication without talking to your doctor or nurse first — even if you feel better.',
+                'Know the purpose and most common side effects of each medication you take.',
+                'Store medications as directed — some require refrigeration; others must be kept at room temperature, away from heat, light, and moisture.',
+                'Do not share your medications with others, and never take someone else\'s medications.',
+                'Dispose of unused or expired medications safely. Many pharmacies have medication drop-box programs.',
+                'Tell every doctor, pharmacist, and care provider about all supplements, vitamins, and over-the-counter medications you take. Interactions can be serious.',
+                'If cost is a barrier to taking your medications, tell your care team. Generic alternatives and patient assistance programs are often available.',
+            ],
+            callDoctor: [
+                { text: 'Unexpected side effects or reactions after starting or changing a medication', is911: false },
+                { text: 'You missed multiple doses and are unsure how to get back on schedule', is911: false },
+                { text: 'You cannot afford a medication and need lower-cost alternatives', is911: false },
+                { text: 'Your symptoms are worsening despite taking medications as prescribed', is911: false },
+                { text: 'You want to start a new supplement, vitamin, or over-the-counter product', is911: false },
+                { text: 'Severe allergic reaction after taking a medication: hives, throat tightening, difficulty breathing, or face swelling', is911: true },
+                { text: 'Suspected overdose or accidental ingestion of the wrong medication or dose', is911: true },
+            ],
+            resources: [
+                { name: 'Institute for Safe Medication Practices (ISMP)', desc: 'Patient medication safety resources and guides — ismp.org' },
+                { name: 'NeedyMeds', desc: 'Medication assistance programs for patients who cannot afford medications — needymeds.org' },
+                { name: 'FDA MedWatch', desc: 'Medication safety alerts and patient guides — fda.gov/drugs' },
+            ],
+        },
+        {
+            id: 'stroke',
+            title: 'Stroke Recovery & Prevention',
+            icon: '🧠',
+            category: 'Neurological',
+            overview: 'A stroke occurs when blood supply to part of the brain is blocked or a blood vessel ruptures, causing brain cells to die. Recovery depends on which area of the brain was affected and how quickly treatment was received. With rehabilitation, medication adherence, and lifestyle changes, many stroke survivors regain significant function and can reduce their risk of a future stroke.',
+            keyPoints: [
+                'Know the FAST warning signs: Face drooping, Arm weakness, Speech difficulty, Time to call 911. Act immediately — every minute matters.',
+                'Take all prescribed medications exactly as directed, especially blood thinners (anticoagulants) and blood pressure medications. Do not miss doses.',
+                'Monitor your blood pressure regularly. High blood pressure is the #1 risk factor for stroke. Know your target range.',
+                'Follow a heart-healthy diet: limit sodium, saturated fat, and processed foods. Eat plenty of fruits, vegetables, whole grains, and lean protein.',
+                'Do not smoke. Smoking significantly increases stroke risk. Ask your doctor about cessation resources and medications.',
+                'Limit alcohol to no more than 1 drink per day for women and 2 drinks per day for men.',
+                'Participate in all prescribed rehabilitation — physical therapy, occupational therapy, and speech therapy as recommended. Consistency matters.',
+                'Manage fall risk carefully — stroke often affects balance, coordination, strength, and vision. Use your assistive devices as prescribed.',
+                'Control diabetes and high cholesterol, as both significantly increase the risk of another stroke.',
+                'Mental health matters — depression is common after stroke and can slow recovery. Tell your care team if you feel persistently sad or hopeless.',
+            ],
+            callDoctor: [
+                { text: 'New or worsening weakness, numbness, or tingling in your face, arm, or leg', is911: false },
+                { text: 'Difficulty speaking, swallowing, reading, or understanding others', is911: false },
+                { text: 'Signs of depression: persistent sadness, loss of interest, changes in sleep or appetite', is911: false },
+                { text: 'Blood pressure consistently above your target range', is911: false },
+                { text: 'Unusual bruising or bleeding if you take blood thinners (anticoagulants)', is911: false },
+                { text: 'Any FAST symptoms — face drooping, arm weakness, speech problems — even if mild or brief', is911: true },
+                { text: 'Sudden severe headache with no known cause (sometimes called a "thunderclap headache")', is911: true },
+                { text: 'Sudden loss of vision in one or both eyes', is911: true },
+                { text: 'Sudden severe dizziness, loss of balance, or inability to walk', is911: true },
+            ],
+            resources: [
+                { name: 'American Stroke Association', desc: 'Stroke education, recovery resources, and FAST information — stroke.org' },
+                { name: 'StrokeLine', desc: 'Free helpline staffed by stroke health professionals: 1-888-4-STROKE (1-888-478-7653)' },
+                { name: 'National Aphasia Association', desc: 'Resources for stroke survivors with communication challenges — aphasia.org' },
+            ],
+        },
+    ];
+
+    let eduActiveModule = null;
+
+    function renderEduGrid() {
+        const search = (document.getElementById('edu-search')?.value || '').toLowerCase().trim();
+        const category = document.getElementById('edu-category-filter')?.value || '';
+        const grid = document.getElementById('edu-grid');
+        if (!grid) return;
+
+        const filtered = EDUCATION_MODULES.filter(m => {
+            const matchSearch = !search ||
+                m.title.toLowerCase().includes(search) ||
+                m.category.toLowerCase().includes(search) ||
+                m.overview.toLowerCase().includes(search);
+            const matchCat = !category || m.category === category;
+            return matchSearch && matchCat;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:48px 24px; color:var(--gray-400);">
+                <div style="font-size:32px; margin-bottom:12px;">🔍</div>
+                <div style="font-weight:600; margin-bottom:6px; color:var(--gray-500);">No modules found</div>
+                <div style="font-size:13px;">Try a different search term or category.</div>
+            </div>`;
+            return;
+        }
+
+        grid.innerHTML = filtered.map(m => `
+            <div class="edu-card" onclick="openEduModule('${m.id}')" role="button" tabindex="0"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){openEduModule('${m.id}')}">
+                <div class="edu-card-icon-area">
+                    <div class="edu-card-icon">${m.icon}</div>
+                    <div class="edu-card-category">${m.category}</div>
+                </div>
+                <div class="edu-card-body">
+                    <div class="edu-card-title">${m.title}</div>
+                    <div class="edu-card-desc">${m.overview}</div>
+                </div>
+                <div class="edu-card-footer">View Module &rarr;</div>
+            </div>
+        `).join('');
+    }
+
+    function openEduModule(id) {
+        const m = EDUCATION_MODULES.find(x => x.id === id);
+        if (!m) return;
+        eduActiveModule = m;
+
+        document.getElementById('edu-modal-icon').textContent = m.icon;
+        document.getElementById('edu-modal-title').textContent = m.title;
+        document.getElementById('edu-modal-category').textContent = m.category;
+
+        document.getElementById('edu-modal-body').innerHTML = `
+            <div class="edu-section">
+                <div class="edu-section-title">Overview</div>
+                <div class="edu-section-text">${m.overview}</div>
+            </div>
+            <div class="edu-section">
+                <div class="edu-section-title">Key Points</div>
+                <ul class="edu-key-points">
+                    ${m.keyPoints.map(pt => `
+                        <li class="edu-key-point">
+                            <div class="edu-key-point-dot"></div>
+                            <span>${pt}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div class="edu-section">
+                <div class="edu-section-title">When to Call Your Doctor or 911</div>
+                <ul class="edu-warning-list">
+                    ${m.callDoctor.map(w => `
+                        <li class="edu-warning-item${w.is911 ? ' edu-warning-911' : ''}">
+                            ${w.is911 ? '🚨 <strong>Call 911:</strong>&nbsp;' : '📞&nbsp;'}${w.text}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div class="edu-section">
+                <div class="edu-section-title">Helpful Resources</div>
+                <div class="edu-resources">
+                    ${m.resources.map(r => `
+                        <div class="edu-resource">
+                            <div class="edu-resource-name">${r.name}</div>
+                            <div class="edu-resource-desc">${r.desc}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        document.getElementById('edu-modal-overlay').classList.add('open');
+        const modal = document.getElementById('edu-modal');
+        modal.classList.add('open');
+        modal.scrollTop = 0;
+    }
+
+    function closeEduModule() {
+        eduActiveModule = null;
+        document.getElementById('edu-modal-overlay').classList.remove('open');
+        document.getElementById('edu-modal').classList.remove('open');
+    }
+
+    // Close education modal on ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('edu-modal')?.classList.contains('open')) {
+            closeEduModule();
+        }
+    });
+
+    function formatEduText(m) {
+        const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        let text = 'PATIENT EDUCATION\n';
+        text += m.title.toUpperCase() + '\n';
+        text += '='.repeat(55) + '\n';
+        text += 'Category: ' + m.category + '  |  Generated: ' + dateStr + '\n';
+        text += '='.repeat(55) + '\n\n';
+        text += 'OVERVIEW\n' + '-'.repeat(30) + '\n';
+        text += m.overview + '\n\n';
+        text += 'KEY POINTS\n' + '-'.repeat(30) + '\n';
+        m.keyPoints.forEach((pt, i) => { text += (i + 1) + '. ' + pt + '\n'; });
+        text += '\nWHEN TO CALL YOUR DOCTOR OR 911\n' + '-'.repeat(30) + '\n';
+        m.callDoctor.forEach(w => {
+            text += (w.is911 ? 'CALL 911: ' : '• ') + w.text + '\n';
+        });
+        text += '\nHELPFUL RESOURCES\n' + '-'.repeat(30) + '\n';
+        m.resources.forEach(r => { text += '• ' + r.name + ': ' + r.desc + '\n'; });
+        return text;
+    }
+
+    function emailEduModule() {
+        if (!eduActiveModule) return;
+        const m = eduActiveModule;
+        const text = formatEduText(m);
+        const subject = 'Patient Education: ' + m.title;
+        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+        window.open(mailto, '_blank');
+    }
+
+    function downloadEduPdf() {
+        if (!eduActiveModule) return;
+        const m = eduActiveModule;
+        if (!window.jspdf) { alert('PDF library is still loading. Please try again.'); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) { doc.addPage(); y = margin; }
+        }
+
+        // Header bar
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text('Patient Education', pageWidth - margin, 12, { align: 'right' });
+        y = 26;
+
+        // Category label
+        doc.setFontSize(9);
+        doc.setTextColor(13, 148, 136);
+        doc.text(m.category.toUpperCase(), margin, y);
+        y += 6;
+
+        // Title
+        doc.setFontSize(17);
+        doc.setTextColor(15, 39, 68);
+        const titleLines = doc.splitTextToSize(m.title, maxWidth);
+        titleLines.forEach(line => { doc.text(line, margin, y); y += 7; });
+        y += 1;
+
+        // Date
+        doc.setFontSize(9);
+        doc.setTextColor(160);
+        doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), margin, y);
+        y += 10;
+
+        // Divider
+        doc.setDrawColor(220);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 8;
+
+        function addPdfSection(heading, renderFn) {
+            checkPageBreak(16);
+            doc.setFontSize(9);
+            doc.setTextColor(13, 148, 136);
+            doc.text(heading.toUpperCase(), margin, y);
+            y += 4;
+            doc.setDrawColor(200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 6;
+            renderFn();
+            y += 6;
+        }
+
+        addPdfSection('Overview', () => {
+            const lines = doc.splitTextToSize(m.overview, maxWidth);
+            doc.setFontSize(10);
+            doc.setTextColor(60);
+            lines.forEach(line => { checkPageBreak(5); doc.text(line, margin, y); y += 4.5; });
+        });
+
+        addPdfSection('Key Points', () => {
+            m.keyPoints.forEach((pt, i) => {
+                const lines = doc.splitTextToSize((i + 1) + '. ' + pt, maxWidth - 3);
+                checkPageBreak(lines.length * 4.5 + 3);
+                doc.setFontSize(10);
+                doc.setTextColor(40);
+                lines.forEach(line => { doc.text(line, margin + 2, y); y += 4.5; });
+                y += 1;
+            });
+        });
+
+        addPdfSection('When to Call Your Doctor or 911', () => {
+            m.callDoctor.forEach(w => {
+                const prefix = w.is911 ? 'CALL 911: ' : '• ';
+                const lines = doc.splitTextToSize(prefix + w.text, maxWidth - 3);
+                checkPageBreak(lines.length * 4.5 + 5);
+                if (w.is911) {
+                    doc.setFillColor(254, 242, 242);
+                    doc.rect(margin, y - 3.5, maxWidth, lines.length * 4.5 + 4, 'F');
+                    doc.setFontSize(10);
+                    doc.setTextColor(153, 27, 27);
+                } else {
+                    doc.setFontSize(10);
+                    doc.setTextColor(60);
+                }
+                lines.forEach(line => { doc.text(line, margin + 2, y); y += 4.5; });
+                y += 2;
+            });
+        });
+
+        addPdfSection('Helpful Resources', () => {
+            m.resources.forEach(r => {
+                checkPageBreak(14);
+                doc.setFontSize(10);
+                doc.setTextColor(15, 39, 68);
+                doc.text('• ' + r.name, margin + 2, y);
+                y += 4.5;
+                doc.setFontSize(9);
+                doc.setTextColor(120);
+                const descLines = doc.splitTextToSize(r.desc, maxWidth - 6);
+                descLines.forEach(line => { checkPageBreak(4); doc.text(line, margin + 5, y); y += 4; });
+                y += 2;
+            });
+        });
+
+        // Footer page numbers
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        doc.save('PatientEducation_' + m.id + '_' + new Date().toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function printEduModule() {
+        if (!eduActiveModule) return;
+        const m = eduActiveModule;
+        const area = document.getElementById('edu-print-area');
+        const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+        area.innerHTML = `
+            <div class="edu-print-header">
+                <div class="edu-print-app">CareNote &middot; Patient Education</div>
+                <div class="edu-print-date">${dateStr}</div>
+            </div>
+            <div class="edu-print-title">${m.icon} ${m.title}</div>
+            <div class="edu-print-category">${m.category}</div>
+            <div class="edu-print-section-title">Overview</div>
+            <p class="edu-print-text">${m.overview}</p>
+            <div class="edu-print-section-title">Key Points</div>
+            <ol class="edu-print-list">
+                ${m.keyPoints.map(pt => `<li>${pt}</li>`).join('')}
+            </ol>
+            <div class="edu-print-section-title">When to Call Your Doctor or 911</div>
+            <ul class="edu-print-list">
+                ${m.callDoctor.map(w => `<li class="${w.is911 ? 'edu-print-warn911' : ''}">${w.is911 ? '🚨 Call 911: ' : ''}${w.text}</li>`).join('')}
+            </ul>
+            <div class="edu-print-section-title">Helpful Resources</div>
+            <ul class="edu-print-list">
+                ${m.resources.map(r => `<li><strong>${r.name}</strong> &mdash; ${r.desc}</li>`).join('')}
+            </ul>
+        `;
+
         area.style.display = 'block';
         window.print();
         setTimeout(() => { area.style.display = 'none'; }, 500);
