@@ -517,6 +517,15 @@
         .hep-history-item-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-200); }
         .hep-history-item-body.open { display: block; }
         .hep-history-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .hep-kebab-wrap { position: relative; flex-shrink: 0; }
+        .hep-kebab-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; color: var(--gray-400); border-radius: 6px; line-height: 1; letter-spacing: 1px; }
+        .hep-kebab-btn:hover { background: var(--gray-100); color: var(--navy); }
+        .hep-kebab-menu { display: none; position: absolute; right: 0; top: 100%; z-index: 50; min-width: 180px; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 6px 0; }
+        .hep-kebab-menu.open { display: block; }
+        .hep-kebab-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--gray-600); text-align: left; white-space: nowrap; }
+        .hep-kebab-menu button:hover { background: var(--gray-100); color: var(--navy); }
+        .hep-kebab-menu button.hep-kebab-danger { color: var(--red); }
+        .hep-kebab-menu button.hep-kebab-danger:hover { background: #fef2f2; }
         .hep-history-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .hep-history-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .hep-history-exercise { padding: 10px 0; border-bottom: 1px solid var(--gray-100); display: flex; gap: 12px; align-items: flex-start; }
@@ -709,6 +718,7 @@
             .hep-history-item-body { padding: 0 16px 16px; }
             .hep-history-actions { flex-direction: column; }
             .hep-history-actions .btn { width: 100%; justify-content: center; }
+            .hep-kebab-menu { right: -8px; }
 
             /* Footer */
             footer { font-size: 13px; }
@@ -7195,15 +7205,26 @@
             const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
             return `
                 <div class="hep-history-item">
-                    <div class="hep-history-item-header" onclick="toggleHepHistory(${entry.id})">
-                        <div class="hep-history-item-left">
+                    <div class="hep-history-item-header">
+                        <div class="hep-history-item-left" onclick="toggleHepHistory(${entry.id})" style="cursor:pointer;">
                             <span class="hep-history-title">${entry.title}</span>
                             <span class="hep-history-count">${entry.exercises.length} exercise${entry.exercises.length !== 1 ? 's' : ''}</span>
                             ${labels}
                         </div>
                         <div class="hep-history-item-right">
                             <span class="hep-history-time">${time}</span>
-                            <span class="hep-history-chevron" id="hep-chevron-${entry.id}">▼</span>
+                            <span class="hep-history-chevron" id="hep-chevron-${entry.id}" onclick="toggleHepHistory(${entry.id})" style="cursor:pointer;">▼</span>
+                            <div class="hep-kebab-wrap">
+                                <button class="hep-kebab-btn" onclick="toggleHepKebab(event, ${entry.id})" title="Actions">⋮</button>
+                                <div class="hep-kebab-menu" id="hep-kebab-${entry.id}">
+                                    <button onclick="loadHepHistoryEntry(${entry.id}); closeAllHepKebabs();">📋 Load to Current</button>
+                                    <button onclick="generateHepHistoryDoc(${entry.id}); closeAllHepKebabs();">📝 EMR Doc</button>
+                                    <button onclick="exportHepHistoryPdf(${entry.id},'single'); closeAllHepKebabs();">📄 PDF (List)</button>
+                                    <button onclick="exportHepHistoryPdf(${entry.id},'grid'); closeAllHepKebabs();">📄 PDF (Grid)</button>
+                                    <button onclick="emailHepHistory(${entry.id}); closeAllHepKebabs();">✉️ Email</button>
+                                    <button class="hep-kebab-danger" onclick="deleteHepHistoryEntry(${entry.id}); closeAllHepKebabs();">🗑️ Delete</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="hep-history-item-body" id="hep-body-${entry.id}">
@@ -7217,14 +7238,6 @@
                                 </div>
                             </div>
                         `).join('')}
-                        <div class="hep-history-actions">
-                            <button class="btn btn-outline" onclick="loadHepHistoryEntry(${entry.id})">📋 Load to Current</button>
-                            <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'single')">📄 PDF (List)</button>
-                            <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'grid')">📄 PDF (Grid)</button>
-                            <button class="btn btn-outline" onclick="emailHepHistory(${entry.id})">✉️ Email</button>
-                            <button class="btn btn-outline" onclick="generateHepHistoryDoc(${entry.id})">📋 EMR Doc</button>
-                            <button class="btn btn-outline" style="color:var(--red); border-color:var(--red);" onclick="deleteHepHistoryEntry(${entry.id})">🗑️ Delete</button>
-                        </div>
                     </div>
                 </div>
             `;
@@ -7235,10 +7248,26 @@
         const body = document.getElementById('hep-body-' + id);
         const chevron = document.getElementById('hep-chevron-' + id);
         if (!body) return;
-        const isOpen = body.classList.contains('open');
         body.classList.toggle('open');
         if (chevron) chevron.classList.toggle('open');
     }
+
+    function toggleHepKebab(e, id) {
+        e.stopPropagation();
+        const menu = document.getElementById('hep-kebab-' + id);
+        const wasOpen = menu.classList.contains('open');
+        closeAllHepKebabs();
+        if (!wasOpen) menu.classList.add('open');
+    }
+
+    function closeAllHepKebabs() {
+        document.querySelectorAll('.hep-kebab-menu.open').forEach(m => m.classList.remove('open'));
+    }
+
+    // Close kebab menus when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.hep-kebab-wrap')) closeAllHepKebabs();
+    });
 
     function loadHepHistoryEntry(id) {
         const entry = hepHistoryData.find(e => e.id === id);
