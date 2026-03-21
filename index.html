@@ -7324,6 +7324,7 @@
     let hepLabelInitialized = false;
     let hepCustomExercisePhotoFile = null;
     let hepEditingExerciseId = null;
+    let hepEditingOriginalBuiltinId = null;
     let hepEditingExerciseExistingPhotoUrl = null;
 
     // SVG to data URL for PDF
@@ -7384,16 +7385,29 @@
     }
 
     function getFullExerciseLibrary() {
-        const custom = hepCustomExercises.map(e => ({
-            id: e.id,
-            name: e.name,
-            category: e.category,
-            svg_key: e.svg_key || getGenericSvgForCategory(e.category),
-            photo_url: e.photo_url || null,
-            instructions: e.instructions,
-            is_builtin: false,
-        }));
-        return [...BUILTIN_EXERCISES, ...custom];
+        // Build a map of builtin_id -> override row for quick lookup
+        const overrideMap = {};
+        const standaloneCustom = [];
+        hepCustomExercises.forEach(e => {
+            const mapped = {
+                id: e.id,
+                name: e.name,
+                category: e.category,
+                svg_key: e.svg_key || getGenericSvgForCategory(e.category),
+                photo_url: e.photo_url || null,
+                instructions: e.instructions,
+                is_builtin: false,
+                builtin_id: e.builtin_id || null,
+            };
+            if (e.builtin_id) {
+                overrideMap[e.builtin_id] = mapped;
+            } else {
+                standaloneCustom.push(mapped);
+            }
+        });
+        // Replace overridden built-ins in-place; keep un-overridden ones as-is
+        const builtins = BUILTIN_EXERCISES.map(b => overrideMap[b.id] || b);
+        return [...builtins, ...standaloneCustom];
     }
 
     // ── Library Rendering ──────────────────────────────
@@ -7414,7 +7428,7 @@
 
         grid.innerHTML = filtered.map(ex => `
             <div class="hep-lib-card" onclick="addToHep('${ex.id}')">
-                ${!ex.is_builtin ? `<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditExercise('${ex.id}')" title="Edit exercise">✏️</button>` : ''}
+                <button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditExercise('${ex.id}')" title="Edit exercise">✏️</button>
                 <div class="hep-lib-card-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" class="hep-lib-card-img">` : getExerciseSvg(ex.svg_key)}</div>
                 <div class="hep-lib-card-body">
                     <div class="hep-lib-card-name">${ex.name}</div>
@@ -7456,18 +7470,29 @@
         const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
         if (saveBtn) saveBtn.textContent = 'Save to Library';
         hepEditingExerciseId = null;
+        hepEditingOriginalBuiltinId = null;
         hepEditingExerciseExistingPhotoUrl = null;
         clearHepCustomPhoto();
     }
 
     function showEditExercise(id) {
-        const ex = hepCustomExercises.find(e => e.id === id);
+        // Look up exercise from the full merged library (handles built-ins and custom)
+        const ex = getFullExerciseLibrary().find(e => e.id === id);
         if (!ex) return;
 
-        // Hide the library grid form if create form is open
-        hepEditingExerciseId = id;
-        hepEditingExerciseExistingPhotoUrl = ex.photo_url || null;
         hepCustomExercisePhotoFile = null;
+
+        if (ex.is_builtin) {
+            // First-time edit of a built-in — no DB row yet; will INSERT an override on save
+            hepEditingExerciseId = null;
+            hepEditingOriginalBuiltinId = id;
+            hepEditingExerciseExistingPhotoUrl = null;
+        } else {
+            // Editing an existing DB row (custom exercise or previously-saved override)
+            hepEditingExerciseId = id;
+            hepEditingOriginalBuiltinId = null;
+            hepEditingExerciseExistingPhotoUrl = ex.photo_url || null;
+        }
 
         // Populate fields
         document.getElementById('hep-custom-name').value = ex.name;
@@ -7521,8 +7546,10 @@
         const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
 
-        // Resolve photo_url: start from existing (edit mode) or null (create mode)
-        let photo_url = hepEditingExerciseId ? hepEditingExerciseExistingPhotoUrl : null;
+        const isEditMode = !!(hepEditingExerciseId || hepEditingOriginalBuiltinId);
+
+        // Resolve photo_url: start from existing (edit mode) or null (create / first built-in override)
+        let photo_url = isEditMode ? hepEditingExerciseExistingPhotoUrl : null;
 
         if (hepCustomExercisePhotoFile) {
             // A new file was selected — upload it
@@ -7531,26 +7558,33 @@
             const { error: uploadError } = await sb.storage.from('exercise-photos').upload(path, hepCustomExercisePhotoFile, { upsert: false });
             if (uploadError) {
                 alert('Photo upload failed: ' + uploadError.message + '\n\nMake sure the "exercise-photos" storage bucket exists in your Supabase project.');
-                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = hepEditingExerciseId ? 'Save Changes' : 'Save to Library'; }
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = isEditMode ? 'Save Changes' : 'Save to Library'; }
                 return;
             }
             const { data: urlData } = sb.storage.from('exercise-photos').getPublicUrl(path);
             photo_url = urlData.publicUrl;
-        } else if (hepEditingExerciseId && document.getElementById('hep-photo-preview-wrap').style.display === 'none') {
+        } else if (isEditMode && document.getElementById('hep-photo-preview-wrap').style.display === 'none') {
             // In edit mode and preview was cleared — remove photo
             photo_url = null;
         }
 
         if (hepEditingExerciseId) {
-            // ── Update existing exercise ──
+            // ── Update existing DB row (custom or previously-saved built-in override) ──
             const updates = { name, category, instructions, svg_key: getGenericSvgForCategory(category), photo_url };
             const { data, error } = await sb.from('exercise_library').update(updates).eq('id', hepEditingExerciseId).select().single();
             if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
             if (error) { alert('Error updating exercise: ' + error.message); return; }
             const idx = hepCustomExercises.findIndex(e => e.id === hepEditingExerciseId);
             if (idx !== -1) hepCustomExercises[idx] = data;
+        } else if (hepEditingOriginalBuiltinId) {
+            // ── Insert override row for a built-in being edited for the first time ──
+            const entry = { user_id: currentUser.id, name, category, instructions, svg_key: getGenericSvgForCategory(category), photo_url, builtin_id: hepEditingOriginalBuiltinId };
+            const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
+            if (error) { alert('Error saving exercise: ' + error.message); return; }
+            hepCustomExercises.unshift(data);
         } else {
-            // ── Create new exercise ──
+            // ── Create brand-new custom exercise ──
             const entry = { user_id: currentUser.id, name, category, instructions, svg_key: getGenericSvgForCategory(category), photo_url };
             const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
             if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
