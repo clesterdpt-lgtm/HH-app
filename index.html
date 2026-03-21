@@ -1269,6 +1269,24 @@
             cursor: pointer;
         }
 
+        /* Calendar Day Export Modal */
+        .cal-export-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+        .cal-export-overlay.open { display: flex; }
+        .cal-export-modal { background: var(--white); border-radius: 16px; width: 90%; max-width: 380px; padding: 24px; box-shadow: var(--shadow-lg); }
+        .cal-export-modal-title { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+        .cal-export-category { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+        .cal-export-category:last-of-type { border-bottom: none; }
+        .cal-export-category input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; flex-shrink: 0; }
+        .cal-export-category label { font-size: 14px; color: var(--gray-700); cursor: pointer; flex: 1; }
+        .cal-export-category.disabled label { color: var(--gray-300); }
+        .cal-export-category.disabled input[type="checkbox"] { cursor: not-allowed; }
+        .cal-export-select-all { display: flex; align-items: center; gap: 10px; padding: 8px 0 12px; margin-bottom: 4px; border-bottom: 2px solid var(--gray-200); }
+        .cal-export-select-all input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; }
+        .cal-export-select-all label { font-size: 13px; font-weight: 600; color: var(--gray-500); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cal-export-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .cal-export-actions button { flex: 1; }
+        .cal-export-close { display: block; width: 100%; margin-top: 10px; padding: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--gray-400); background: none; border: none; cursor: pointer; }
+
         @media (min-width: 769px) {
             body.assist-open main {
                 margin-right: 420px;
@@ -2128,9 +2146,39 @@
                             <div class="day-group-title" id="cal-detail-title"></div>
                             <div class="day-group-count" id="cal-detail-count"></div>
                         </div>
+                        <button class="btn btn-outline btn-sm" id="cal-export-btn" onclick="openCalDayExport()" style="display:none;">📤 Export Day</button>
                     </div>
                 </div>
                 <div id="cal-detail-list" style="margin-top:8px;"></div>
+            </div>
+
+            <!-- Calendar Day Export Modal -->
+            <div class="cal-export-overlay" id="cal-export-overlay" onclick="if(event.target===this)closeCalDayExport()">
+                <div class="cal-export-modal">
+                    <div class="cal-export-modal-title">📤 Export Day</div>
+                    <div class="cal-export-select-all">
+                        <input type="checkbox" id="cal-export-all" onchange="toggleCalExportAll()">
+                        <label for="cal-export-all">Select All</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-notes">
+                        <input type="checkbox" id="cal-export-notes">
+                        <label for="cal-export-notes" id="cal-export-notes-label">Documentation</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-meds">
+                        <input type="checkbox" id="cal-export-meds">
+                        <label for="cal-export-meds" id="cal-export-meds-label">Medication List</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-heps">
+                        <input type="checkbox" id="cal-export-heps">
+                        <label for="cal-export-heps" id="cal-export-heps-label">Home Exercise Program</label>
+                    </div>
+                    <div class="cal-export-actions">
+                        <button class="btn btn-outline btn-sm" onclick="calExportEmail()">✉️ Email</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportPdf()">📄 PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportCopy()">📋 Copy</button>
+                    </div>
+                    <button class="cal-export-close" onclick="closeCalDayExport()">Cancel</button>
+                </div>
             </div>
         </div>
     </main>
@@ -3548,16 +3596,20 @@
         const d = new Date(dateKey + 'T12:00:00');
         titleEl.textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
+        const exportBtn = document.getElementById('cal-export-btn');
         const data = calDataMap[dateKey];
         if (!data) {
             detailEl.style.display = 'block';
             countEl.textContent = 'No items';
+            exportBtn.style.display = 'none';
             listEl.innerHTML = '<div style="text-align:center; padding:32px; color:var(--gray-400);">No notes, medications, or recordings on this day.</div>';
             return;
         }
 
         const totalItems = data.notes.length + data.meds.length + (data.heps || []).length + data.pendingRec.length + data.pendingNotes.length;
         countEl.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
+        const hasExportable = data.notes.length > 0 || data.meds.length > 0 || (data.heps || []).length > 0;
+        exportBtn.style.display = hasExportable ? '' : 'none';
 
         listEl.innerHTML = '';
         detailEl.style.display = 'block';
@@ -3640,6 +3692,287 @@
                 <div class="cal-item-preview">${note.notes ? note.notes.substring(0, 120).replace(/</g, '&lt;') + '...' : 'Queued for generation'}</div>`;
             listEl.appendChild(el);
         });
+    }
+
+    // ── Calendar Day Export ──────────────────────────────
+    function openCalDayExport() {
+        const data = calDataMap[calSelectedDate];
+        if (!data) return;
+        const noteCount = data.notes.length;
+        const medCount = data.meds.length;
+        const hepCount = (data.heps || []).length;
+
+        const notesCheck = document.getElementById('cal-export-notes');
+        const medsCheck = document.getElementById('cal-export-meds');
+        const hepsCheck = document.getElementById('cal-export-heps');
+        const notesCat = document.getElementById('cal-export-cat-notes');
+        const medsCat = document.getElementById('cal-export-cat-meds');
+        const hepsCat = document.getElementById('cal-export-cat-heps');
+
+        document.getElementById('cal-export-notes-label').textContent = noteCount > 0 ? `Documentation (${noteCount} note${noteCount !== 1 ? 's' : ''})` : 'Documentation (none)';
+        document.getElementById('cal-export-meds-label').textContent = medCount > 0 ? `Medication List (${medCount})` : 'Medication List (none)';
+        document.getElementById('cal-export-heps-label').textContent = hepCount > 0 ? `Home Exercise Program (${hepCount})` : 'Home Exercise Program (none)';
+
+        notesCheck.checked = noteCount > 0;
+        notesCheck.disabled = noteCount === 0;
+        notesCat.classList.toggle('disabled', noteCount === 0);
+
+        medsCheck.checked = medCount > 0;
+        medsCheck.disabled = medCount === 0;
+        medsCat.classList.toggle('disabled', medCount === 0);
+
+        hepsCheck.checked = hepCount > 0;
+        hepsCheck.disabled = hepCount === 0;
+        hepsCat.classList.toggle('disabled', hepCount === 0);
+
+        document.getElementById('cal-export-all').checked = notesCheck.checked && medsCheck.checked && hepsCheck.checked;
+        document.getElementById('cal-export-overlay').classList.add('open');
+    }
+
+    function closeCalDayExport() {
+        document.getElementById('cal-export-overlay').classList.remove('open');
+    }
+
+    function toggleCalExportAll() {
+        const allChecked = document.getElementById('cal-export-all').checked;
+        ['cal-export-notes', 'cal-export-meds', 'cal-export-heps'].forEach(id => {
+            const cb = document.getElementById(id);
+            if (!cb.disabled) cb.checked = allChecked;
+        });
+    }
+
+    function getCalExportSelections() {
+        return {
+            notes: document.getElementById('cal-export-notes').checked,
+            meds: document.getElementById('cal-export-meds').checked,
+            heps: document.getElementById('cal-export-heps').checked
+        };
+    }
+
+    function getCalDateLabel() {
+        const d = new Date(calSelectedDate + 'T12:00:00');
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatMedEntryText(entry) {
+        const lines = entry.medications.map(med => {
+            const parts = [med.name, med.dose, med.frequency, med.route].filter(Boolean);
+            let line = parts.join(' | ');
+            if (med.notes) line += ' | ' + med.notes;
+            return line;
+        });
+        return `--- Medication List (${entry.title}) ---\n${lines.join('\n')}`;
+    }
+
+    async function calExportEmail() {
+        const sel = getCalExportSelections();
+        if (!sel.notes && !sel.meds && !sel.heps) { alert('Please select at least one category.'); return; }
+        const data = calDataMap[calSelectedDate];
+        const dateLabel = getCalDateLabel();
+        const sections = [];
+
+        if (sel.notes && data.notes.length > 0) {
+            const goalsMap = await fetchGoalsForNotes(data.notes.map(n => n.id));
+            sections.push('=== DOCUMENTATION ===\n\n' + data.notes.map(n => formatEmailNote(n, goalsMap[n.id])).join('\n\n\n'));
+        }
+        if (sel.meds && data.meds.length > 0) {
+            sections.push('=== MEDICATION LIST ===\n\n' + data.meds.map(e => formatMedEntryText(e)).join('\n\n'));
+        }
+        if (sel.heps && (data.heps || []).length > 0) {
+            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => formatHepText(e.exercises, e.title)).join('\n\n'));
+        }
+
+        const subject = encodeURIComponent(`CareNote — ${dateLabel}`);
+        const body = encodeURIComponent(sections.join('\n\n\n'));
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+        closeCalDayExport();
+    }
+
+    async function calExportCopy() {
+        const sel = getCalExportSelections();
+        if (!sel.notes && !sel.meds && !sel.heps) { alert('Please select at least one category.'); return; }
+        const data = calDataMap[calSelectedDate];
+        const dateLabel = getCalDateLabel();
+        const sections = [];
+
+        if (sel.notes && data.notes.length > 0) {
+            const goalsMap = await fetchGoalsForNotes(data.notes.map(n => n.id));
+            sections.push('=== DOCUMENTATION ===\n\n' + data.notes.map(n => formatEmailNote(n, goalsMap[n.id])).join('\n\n\n'));
+        }
+        if (sel.meds && data.meds.length > 0) {
+            sections.push('=== MEDICATION LIST ===\n\n' + data.meds.map(e => formatMedEntryText(e)).join('\n\n'));
+        }
+        if (sel.heps && (data.heps || []).length > 0) {
+            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => formatHepText(e.exercises, e.title)).join('\n\n'));
+        }
+
+        const text = `CareNote — ${dateLabel}\n${'='.repeat(40)}\n\n${sections.join('\n\n\n')}`;
+        await navigator.clipboard.writeText(text);
+        closeCalDayExport();
+        alert('Copied to clipboard!');
+    }
+
+    async function calExportPdf() {
+        const sel = getCalExportSelections();
+        if (!sel.notes && !sel.meds && !sel.heps) { alert('Please select at least one category.'); return; }
+        const data = calDataMap[calSelectedDate];
+        const dateLabel = getCalDateLabel();
+
+        if (!window.jspdf) { alert('PDF library is still loading. Please try again in a moment.'); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) { doc.addPage(); y = margin; }
+        }
+
+        // Title header
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text(dateLabel, pageWidth - margin, 12, { align: 'right' });
+        y = 28;
+
+        // Notes section
+        if (sel.notes && data.notes.length > 0) {
+            const goalsMap = await fetchGoalsForNotes(data.notes.map(n => n.id));
+            doc.setFontSize(14);
+            doc.setTextColor(15, 39, 68);
+            doc.text('Documentation', margin, y);
+            y += 8;
+            doc.setDrawColor(200);
+            doc.line(margin, y - 2, pageWidth - margin, y - 2);
+            y += 4;
+
+            data.notes.forEach(note => {
+                const noteType = note.note_type.replace(/\b\w/g, l => l.toUpperCase());
+                const time = new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                checkPageBreak(20);
+                doc.setFontSize(11);
+                doc.setTextColor(13, 148, 136);
+                doc.text(`${noteType} — ${time}`, margin, y);
+                y += 6;
+                doc.setFontSize(10);
+                doc.setTextColor(60);
+                const lines = doc.splitTextToSize(note.generated_note, maxWidth);
+                lines.forEach(line => { checkPageBreak(5); doc.text(line, margin, y); y += 4.5; });
+                const goals = goalsMap[note.id] || [];
+                if (goals.length > 0) {
+                    y += 2;
+                    doc.setFontSize(9);
+                    doc.setTextColor(100);
+                    doc.text('Care Plan Goals:', margin, y); y += 4;
+                    goals.forEach((g, i) => {
+                        checkPageBreak(5);
+                        const goalLines = doc.splitTextToSize(`${i + 1}. ${g.goal_text}${g.timeframe ? ' (' + g.timeframe + ')' : ''}`, maxWidth - 5);
+                        goalLines.forEach(gl => { doc.text(gl, margin + 5, y); y += 4; });
+                    });
+                }
+                y += 6;
+            });
+        }
+
+        // Meds section
+        if (sel.meds && data.meds.length > 0) {
+            checkPageBreak(20);
+            doc.setFontSize(14);
+            doc.setTextColor(15, 39, 68);
+            doc.text('Medication List', margin, y);
+            y += 8;
+            doc.setDrawColor(200);
+            doc.line(margin, y - 2, pageWidth - margin, y - 2);
+            y += 4;
+
+            data.meds.forEach(entry => {
+                checkPageBreak(10);
+                doc.setFontSize(10);
+                doc.setTextColor(13, 148, 136);
+                doc.text(entry.title, margin, y);
+                y += 6;
+                entry.medications.forEach(med => {
+                    checkPageBreak(6);
+                    doc.setFontSize(10);
+                    doc.setTextColor(40);
+                    doc.text(`• ${med.name}`, margin + 3, y);
+                    const details = [med.dose, med.frequency, med.route].filter(Boolean).join(' · ');
+                    if (details) {
+                        doc.setTextColor(120);
+                        doc.text(details, margin + 8 + doc.getTextWidth(`• ${med.name}`), y);
+                    }
+                    y += 5;
+                    if (med.notes) {
+                        checkPageBreak(5);
+                        doc.setFontSize(9);
+                        doc.setTextColor(140);
+                        doc.text(`  Note: ${med.notes}`, margin + 5, y);
+                        y += 4.5;
+                    }
+                });
+                y += 4;
+            });
+        }
+
+        // HEP section
+        if (sel.heps && (data.heps || []).length > 0) {
+            checkPageBreak(20);
+            doc.setFontSize(14);
+            doc.setTextColor(15, 39, 68);
+            doc.text('Home Exercise Program', margin, y);
+            y += 8;
+            doc.setDrawColor(200);
+            doc.line(margin, y - 2, pageWidth - margin, y - 2);
+            y += 4;
+
+            data.heps.forEach(entry => {
+                checkPageBreak(10);
+                doc.setFontSize(10);
+                doc.setTextColor(13, 148, 136);
+                doc.text(entry.title || 'HEP', margin, y);
+                y += 6;
+                entry.exercises.forEach((ex, i) => {
+                    checkPageBreak(14);
+                    doc.setFontSize(10);
+                    doc.setTextColor(40);
+                    doc.text(`${i + 1}. ${ex.name}`, margin + 3, y);
+                    y += 5;
+                    doc.setFontSize(9);
+                    doc.setTextColor(100);
+                    let detail = `Sets: ${ex.sets} | Reps: ${ex.reps}`;
+                    if (ex.hold_seconds > 0) detail += ` | Hold: ${ex.hold_seconds}s`;
+                    detail += ` | ${ex.frequency}`;
+                    doc.text(detail, margin + 6, y);
+                    y += 4;
+                    const instrLines = doc.splitTextToSize(ex.instructions, maxWidth - 10);
+                    doc.setTextColor(130);
+                    instrLines.forEach(line => { checkPageBreak(4); doc.text(line, margin + 6, y); y += 4; });
+                    y += 3;
+                });
+                y += 4;
+            });
+        }
+
+        // Page numbers
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        const safeDate = dateLabel.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+        doc.save('CareNote-DayExport-' + safeDate + '.pdf');
+        closeCalDayExport();
     }
 
     // ── Note Generation ───────────────────────────────────
