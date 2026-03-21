@@ -7353,6 +7353,7 @@
                                     <button onclick="exportHepHistoryPdf(${entry.id},'single'); closeAllHepKebabs();">📄 PDF (List)</button>
                                     <button onclick="exportHepHistoryPdf(${entry.id},'grid'); closeAllHepKebabs();">📄 PDF (Grid)</button>
                                     <button onclick="emailHepHistory(${entry.id}); closeAllHepKebabs();">✉️ Email</button>
+                                    <button onclick="toggleHepHistoryLabels(${entry.id}); closeAllHepKebabs();">🏷️ Label</button>
                                     <button class="hep-kebab-danger" onclick="deleteHepHistoryEntry(${entry.id}); closeAllHepKebabs();">🗑️ Delete</button>
                                 </div>
                             </div>
@@ -7369,6 +7370,18 @@
                                 </div>
                             </div>
                         `).join('')}
+                        <div class="history-label-editor" id="hep-label-editor-${entry.id}">
+                            <div class="label-input-wrapper">
+                                <div class="label-input-container" id="labels-hephistory-${entry.id}" onclick="this.querySelector('.label-input').focus()">
+                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                </div>
+                                <div class="label-suggestions" id="suggestions-hephistory-${entry.id}"></div>
+                            </div>
+                            <div class="history-label-actions">
+                                <button class="btn btn-outline btn-sm" onclick="cancelHepHistoryLabels(${entry.id})">Cancel</button>
+                                <button class="btn btn-primary btn-sm" onclick="saveHepHistoryLabels(${entry.id})">Save Labels</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -7399,6 +7412,54 @@
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.hep-kebab-wrap')) closeAllHepKebabs();
     });
+
+    function toggleHepHistoryLabels(id) {
+        const editor = document.getElementById(`hep-label-editor-${id}`);
+        const isOpen = editor.classList.contains('open');
+        if (isOpen) {
+            cancelHepHistoryLabels(id);
+            return;
+        }
+        const body = document.getElementById('hep-body-' + id);
+        if (!body.classList.contains('open')) {
+            body.classList.add('open');
+            const chevron = document.getElementById('hep-chevron-' + id);
+            if (chevron) chevron.classList.add('open');
+        }
+        editor.classList.add('open');
+        const containerId = `labels-hephistory-${id}`;
+        clearLabels(containerId);
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (entry && entry.labels) {
+            entry.labels.forEach(l => addLabel(containerId, l));
+        }
+        if (!editor.dataset.initialized) {
+            initLabelInput(containerId);
+            editor.dataset.initialized = 'true';
+        }
+        setTimeout(() => {
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const input = document.getElementById(containerId).querySelector('.label-input');
+            if (input) input.focus();
+        }, 50);
+    }
+
+    async function saveHepHistoryLabels(id) {
+        const containerId = `labels-hephistory-${id}`;
+        const labels = getLabels(containerId);
+        const { error } = await sb.from('hep_history').update({ labels }).eq('id', id);
+        if (error) { alert('Failed to save labels.'); return; }
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (entry) entry.labels = labels;
+        renderHepHistory();
+        refreshHepHistoryLabelFilter();
+    }
+
+    function cancelHepHistoryLabels(id) {
+        const editor = document.getElementById(`hep-label-editor-${id}`);
+        editor.classList.remove('open');
+        clearLabels(`labels-hephistory-${id}`);
+    }
 
     function loadHepHistoryEntry(id) {
         const entry = hepHistoryData.find(e => e.id === id);
