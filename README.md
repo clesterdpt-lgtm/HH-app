@@ -9,6 +9,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Backend**: Supabase (Auth, PostgreSQL, Edge Functions)
 - **AI**: Anthropic Claude API (`claude-sonnet-4-20250514`) for note generation + assist
 - **Transcription**: OpenAI Whisper API for audio-to-text
+- **Storage**: Supabase Storage (exercise photo uploads)
 - **PDF**: jsPDF (client-side PDF generation via CDN)
 - **Offline**: IndexedDB for local persistence, service worker for caching
 
@@ -18,6 +19,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Sidebar navigation with collapsible module menu
 - **Clinical Notes (CareNote)**: Primary documentation module
 - **Medication Manager**: Medication tracking and history
+- **Home Exercise Program (HEP)**: Exercise library and program builder
 - **Calendar**: Unified date-based view across all modules
 - Active module and tab persist across page refreshes
 
@@ -98,11 +100,12 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Print medication list
 
 ### Home Exercise Program (HEP)
-- **Exercise Library**: 34 built-in exercises across 6 categories (Upper Body, Lower Body, Core, Balance, Stretching, Breathing)
+- **Exercise Library**: 34 built-in exercises across 7 categories (Upper Body, Lower Body, Core, Balance, Stretching, Breathing, General)
 - Each exercise has a semi-realistic cartoon SVG illustration, detailed instructions, and category badge
 - **Search and filter** by name, keyword, or category
 - **Inline add confirmation**: Adding an exercise shows "✓ Added" on the card without leaving the Library tab; duplicate adds show "✓ Already Added"
-- **Custom exercises**: Create and save custom exercises to your library (syncs via Supabase)
+- **Custom exercises**: Create and save custom exercises with optional photo upload to your library (syncs via Supabase)
+- **Edit exercises**: Edit both custom and built-in exercises; built-in edits are stored as per-user override rows
 - **Current HEP builder**: Add exercises, set per-exercise sets/reps/hold time/frequency, reorder or remove
 - **Export**: PDF (single-column list or two-column grid layout), email via mailto, or print — buttons in a clean symmetrical grid layout (3-column desktop, 2-column mobile)
 - **EMR Documentation**: Generate structured clinical documentation from current or saved HEPs for pasting into EMR systems, with copy, email, and PDF options. Exercises grouped by category with dosage, frequency, and standard patient education footer
@@ -114,6 +117,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Colored dot indicators** on days with activity: teal for notes, orange for medications, purple for HEPs, red for pending items
 - Click any day to see all items for that date grouped by type
 - Day detail shows type badges, timestamps, labels, and text previews
+- **Day export**: Email, copy, or PDF all items for a specific date
 - Aggregates data from Supabase notes, medication history, HEP history, and IndexedDB pending recordings/notes
 
 ### History
@@ -152,7 +156,7 @@ supabase/
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 - **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
-- **exercise_library**: User-created custom exercises (id, user_id, name, category, instructions, svg_key)
+- **exercise_library**: User-created custom exercises and per-user built-in overrides (id, user_id, name, category, instructions, svg_key, photo_url, builtin_id)
 - **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
 
 ## Edge Functions
@@ -191,3 +195,4 @@ supabase functions deploy parse-medication
 - **Category-aware assist**: When templates define required sections, the assist system prompt instructs Claude to evaluate each section individually and prioritize missing ones in follow-up questions
 - **Position: fixed dropdowns**: Export dropdowns use fixed positioning to escape parent `overflow: hidden` on cards/history items
 - **Loose equality for ID lookups**: Supabase IDs compared with `==` not `===` to handle potential type differences
+- **Per-user exercise overrides**: Editing a built-in exercise creates a user-specific row in `exercise_library` with `builtin_id` referencing the original, preserving the built-in for other users
