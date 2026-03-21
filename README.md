@@ -101,10 +101,12 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Exercise Library**: 34 built-in exercises across 6 categories (Upper Body, Lower Body, Core, Balance, Stretching, Breathing)
 - Each exercise has a semi-realistic cartoon SVG illustration, detailed instructions, and category badge
 - **Search and filter** by name, keyword, or category
+- **Inline add confirmation**: Adding an exercise shows "✓ Added" on the card without leaving the Library tab; duplicate adds show "✓ Already Added"
 - **Custom exercises**: Create and save custom exercises to your library (syncs via Supabase)
 - **Current HEP builder**: Add exercises, set per-exercise sets/reps/hold time/frequency, reorder or remove
-- **Export**: PDF (single-column list or two-column grid layout), email via mailto, or print
-- **History tab**: Saved HEPs with labels, search, sort, expandable detail view, load-to-current, and per-entry export
+- **Export**: PDF (single-column list or two-column grid layout), email via mailto, or print — buttons in a clean symmetrical grid layout (3-column desktop, 2-column mobile)
+- **EMR Documentation**: Generate structured clinical documentation from current or saved HEPs for pasting into EMR systems, with copy, email, and PDF options. Exercises grouped by category with dosage, frequency, and standard patient education footer
+- **History tab**: Saved HEPs with labels, search, sort, expandable detail view, load-to-current, and per-entry export via **3-dot kebab menu** (Load, EMR Doc, PDF List/Grid, Email, Delete)
 - Integrated into Calendar with purple dot indicators
 
 ### Calendar
