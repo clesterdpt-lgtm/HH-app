@@ -510,11 +510,17 @@
         .hep-current-item-actions button { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; color: var(--gray-400); transition: background 0.15s, color 0.15s; }
         .hep-current-item-actions button:hover { background: var(--gray-100); color: var(--navy); }
         .hep-current-item-actions .hep-remove-btn:hover { color: var(--red); }
-        .hep-action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .hep-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .hep-action-grid .btn { width: 100%; justify-content: center; text-align: center; padding: 10px 12px; font-size: 13px; }
         .hep-action-full { grid-column: 1 / -1; }
         .hep-action-danger { color: var(--red) !important; border-color: var(--red) !important; }
         .hep-action-danger:hover { background: #fef2f2 !important; }
+        .hep-dropdown { position: relative; }
+        .hep-dropdown-toggle { width: 100%; }
+        .hep-dropdown-menu { display: none; position: absolute; bottom: calc(100% + 4px); left: 0; min-width: 170px; background: var(--white, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 200; overflow: hidden; }
+        .hep-dropdown-menu.open { display: block; }
+        .hep-dropdown-item { display: block; width: 100%; padding: 10px 14px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text, #1e293b); font-family: inherit; }
+        .hep-dropdown-item:hover { background: var(--bg-light, #f8fafc); }
         .hep-current-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .hep-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .hep-history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: visible; transition: box-shadow 0.2s; background: var(--white); }
@@ -730,7 +736,6 @@
             .hep-history-item-header { padding: 14px 16px; gap: 10px; }
             .hep-history-title { max-width: 140px; font-size: 13px; }
             .hep-history-item-body { padding: 0 16px 16px; }
-            .hep-action-grid { grid-template-columns: 1fr 1fr; }
             .hep-history-actions { flex-direction: column; }
             .hep-history-actions .btn { width: 100%; justify-content: center; }
             .hep-kebab-menu { right: -8px; }
@@ -2041,11 +2046,16 @@
                     </div>
                     <div class="hep-action-grid">
                         <button class="btn btn-primary hep-action-full" onclick="saveHepToHistory()">💾 Save to History</button>
-                        <button class="btn btn-outline" onclick="generateHepDoc()">📋 EMR Doc</button>
-                        <button class="btn btn-outline" onclick="emailHep()">✉️ Email</button>
-                        <button class="btn btn-outline" onclick="downloadHepPdf('single')">📄 PDF List</button>
-                        <button class="btn btn-outline" onclick="downloadHepPdf('grid')">📄 PDF Grid</button>
-                        <button class="btn btn-outline" onclick="printHep()">🖨️ Print</button>
+                        <div class="hep-dropdown" id="hepMoreActionsContainer">
+                            <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleHepDropdown(event)">⚡ More Actions ▾</button>
+                            <div class="hep-dropdown-menu" id="hepDropdownMenu">
+                                <button class="hep-dropdown-item" onclick="generateHepDoc(); closeHepDropdown()">📋 EMR Doc</button>
+                                <button class="hep-dropdown-item" onclick="emailHep(); closeHepDropdown()">✉️ Email</button>
+                                <button class="hep-dropdown-item" onclick="downloadHepPdf('single'); closeHepDropdown()">📄 PDF List</button>
+                                <button class="hep-dropdown-item" onclick="downloadHepPdf('grid'); closeHepDropdown()">📄 PDF Grid</button>
+                                <button class="hep-dropdown-item" onclick="printHep(); closeHepDropdown()">🖨️ Print</button>
+                            </div>
+                        </div>
                         <button class="btn btn-outline hep-action-danger" onclick="clearCurrentHep()">🗑️ Clear</button>
                     </div>
                 </div>
@@ -7579,6 +7589,17 @@
             </div>
         `).join('');
     }
+
+    function toggleHepDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('hepDropdownMenu').classList.toggle('open');
+    }
+    function closeHepDropdown() {
+        document.getElementById('hepDropdownMenu').classList.remove('open');
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#hepMoreActionsContainer')) closeHepDropdown();
+    });
 
     function clearCurrentHep() {
         if (hepCurrentExercises.length === 0) return;
