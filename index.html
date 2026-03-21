@@ -6908,7 +6908,7 @@
                     <div class="hep-lib-card-cat">${getCategoryLabel(ex.category)}</div>
                     <div class="hep-lib-card-desc">${ex.instructions}</div>
                 </div>
-                <div class="hep-lib-card-btn">+ Add to HEP</div>
+                <div class="hep-lib-card-btn" id="hep-add-btn-${ex.id}">+ Add to HEP</div>
             </div>
         `).join('');
     }
@@ -6998,13 +6998,16 @@
         const ex = lib.find(e => e.id === exerciseId);
         if (!ex) return;
 
+        const btn = document.getElementById('hep-add-btn-' + exerciseId);
+
         // Check if already added
         if (hepCurrentExercises.some(e => e.id === exerciseId)) {
-            // Flash the existing item
-            const idx = hepCurrentExercises.findIndex(e => e.id === exerciseId);
-            const el = document.querySelectorAll('.hep-current-item')[idx];
-            if (el) { el.style.boxShadow = '0 0 0 2px var(--teal)'; setTimeout(() => el.style.boxShadow = '', 800); }
-            switchHepSubTab('current');
+            if (btn) {
+                btn.textContent = '✓ Already Added';
+                btn.style.background = 'var(--gray-200)';
+                btn.style.color = 'var(--gray-500)';
+                setTimeout(() => { btn.textContent = '+ Add to HEP'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+            }
             return;
         }
 
@@ -7021,7 +7024,13 @@
         });
 
         saveHepCurrentToDB();
-        switchHepSubTab('current');
+
+        if (btn) {
+            btn.textContent = '✓ Added';
+            btn.style.background = 'var(--teal)';
+            btn.style.color = '#fff';
+            setTimeout(() => { btn.textContent = '+ Add to HEP'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+        }
     }
 
     function removeFromHep(index) {
