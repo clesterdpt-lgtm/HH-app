@@ -493,6 +493,14 @@
         .hep-svg-option:hover { border-color: var(--gray-400); }
         .hep-svg-option.selected { border-color: var(--teal); background: rgba(13,148,136,0.08); }
         .hep-svg-option svg { width: 100%; height: 100%; }
+        .hep-photo-upload-area { border: 2px dashed var(--gray-300); border-radius: 10px; padding: 14px; background: var(--gray-50); }
+        .hep-photo-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hep-photo-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1.5px solid var(--gray-300); border-radius: 8px; background: var(--white); color: var(--gray-600); font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.15s, color 0.15s; font-family: 'DM Sans', sans-serif; }
+        .hep-photo-btn:hover { border-color: var(--teal); color: var(--teal); }
+        .hep-photo-preview-wrap { position: relative; display: inline-block; margin-top: 12px; }
+        .hep-photo-preview-wrap img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid var(--gray-200); display: block; }
+        .hep-photo-preview-remove { position: absolute; top: -8px; right: -8px; background: var(--gray-600); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .hep-lib-card-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .hep-current-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; background: var(--white); transition: box-shadow 0.2s; overflow: hidden; }
         .hep-current-item:hover { box-shadow: var(--shadow-md); }
         .hep-current-item-top { display: flex; gap: 14px; padding: 14px 18px; align-items: flex-start; }
@@ -2022,6 +2030,21 @@
                     <div class="form-group">
                         <label class="form-label">Illustration</label>
                         <div class="hep-svg-picker" id="hep-svg-picker"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Photo <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(optional — replaces illustration)</span></label>
+                        <div class="hep-photo-upload-area">
+                            <div class="hep-photo-btn-row">
+                                <button type="button" class="hep-photo-btn" onclick="document.getElementById('hep-photo-file').click()">📁 Upload Photo</button>
+                                <button type="button" class="hep-photo-btn" onclick="document.getElementById('hep-photo-camera').click()">📷 Take Photo</button>
+                            </div>
+                            <div id="hep-photo-preview-wrap" class="hep-photo-preview-wrap" style="display:none;">
+                                <img id="hep-photo-preview-img" src="" alt="Exercise photo">
+                                <button type="button" class="hep-photo-preview-remove" onclick="clearHepCustomPhoto()" title="Remove photo">✕</button>
+                            </div>
+                        </div>
+                        <input type="file" id="hep-photo-file" accept="image/*" style="display:none;" onchange="handleHepPhotoSelected(this)">
+                        <input type="file" id="hep-photo-camera" accept="image/*" capture="environment" style="display:none;" onchange="handleHepPhotoSelected(this)">
                     </div>
                     <button class="btn btn-primary" onclick="saveCustomExercise()">Save to Library</button>
                 </div>
@@ -7300,6 +7323,7 @@
     let hepHistoryData = [];
     let hepLabelInitialized = false;
     let hepSelectedSvgKey = 'generic_exercise';
+    let hepCustomExercisePhotoFile = null;
 
     // SVG to data URL for PDF
     function svgToDataUrl(svgString, width, height) {
@@ -7364,6 +7388,7 @@
             name: e.name,
             category: e.category,
             svg_key: e.svg_key || getGenericSvgForCategory(e.category),
+            photo_url: e.photo_url || null,
             instructions: e.instructions,
             is_builtin: false,
         }));
@@ -7388,7 +7413,7 @@
 
         grid.innerHTML = filtered.map(ex => `
             <div class="hep-lib-card" onclick="addToHep('${ex.id}')">
-                <div class="hep-lib-card-svg">${getExerciseSvg(ex.svg_key)}</div>
+                <div class="hep-lib-card-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" class="hep-lib-card-img">` : getExerciseSvg(ex.svg_key)}</div>
                 <div class="hep-lib-card-body">
                     <div class="hep-lib-card-name">${ex.name}</div>
                     <div class="hep-lib-card-cat">${getCategoryLabel(ex.category)}</div>
@@ -7427,6 +7452,7 @@
         document.getElementById('hep-custom-name').value = '';
         document.getElementById('hep-custom-instructions').value = '';
         hepSelectedSvgKey = 'generic_exercise';
+        clearHepCustomPhoto();
     }
 
     function renderSvgPicker() {
@@ -7444,6 +7470,24 @@
         renderSvgPicker();
     }
 
+    function handleHepPhotoSelected(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        input.value = '';
+        hepCustomExercisePhotoFile = file;
+        const url = URL.createObjectURL(file);
+        document.getElementById('hep-photo-preview-img').src = url;
+        document.getElementById('hep-photo-preview-wrap').style.display = 'block';
+    }
+
+    function clearHepCustomPhoto() {
+        hepCustomExercisePhotoFile = null;
+        const wrap = document.getElementById('hep-photo-preview-wrap');
+        const img = document.getElementById('hep-photo-preview-img');
+        if (wrap) wrap.style.display = 'none';
+        if (img) img.src = '';
+    }
+
     async function saveCustomExercise() {
         const name = document.getElementById('hep-custom-name').value.trim();
         const category = document.getElementById('hep-custom-category').value;
@@ -7453,15 +7497,34 @@
         if (!instructions) { alert('Please enter instructions.'); return; }
         if (!currentUser) { alert('Please sign in to save custom exercises.'); return; }
 
+        const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
+        let photo_url = null;
+        if (hepCustomExercisePhotoFile) {
+            const ext = hepCustomExercisePhotoFile.name.split('.').pop().toLowerCase() || 'jpg';
+            const path = `${currentUser.id}/${crypto.randomUUID()}.${ext}`;
+            const { error: uploadError } = await sb.storage.from('exercise-photos').upload(path, hepCustomExercisePhotoFile, { upsert: false });
+            if (uploadError) {
+                alert('Photo upload failed: ' + uploadError.message + '\n\nMake sure the "exercise-photos" storage bucket exists in your Supabase project.');
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
+                return;
+            }
+            const { data: urlData } = sb.storage.from('exercise-photos').getPublicUrl(path);
+            photo_url = urlData.publicUrl;
+        }
+
         const entry = {
             user_id: currentUser.id,
             name,
             category,
             instructions,
             svg_key: hepSelectedSvgKey,
+            ...(photo_url && { photo_url }),
         };
 
         const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
         if (error) { alert('Error saving exercise: ' + error.message); return; }
 
         hepCustomExercises.unshift(data);
