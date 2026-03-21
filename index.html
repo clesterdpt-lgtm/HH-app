@@ -501,6 +501,11 @@
         .hep-current-item-actions button { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; color: var(--gray-400); transition: background 0.15s, color 0.15s; }
         .hep-current-item-actions button:hover { background: var(--gray-100); color: var(--navy); }
         .hep-current-item-actions .hep-remove-btn:hover { color: var(--red); }
+        .hep-action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .hep-action-grid .btn { width: 100%; justify-content: center; text-align: center; padding: 10px 12px; font-size: 13px; }
+        .hep-action-full { grid-column: 1 / -1; }
+        .hep-action-danger { color: var(--red) !important; border-color: var(--red) !important; }
+        .hep-action-danger:hover { background: #fef2f2 !important; }
         .hep-current-empty { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .hep-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .hep-history-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; overflow: visible; transition: box-shadow 0.2s; background: var(--white); }
@@ -716,6 +721,7 @@
             .hep-history-item-header { padding: 14px 16px; gap: 10px; }
             .hep-history-title { max-width: 140px; font-size: 13px; }
             .hep-history-item-body { padding: 0 16px 16px; }
+            .hep-action-grid { grid-template-columns: 1fr 1fr; }
             .hep-history-actions { flex-direction: column; }
             .hep-history-actions .btn { width: 100%; justify-content: center; }
             .hep-kebab-menu { right: -8px; }
@@ -2006,14 +2012,14 @@
                         </div>
                         <div class="label-suggestions" id="suggestions-hep"></div>
                     </div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                        <button class="btn btn-primary" onclick="saveHepToHistory()">💾 Save to History</button>
-                        <button class="btn btn-outline" onclick="downloadHepPdf('single')">📄 PDF (List)</button>
-                        <button class="btn btn-outline" onclick="downloadHepPdf('grid')">📄 PDF (Grid)</button>
-                        <button class="btn btn-outline" onclick="emailHep()">✉️ Email</button>
-                        <button class="btn btn-outline" onclick="printHep()">🖨️ Print</button>
+                    <div class="hep-action-grid">
+                        <button class="btn btn-primary hep-action-full" onclick="saveHepToHistory()">💾 Save to History</button>
                         <button class="btn btn-outline" onclick="generateHepDoc()">📋 EMR Doc</button>
-                        <button class="btn btn-outline" style="margin-left:auto; color:var(--red); border-color:var(--red);" onclick="clearCurrentHep()">🗑️ Clear</button>
+                        <button class="btn btn-outline" onclick="emailHep()">✉️ Email</button>
+                        <button class="btn btn-outline" onclick="downloadHepPdf('single')">📄 PDF List</button>
+                        <button class="btn btn-outline" onclick="downloadHepPdf('grid')">📄 PDF Grid</button>
+                        <button class="btn btn-outline" onclick="printHep()">🖨️ Print</button>
+                        <button class="btn btn-outline hep-action-danger" onclick="clearCurrentHep()">🗑️ Clear</button>
                     </div>
                 </div>
                 <!-- HEP Documentation Output -->
