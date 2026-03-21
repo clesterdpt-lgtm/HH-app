@@ -1482,6 +1482,27 @@
             .format-toggle-btn { padding: 8px 16px; font-size: 14px; }
             .format-row-label { font-size: 13px; }
         }
+
+        /* ── Vehicle Tracker ── */
+        .vehicle-tabs { display:flex; gap:4px; background:var(--gray-100); padding:4px; border-radius:10px; margin-bottom:20px; }
+        .vehicle-tab-btn { flex:1; padding:8px 12px; text-align:center; font-size:14px; font-weight:500; font-family:'DM Sans',sans-serif; border:none; border-radius:8px; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--gray-600); }
+        .vehicle-tab-btn.active { background:var(--white); color:var(--navy); box-shadow:var(--shadow-sm); font-weight:600; }
+        .vt-entry { border:1px solid var(--gray-200); border-radius:12px; margin-bottom:12px; overflow:hidden; background:var(--white); transition:box-shadow 0.2s; }
+        .vt-entry:hover { box-shadow:var(--shadow-md); }
+        .vt-entry-header { padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .vt-entry-header.expandable { cursor:pointer; }
+        .vt-entry-header.expandable:hover { background:var(--gray-100); }
+        .vt-entry-body { display:none; padding:0 18px 14px; border-top:1px solid var(--gray-200); }
+        .vt-entry-body.open { display:block; }
+        .vt-trip-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap; }
+        .vt-trip-row .form-input { flex:1; min-width:90px; }
+        .vt-trip-row .form-input.miles { flex:0 0 80px; min-width:0; }
+        .vt-summary-section { margin-bottom:24px; }
+        .vt-summary-title { font-weight:700; font-size:15px; color:var(--navy); margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--gray-200); }
+        .vt-stat-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--gray-200); font-size:14px; }
+        .vt-stat-row:last-child { border-bottom:none; }
+        .vt-stat-label { color:var(--gray-600); }
+        .vt-stat-value { font-weight:600; color:var(--navy); }
     </style>
 </head>
 <body>
@@ -2237,11 +2258,168 @@
         </div>
 
         <div id="view-vehicle" style="display:none;">
-            <div class="module-placeholder">
-                <div class="module-placeholder-icon">🚗</div>
-                <div class="module-placeholder-title">Vehicle Tracking</div>
-                <div class="module-placeholder-subtitle">Coming Soon</div>
-                <div class="module-placeholder-desc">Log mileage between patient visits for reimbursement. Track routes, distances, and generate mileage reports.</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+                <div>
+                    <div class="page-title">Vehicle Tracker</div>
+                    <div class="page-subtitle">Log mileage and expenses. Track IRS deductions and generate monthly reports.</div>
+                </div>
+            </div>
+
+            <!-- Vehicle sub-tabs -->
+            <div class="vehicle-tabs">
+                <button class="vehicle-tab-btn active" data-vtab="mileage" onclick="switchVehicleTab('mileage')">📏 Mileage Log</button>
+                <button class="vehicle-tab-btn" data-vtab="expenses" onclick="switchVehicleTab('expenses')">💳 Expenses</button>
+                <button class="vehicle-tab-btn" data-vtab="summary" onclick="switchVehicleTab('summary')">📊 Monthly Summary</button>
+            </div>
+
+            <!-- ── Tab: Mileage Log ── -->
+            <div id="vtab-mileage">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">📏</div>
+                        <div class="card-header-text">
+                            <h2>Log Mileage</h2>
+                            <p>Record daily miles driven for patient visits</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input class="form-input" type="date" id="vt-mileage-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Miles Driven</label>
+                            <input class="form-input" type="number" id="vt-mileage-total" placeholder="0" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Purpose</label>
+                            <input class="form-input" type="text" id="vt-mileage-purpose" placeholder="e.g. Patient visits">
+                        </div>
+                        <button class="btn btn-outline btn-sm" onclick="vtToggleTripBreakdown()" id="vt-trip-toggle">+ Add Trip Breakdown</button>
+                        <div id="vt-trip-section" style="display:none; margin-top:16px;">
+                            <div class="divider">Trip Details</div>
+                            <div id="vt-trip-rows"></div>
+                            <button class="btn btn-outline btn-sm" onclick="vtAddTripRow()" style="margin-top:4px;">+ Add Trip</button>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <button class="btn btn-primary" onclick="vtSaveMileage()">Save Mileage Log</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">📋</div>
+                        <div class="card-header-text">
+                            <h2>Recent Mileage Logs</h2>
+                            <p>Last 10 entries, most recent first</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="vt-mileage-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tab: Expenses ── -->
+            <div id="vtab-expenses" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">💳</div>
+                        <div class="card-header-text">
+                            <h2>Log Expense</h2>
+                            <p>Track vehicle-related costs</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input class="form-input" type="date" id="vt-expense-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <div class="select-wrapper">
+                                <select id="vt-expense-category">
+                                    <option value="fuel">Fuel/Gas</option>
+                                    <option value="service">Oil Change &amp; Service</option>
+                                    <option value="repair">Repair</option>
+                                    <option value="insurance">Insurance &amp; Registration</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount ($)</label>
+                            <input class="form-input" type="number" id="vt-expense-amount" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <input class="form-input" type="text" id="vt-expense-desc" placeholder="e.g. Fill-up at Shell">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Odometer (optional)</label>
+                            <input class="form-input" type="number" id="vt-expense-odometer" placeholder="miles">
+                        </div>
+                        <button class="btn btn-primary" onclick="vtSaveExpense()">Save Expense</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">📋</div>
+                        <div class="card-header-text">
+                            <h2>Recent Expenses</h2>
+                            <p>Last 10 entries, most recent first</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="vt-expense-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tab: Monthly Summary ── -->
+            <div id="vtab-summary" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">📊</div>
+                        <div class="card-header-text">
+                            <h2>Monthly Summary</h2>
+                            <p>Mileage and expense totals by month</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:20px;">
+                            <div class="select-wrapper" style="min-width:150px; flex:none;">
+                                <select id="vt-summary-month" onchange="vtLoadSummary()">
+                                    <option value="0">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8">September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select>
+                            </div>
+                            <div class="select-wrapper" style="min-width:100px; flex:none;">
+                                <select id="vt-summary-year" onchange="vtLoadSummary()">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="vt-summary-content"></div>
+
+                        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px; padding-top:20px; border-top:1px solid var(--gray-200);">
+                            <button class="btn btn-primary" onclick="vtDownloadPdf()">⬇️ Download PDF</button>
+                            <button class="btn btn-outline" onclick="vtEmailSummary()">✉️ Email Summary</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2556,6 +2734,9 @@
             if (module === 'education') {
                 renderEduGrid();
             }
+            if (module === 'vehicle') {
+                initVehicleTracker();
+            }
         }
     }
 
@@ -2569,7 +2750,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 7);
+            const req = indexedDB.open('carenote', 8);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -2592,6 +2773,14 @@
                 }
                 if (!db.objectStoreNames.contains('hepCurrent')) {
                     db.createObjectStore('hepCurrent', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains('mileageLogs')) {
+                    const ml = db.createObjectStore('mileageLogs', { keyPath: 'id', autoIncrement: true });
+                    ml.createIndex('date', 'date', { unique: false });
+                }
+                if (!db.objectStoreNames.contains('vehicleExpenses')) {
+                    const ve = db.createObjectStore('vehicleExpenses', { keyPath: 'id', autoIncrement: true });
+                    ve.createIndex('date', 'date', { unique: false });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -9345,6 +9534,632 @@
     if (labelContainer) {
         const observer = new MutationObserver(scheduleDraftSave);
         observer.observe(labelContainer, { childList: true, subtree: true });
+    }
+
+    // ── Vehicle Tracker ─────────────────────────────────────────────────────
+
+    const IRS_MILEAGE_RATE = 0.67; // 2024 IRS standard mileage rate — update annually each January
+
+    let vtTripCount = 0;
+    let vtInitialized = false;
+
+    // ── IndexedDB helpers ──
+
+    async function vtSaveMileageLog(record) {
+        try {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('mileageLogs', 'readwrite');
+                tx.objectStore('mileageLogs').add(record);
+                tx.oncomplete = () => res();
+                tx.onerror = () => rej(tx.error);
+            });
+        } catch (e) { console.log('vtSaveMileageLog error:', e); }
+    }
+
+    async function vtDeleteMileageLog(id) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('mileageLogs', 'readwrite');
+            tx.objectStore('mileageLogs').delete(id);
+        } catch (e) { console.log('vtDeleteMileageLog error:', e); }
+    }
+
+    async function vtGetAllMileageLogs() {
+        try {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('mileageLogs', 'readonly');
+                const req = tx.objectStore('mileageLogs').getAll();
+                req.onsuccess = () => res(req.result || []);
+                req.onerror = () => rej(req.error);
+            });
+        } catch (e) { return []; }
+    }
+
+    async function vtSaveExpenseRecord(record) {
+        try {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('vehicleExpenses', 'readwrite');
+                tx.objectStore('vehicleExpenses').add(record);
+                tx.oncomplete = () => res();
+                tx.onerror = () => rej(tx.error);
+            });
+        } catch (e) { console.log('vtSaveExpenseRecord error:', e); }
+    }
+
+    async function vtDeleteExpenseRecord(id) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('vehicleExpenses', 'readwrite');
+            tx.objectStore('vehicleExpenses').delete(id);
+        } catch (e) { console.log('vtDeleteExpenseRecord error:', e); }
+    }
+
+    async function vtGetAllExpenses() {
+        try {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('vehicleExpenses', 'readonly');
+                const req = tx.objectStore('vehicleExpenses').getAll();
+                req.onsuccess = () => res(req.result || []);
+                req.onerror = () => rej(req.error);
+            });
+        } catch (e) { return []; }
+    }
+
+    // ── Sub-tab switching ──
+
+    function switchVehicleTab(tab) {
+        document.querySelectorAll('.vehicle-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.vtab === tab));
+        ['mileage', 'expenses', 'summary'].forEach(t => {
+            document.getElementById('vtab-' + t).style.display = t === tab ? 'block' : 'none';
+        });
+        if (tab === 'summary') vtLoadSummary();
+    }
+
+    // ── Init ──
+
+    function initVehicleTracker() {
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById('vt-mileage-date').value = today;
+        document.getElementById('vt-expense-date').value = today;
+
+        // Populate year selector (current year down 4 years)
+        const yearSel = document.getElementById('vt-summary-year');
+        if (!yearSel.options.length) {
+            const now = new Date();
+            for (let y = now.getFullYear(); y >= now.getFullYear() - 4; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSel.appendChild(opt);
+            }
+            document.getElementById('vt-summary-month').value = now.getMonth();
+        }
+
+        // Reset to mileage tab on each open
+        switchVehicleTab('mileage');
+        vtLoadMileageList();
+        vtLoadExpenseList();
+    }
+
+    // ── Trip breakdown ──
+
+    function vtToggleTripBreakdown() {
+        const sec = document.getElementById('vt-trip-section');
+        const btn = document.getElementById('vt-trip-toggle');
+        if (sec.style.display === 'none') {
+            sec.style.display = 'block';
+            btn.textContent = '− Hide Trip Breakdown';
+            if (document.getElementById('vt-trip-rows').children.length === 0) vtAddTripRow();
+        } else {
+            sec.style.display = 'none';
+            btn.textContent = '+ Add Trip Breakdown';
+        }
+    }
+
+    function vtAddTripRow() {
+        vtTripCount++;
+        const id = 'vt-trip-' + vtTripCount;
+        const row = document.createElement('div');
+        row.className = 'vt-trip-row';
+        row.id = id;
+        row.innerHTML =
+            '<input class="form-input" type="text" placeholder="From" data-trip-from>' +
+            '<input class="form-input" type="text" placeholder="To" data-trip-to>' +
+            '<input class="form-input miles" type="number" placeholder="Miles" min="0" step="0.1" data-trip-miles oninput="vtSumTripMiles()">' +
+            '<input class="form-input" type="text" placeholder="Purpose" data-trip-purpose>' +
+            '<button class="btn btn-danger btn-sm" onclick="vtRemoveTripRow(\'' + id + '\')">✕</button>';
+        document.getElementById('vt-trip-rows').appendChild(row);
+    }
+
+    function vtRemoveTripRow(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        vtSumTripMiles();
+    }
+
+    function vtSumTripMiles() {
+        let sum = 0;
+        document.querySelectorAll('#vt-trip-rows [data-trip-miles]').forEach(inp => {
+            sum += parseFloat(inp.value) || 0;
+        });
+        if (sum > 0) document.getElementById('vt-mileage-total').value = sum.toFixed(1);
+    }
+
+    // ── Mileage form save ──
+
+    async function vtSaveMileage() {
+        const date = document.getElementById('vt-mileage-date').value;
+        const totalMiles = parseFloat(document.getElementById('vt-mileage-total').value);
+        const purpose = document.getElementById('vt-mileage-purpose').value.trim();
+        if (!date) { alert('Please select a date.'); return; }
+        if (isNaN(totalMiles) || totalMiles <= 0) { alert('Please enter total miles driven.'); return; }
+
+        const trips = [];
+        const tripSection = document.getElementById('vt-trip-section');
+        if (tripSection.style.display !== 'none') {
+            document.querySelectorAll('#vt-trip-rows .vt-trip-row').forEach(row => {
+                const from = row.querySelector('[data-trip-from]').value.trim();
+                const to = row.querySelector('[data-trip-to]').value.trim();
+                const miles = parseFloat(row.querySelector('[data-trip-miles]').value) || 0;
+                const tripPurpose = row.querySelector('[data-trip-purpose]').value.trim();
+                if (from || to || miles) trips.push({ from, to, miles, purpose: tripPurpose });
+            });
+        }
+
+        await vtSaveMileageLog({ date, totalMiles, purpose, trips });
+
+        // Reset form
+        document.getElementById('vt-mileage-total').value = '';
+        document.getElementById('vt-mileage-purpose').value = '';
+        document.getElementById('vt-trip-rows').innerHTML = '';
+        vtTripCount = 0;
+        document.getElementById('vt-trip-section').style.display = 'none';
+        document.getElementById('vt-trip-toggle').textContent = '+ Add Trip Breakdown';
+        vtLoadMileageList();
+    }
+
+    // ── Mileage list ──
+
+    async function vtLoadMileageList() {
+        const all = await vtGetAllMileageLogs();
+        all.sort((a, b) => b.date.localeCompare(a.date));
+        const recent = all.slice(0, 10);
+        const container = document.getElementById('vt-mileage-list');
+        if (!container) return;
+        if (recent.length === 0) {
+            container.innerHTML = '<div class="pending-empty"><div class="pending-empty-icon">📏</div><p>No mileage logs yet. Add your first entry above.</p></div>';
+            return;
+        }
+        container.innerHTML = recent.map(log => {
+            const deduction = (log.totalMiles * IRS_MILEAGE_RATE).toFixed(2);
+            const hasTrips = log.trips && log.trips.length > 0;
+            const tripHtml = hasTrips ? log.trips.map(t =>
+                '<div style="padding:5px 0 5px 12px; border-left:3px solid var(--gray-200); margin-bottom:4px; font-size:13px; color:var(--gray-600);">' +
+                (t.from ? '<strong>' + t.from + '</strong> → ' : '') + (t.to || '') +
+                ' · ' + t.miles + ' mi' + (t.purpose ? ' · ' + t.purpose : '') +
+                '</div>'
+            ).join('') : '';
+            return '<div class="vt-entry">' +
+                '<div class="vt-entry-header' + (hasTrips ? ' expandable' : '') + '"' + (hasTrips ? ' onclick="vtToggleEntry(this)"' : '') + '>' +
+                '<div style="flex:1;">' +
+                '<span style="font-weight:600; color:var(--navy); font-size:14px;">' + log.date + '</span>' +
+                '<span style="margin-left:12px; color:var(--gray-600); font-size:13px;">' + log.totalMiles + ' mi · <span style="color:var(--green);">$' + deduction + '</span></span>' +
+                (log.purpose ? '<span style="margin-left:8px; color:var(--gray-400); font-size:12px;">' + log.purpose + '</span>' : '') +
+                (hasTrips ? '<span style="margin-left:8px; background:rgba(13,148,136,0.1); color:var(--teal); font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px;">' + log.trips.length + ' trip' + (log.trips.length > 1 ? 's' : '') + '</span>' : '') +
+                '</div>' +
+                '<button class="btn-delete-single" onclick="event.stopPropagation(); vtDeleteMileageEntry(' + log.id + ')" title="Delete">🗑</button>' +
+                (hasTrips ? '<span class="history-chevron">▾</span>' : '') +
+                '</div>' +
+                (hasTrips ? '<div class="vt-entry-body"><div style="padding-top:10px;">' + tripHtml + '</div></div>' : '') +
+                '</div>';
+        }).join('');
+    }
+
+    function vtToggleEntry(header) {
+        const body = header.nextElementSibling;
+        if (body && body.classList.contains('vt-entry-body')) {
+            body.classList.toggle('open');
+            const chevron = header.querySelector('.history-chevron');
+            if (chevron) chevron.classList.toggle('open');
+        }
+    }
+
+    async function vtDeleteMileageEntry(id) {
+        if (!confirm('Delete this mileage log?')) return;
+        await vtDeleteMileageLog(id);
+        vtLoadMileageList();
+    }
+
+    // ── Expense form save ──
+
+    const vtCategoryLabels = {
+        fuel: 'Fuel/Gas',
+        service: 'Oil Change & Service',
+        repair: 'Repair',
+        insurance: 'Insurance & Registration'
+    };
+
+    async function vtSaveExpense() {
+        const date = document.getElementById('vt-expense-date').value;
+        const category = document.getElementById('vt-expense-category').value;
+        const amount = parseFloat(document.getElementById('vt-expense-amount').value);
+        const description = document.getElementById('vt-expense-desc').value.trim();
+        const odometerVal = document.getElementById('vt-expense-odometer').value;
+        const odometer = odometerVal ? parseFloat(odometerVal) : null;
+        if (!date) { alert('Please select a date.'); return; }
+        if (isNaN(amount) || amount <= 0) { alert('Please enter an amount greater than zero.'); return; }
+
+        await vtSaveExpenseRecord({ date, category, amount, description, odometer });
+
+        document.getElementById('vt-expense-amount').value = '';
+        document.getElementById('vt-expense-desc').value = '';
+        document.getElementById('vt-expense-odometer').value = '';
+        vtLoadExpenseList();
+    }
+
+    // ── Expense list ──
+
+    async function vtLoadExpenseList() {
+        const all = await vtGetAllExpenses();
+        all.sort((a, b) => b.date.localeCompare(a.date));
+        const recent = all.slice(0, 10);
+        const container = document.getElementById('vt-expense-list');
+        if (!container) return;
+        if (recent.length === 0) {
+            container.innerHTML = '<div class="pending-empty"><div class="pending-empty-icon">💳</div><p>No expenses logged yet. Add your first entry above.</p></div>';
+            return;
+        }
+        container.innerHTML = recent.map(exp =>
+            '<div class="vt-entry">' +
+            '<div class="vt-entry-header">' +
+            '<div style="flex:1;">' +
+            '<span style="font-weight:600; color:var(--navy); font-size:14px;">' + exp.date + '</span>' +
+            '<span style="margin-left:8px; background:rgba(13,148,136,0.1); color:var(--teal); font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px;">' + (vtCategoryLabels[exp.category] || exp.category) + '</span>' +
+            '<span style="margin-left:10px; color:var(--green); font-weight:600; font-size:14px;">$' + exp.amount.toFixed(2) + '</span>' +
+            (exp.description ? '<div style="font-size:13px; color:var(--gray-600); margin-top:4px;">' + exp.description + '</div>' : '') +
+            (exp.odometer ? '<div style="font-size:12px; color:var(--gray-400); margin-top:2px;">Odometer: ' + exp.odometer.toLocaleString() + ' mi</div>' : '') +
+            '</div>' +
+            '<button class="btn-delete-single" onclick="vtDeleteExpenseEntry(' + exp.id + ')" title="Delete">🗑</button>' +
+            '</div>' +
+            '</div>'
+        ).join('');
+    }
+
+    async function vtDeleteExpenseEntry(id) {
+        if (!confirm('Delete this expense?')) return;
+        await vtDeleteExpenseRecord(id);
+        vtLoadExpenseList();
+    }
+
+    // ── Monthly summary ──
+
+    function vtGetMonthRange(year, month) {
+        const start = year + '-' + String(month + 1).padStart(2, '0') + '-01';
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const end = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+        return { start, end };
+    }
+
+    const vtMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    async function vtLoadSummary() {
+        const monthSel = document.getElementById('vt-summary-month');
+        const yearSel = document.getElementById('vt-summary-year');
+        if (!monthSel || !yearSel) return;
+        const month = parseInt(monthSel.value);
+        const year = parseInt(yearSel.value);
+        if (isNaN(month) || isNaN(year)) return;
+        const { start, end } = vtGetMonthRange(year, month);
+
+        const [allLogs, allExp] = await Promise.all([vtGetAllMileageLogs(), vtGetAllExpenses()]);
+        const logs = allLogs.filter(l => l.date >= start && l.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+        const exps = allExp.filter(e => e.date >= start && e.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+
+        const totalMiles = logs.reduce((s, l) => s + (l.totalMiles || 0), 0);
+        const totalDeduction = totalMiles * IRS_MILEAGE_RATE;
+        const totalExpenses = exps.reduce((s, e) => s + (e.amount || 0), 0);
+        const catTotals = {};
+        exps.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+
+        const container = document.getElementById('vt-summary-content');
+        if (!container) return;
+
+        let html = '<div class="vt-summary-section">' +
+            '<div class="vt-summary-title">🛣️ Mileage</div>' +
+            '<div class="vt-stat-row"><span class="vt-stat-label">Total Miles</span><span class="vt-stat-value">' + totalMiles.toFixed(1) + ' mi</span></div>' +
+            '<div class="vt-stat-row"><span class="vt-stat-label">IRS Deduction (@$' + IRS_MILEAGE_RATE + '/mi)</span><span class="vt-stat-value" style="color:var(--green);">$' + totalDeduction.toFixed(2) + '</span></div>' +
+            '<div class="vt-stat-row"><span class="vt-stat-label">Days Logged</span><span class="vt-stat-value">' + logs.length + '</span></div>';
+
+        if (logs.length > 0) {
+            html += '<div style="margin-top:8px;">';
+            logs.forEach(l => {
+                html += '<div class="vt-stat-row" style="padding-left:8px;">' +
+                    '<span class="vt-stat-label">' + l.date + (l.purpose ? ' — ' + l.purpose : '') + '</span>' +
+                    '<span class="vt-stat-value">' + l.totalMiles + ' mi · <span style="color:var(--green);">$' + (l.totalMiles * IRS_MILEAGE_RATE).toFixed(2) + '</span></span>' +
+                    '</div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<p style="color:var(--gray-400); font-size:14px; margin-top:8px;">No mileage logged this month.</p>';
+        }
+        html += '</div>';
+
+        html += '<div class="vt-summary-section">' +
+            '<div class="vt-summary-title">💳 Expenses</div>' +
+            '<div class="vt-stat-row"><span class="vt-stat-label">Total Expenses</span><span class="vt-stat-value" style="color:var(--red);">$' + totalExpenses.toFixed(2) + '</span></div>';
+
+        Object.entries(catTotals).forEach(([cat, total]) => {
+            html += '<div class="vt-stat-row" style="padding-left:8px;">' +
+                '<span class="vt-stat-label">' + (vtCategoryLabels[cat] || cat) + '</span>' +
+                '<span class="vt-stat-value">$' + total.toFixed(2) + '</span>' +
+                '</div>';
+        });
+
+        if (exps.length > 0) {
+            html += '<div style="margin-top:8px;">';
+            exps.forEach(e => {
+                html += '<div class="vt-stat-row" style="padding-left:8px;">' +
+                    '<span class="vt-stat-label">' + e.date + ' — ' + (vtCategoryLabels[e.category] || e.category) + (e.description ? ': ' + e.description : '') + '</span>' +
+                    '<span class="vt-stat-value">$' + e.amount.toFixed(2) + '</span>' +
+                    '</div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<p style="color:var(--gray-400); font-size:14px; margin-top:8px;">No expenses logged this month.</p>';
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    // ── PDF Export ──
+
+    async function vtDownloadPdf() {
+        if (!window.jspdf) { alert('PDF library is still loading. Please try again.'); return; }
+        const month = parseInt(document.getElementById('vt-summary-month').value);
+        const year = parseInt(document.getElementById('vt-summary-year').value);
+        const { start, end } = vtGetMonthRange(year, month);
+        const [allLogs, allExp] = await Promise.all([vtGetAllMileageLogs(), vtGetAllExpenses()]);
+        const logs = allLogs.filter(l => l.date >= start && l.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+        const exps = allExp.filter(e => e.date >= start && e.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+        const monthLabel = vtMonthNames[month] + ' ' + year;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function vtCheckPageBreak(needed) {
+            if (y + needed > pageHeight - 20) { doc.addPage(); y = margin; }
+        }
+
+        // Navy header bar
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255, 255, 255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text('Vehicle Log — ' + monthLabel, pageWidth - margin, 12, { align: 'right' });
+        y = 28;
+
+        // Generated line
+        const now = new Date();
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Generated: ' + now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), margin, y);
+        y += 10;
+
+        // ── Mileage section ──
+        doc.setFontSize(13);
+        doc.setTextColor(15, 39, 68);
+        doc.text('Mileage Log', margin, y);
+        y += 8;
+
+        // Table header
+        const mc = { date: margin, miles: margin + 38, deduct: margin + 62, purpose: margin + 95 };
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Date', mc.date, y);
+        doc.text('Miles', mc.miles, y);
+        doc.text('IRS Deduction', mc.deduct, y);
+        doc.text('Purpose', mc.purpose, y);
+        y += 4;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 5;
+
+        let totalMiles = 0;
+        if (logs.length === 0) {
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text('No mileage logged this month.', margin, y);
+            y += 8;
+        } else {
+            logs.forEach(log => {
+                vtCheckPageBreak(8);
+                doc.setFontSize(10);
+                doc.setTextColor(30, 30, 30);
+                doc.text(log.date, mc.date, y);
+                doc.text(String(log.totalMiles), mc.miles, y);
+                doc.text('$' + (log.totalMiles * IRS_MILEAGE_RATE).toFixed(2), mc.deduct, y);
+                if (log.purpose) {
+                    const pLines = doc.splitTextToSize(log.purpose, maxWidth - 75);
+                    doc.text(pLines[0], mc.purpose, y);
+                }
+                y += 5;
+                totalMiles += log.totalMiles;
+
+                // Trip breakdown indented
+                if (log.trips && log.trips.length > 0) {
+                    log.trips.forEach(t => {
+                        vtCheckPageBreak(5);
+                        doc.setFontSize(8.5);
+                        doc.setTextColor(100, 100, 100);
+                        const tripStr = '    ' + (t.from || '') + (t.from && t.to ? ' → ' : '') + (t.to || '') + ' (' + t.miles + ' mi)' + (t.purpose ? ' · ' + t.purpose : '');
+                        const tLines = doc.splitTextToSize(tripStr, maxWidth - 8);
+                        tLines.forEach(line => { doc.text(line, margin + 4, y); y += 4.5; });
+                    });
+                }
+            });
+
+            // Monthly totals row
+            vtCheckPageBreak(10);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 5;
+            doc.setFontSize(10);
+            doc.setTextColor(15, 39, 68);
+            doc.text('TOTAL', mc.date, y);
+            doc.text(totalMiles.toFixed(1) + ' mi', mc.miles, y);
+            doc.text('$' + (totalMiles * IRS_MILEAGE_RATE).toFixed(2), mc.deduct, y);
+            y += 12;
+        }
+
+        // ── Expenses section ──
+        vtCheckPageBreak(20);
+        doc.setFontSize(13);
+        doc.setTextColor(15, 39, 68);
+        doc.text('Expenses', margin, y);
+        y += 8;
+
+        const ec = { date: margin, cat: margin + 28, amount: margin + 98, desc: margin + 118 };
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Date', ec.date, y);
+        doc.text('Category', ec.cat, y);
+        doc.text('Amount', ec.amount, y);
+        doc.text('Description', ec.desc, y);
+        y += 4;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 5;
+
+        let totalExp = 0;
+        const catTotals = {};
+
+        if (exps.length === 0) {
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text('No expenses logged this month.', margin, y);
+            y += 8;
+        } else {
+            exps.forEach(exp => {
+                vtCheckPageBreak(8);
+                doc.setFontSize(10);
+                doc.setTextColor(30, 30, 30);
+                doc.text(exp.date, ec.date, y);
+                const catLabel = vtCategoryLabels[exp.category] || exp.category;
+                doc.text(doc.splitTextToSize(catLabel, 66)[0], ec.cat, y);
+                doc.text('$' + exp.amount.toFixed(2), ec.amount, y);
+                if (exp.description) {
+                    doc.text(doc.splitTextToSize(exp.description, maxWidth - 98)[0], ec.desc, y);
+                }
+                y += 5;
+                totalExp += exp.amount;
+                catTotals[exp.category] = (catTotals[exp.category] || 0) + exp.amount;
+            });
+
+            // Category subtotals
+            vtCheckPageBreak(14 + Object.keys(catTotals).length * 5);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 5;
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80);
+            doc.text('Category Subtotals:', margin, y);
+            y += 5;
+            Object.entries(catTotals).forEach(([cat, total]) => {
+                doc.setFontSize(9);
+                doc.setTextColor(30, 30, 30);
+                doc.text(vtCategoryLabels[cat] || cat, margin + 8, y);
+                doc.text('$' + total.toFixed(2), ec.amount, y);
+                y += 4.5;
+            });
+
+            // Grand total
+            vtCheckPageBreak(8);
+            doc.setFontSize(10);
+            doc.setTextColor(15, 39, 68);
+            doc.text('TOTAL', ec.date, y);
+            doc.text('$' + totalExp.toFixed(2), ec.amount, y);
+            y += 6;
+        }
+
+        // Page numbers footer
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160, 160, 160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        doc.save('CareNote-VehicleLog-' + monthLabel.replace(' ', '-') + '.pdf');
+    }
+
+    // ── Email Export ──
+
+    async function vtEmailSummary() {
+        const month = parseInt(document.getElementById('vt-summary-month').value);
+        const year = parseInt(document.getElementById('vt-summary-year').value);
+        const { start, end } = vtGetMonthRange(year, month);
+        const [allLogs, allExp] = await Promise.all([vtGetAllMileageLogs(), vtGetAllExpenses()]);
+        const logs = allLogs.filter(l => l.date >= start && l.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+        const exps = allExp.filter(e => e.date >= start && e.date <= end).sort((a, b) => a.date.localeCompare(b.date));
+        const monthLabel = vtMonthNames[month] + ' ' + year;
+
+        const totalMiles = logs.reduce((s, l) => s + (l.totalMiles || 0), 0);
+        const totalDeduction = totalMiles * IRS_MILEAGE_RATE;
+        const totalExpenses = exps.reduce((s, e) => s + (e.amount || 0), 0);
+
+        let body = 'Vehicle Log — ' + monthLabel + '\n';
+        body += '='.repeat(40) + '\n\n';
+        body += 'SUMMARY\n';
+        body += 'Total Miles: ' + totalMiles.toFixed(1) + ' mi\n';
+        body += 'IRS Deduction (@$' + IRS_MILEAGE_RATE + '/mi): $' + totalDeduction.toFixed(2) + '\n';
+        body += 'Total Expenses: $' + totalExpenses.toFixed(2) + '\n\n';
+
+        body += 'MILEAGE LOG\n';
+        body += '-'.repeat(30) + '\n';
+        if (logs.length === 0) {
+            body += 'No mileage logged this month.\n';
+        } else {
+            logs.forEach(l => {
+                body += l.date + ' — ' + l.totalMiles + ' mi — $' + (l.totalMiles * IRS_MILEAGE_RATE).toFixed(2);
+                if (l.purpose) body += ' — ' + l.purpose;
+                body += '\n';
+                if (l.trips && l.trips.length > 0) {
+                    l.trips.forEach(t => {
+                        body += '  ' + (t.from || '') + (t.from && t.to ? ' → ' : '') + (t.to || '') + ' (' + t.miles + ' mi)' + (t.purpose ? ' — ' + t.purpose : '') + '\n';
+                    });
+                }
+            });
+        }
+
+        body += '\nEXPENSES\n';
+        body += '-'.repeat(30) + '\n';
+        if (exps.length === 0) {
+            body += 'No expenses logged this month.\n';
+        } else {
+            exps.forEach(e => {
+                body += e.date + ' — ' + (vtCategoryLabels[e.category] || e.category) + ' — $' + e.amount.toFixed(2);
+                if (e.description) body += ' — ' + e.description;
+                body += '\n';
+            });
+        }
+
+        const subject = encodeURIComponent('Vehicle Log — ' + monthLabel);
+        const to = encodeURIComponent(defaultEmail || '');
+        window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + encodeURIComponent(body);
     }
 </script>
 
