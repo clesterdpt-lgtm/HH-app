@@ -2028,10 +2028,6 @@
                         <textarea class="form-input" id="hep-custom-instructions" rows="3" placeholder="Step-by-step instructions for performing this exercise..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Illustration</label>
-                        <div class="hep-svg-picker" id="hep-svg-picker"></div>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Photo <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(optional — replaces illustration)</span></label>
                         <div class="hep-photo-upload-area">
                             <div class="hep-photo-btn-row">
@@ -7322,7 +7318,6 @@
     let hepCustomExercises = [];
     let hepHistoryData = [];
     let hepLabelInitialized = false;
-    let hepSelectedSvgKey = 'generic_exercise';
     let hepCustomExercisePhotoFile = null;
 
     // SVG to data URL for PDF
@@ -7444,30 +7439,13 @@
     // ── Custom Exercise Form ──────────────────────────────
     function showAddCustomExercise() {
         document.getElementById('hep-custom-form').style.display = 'block';
-        renderSvgPicker();
     }
 
     function hideAddCustomExercise() {
         document.getElementById('hep-custom-form').style.display = 'none';
         document.getElementById('hep-custom-name').value = '';
         document.getElementById('hep-custom-instructions').value = '';
-        hepSelectedSvgKey = 'generic_exercise';
         clearHepCustomPhoto();
-    }
-
-    function renderSvgPicker() {
-        const picker = document.getElementById('hep-svg-picker');
-        const genericKeys = HEP_CATEGORIES.map(c => c.generic_svg).concat(['generic_exercise']);
-        picker.innerHTML = genericKeys.map(key => `
-            <div class="hep-svg-option ${hepSelectedSvgKey === key ? 'selected' : ''}" onclick="selectHepSvg('${key}')">
-                ${HEP_SVGS[key]}
-            </div>
-        `).join('');
-    }
-
-    function selectHepSvg(key) {
-        hepSelectedSvgKey = key;
-        renderSvgPicker();
     }
 
     function handleHepPhotoSelected(input) {
@@ -7519,7 +7497,7 @@
             name,
             category,
             instructions,
-            svg_key: hepSelectedSvgKey,
+            svg_key: getGenericSvgForCategory(category),
             ...(photo_url && { photo_url }),
         };
 
