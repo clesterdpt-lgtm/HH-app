@@ -3755,13 +3755,14 @@
     }
 
     function formatMedEntryText(entry) {
+        const labels = (entry.labels && entry.labels.length > 0) ? `\nLabels: ${entry.labels.join(', ')}` : '';
         const lines = entry.medications.map(med => {
             const parts = [med.name, med.dose, med.frequency, med.route].filter(Boolean);
             let line = parts.join(' | ');
             if (med.notes) line += ' | ' + med.notes;
             return line;
         });
-        return `--- Medication List (${entry.title}) ---\n${lines.join('\n')}`;
+        return `--- Medication List (${entry.title}) ---${labels}\n${lines.join('\n')}`;
     }
 
     async function calExportEmail() {
@@ -3779,7 +3780,11 @@
             sections.push('=== MEDICATION LIST ===\n\n' + data.meds.map(e => formatMedEntryText(e)).join('\n\n'));
         }
         if (sel.heps && (data.heps || []).length > 0) {
-            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => formatHepText(e.exercises, e.title)).join('\n\n'));
+            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => {
+                let text = formatHepText(e.exercises, e.title);
+                if (e.labels && e.labels.length > 0) text = text.replace('\n', '\nLabels: ' + e.labels.join(', ') + '\n');
+                return text;
+            }).join('\n\n'));
         }
 
         const subject = encodeURIComponent(`CareNote — ${dateLabel}`);
@@ -3804,7 +3809,11 @@
             sections.push('=== MEDICATION LIST ===\n\n' + data.meds.map(e => formatMedEntryText(e)).join('\n\n'));
         }
         if (sel.heps && (data.heps || []).length > 0) {
-            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => formatHepText(e.exercises, e.title)).join('\n\n'));
+            sections.push('=== HOME EXERCISE PROGRAM ===\n\n' + data.heps.map(e => {
+                let text = formatHepText(e.exercises, e.title);
+                if (e.labels && e.labels.length > 0) text = text.replace('\n', '\nLabels: ' + e.labels.join(', ') + '\n');
+                return text;
+            }).join('\n\n'));
         }
 
         const text = `CareNote — ${dateLabel}\n${'='.repeat(40)}\n\n${sections.join('\n\n\n')}`;
@@ -3861,6 +3870,12 @@
                 doc.setTextColor(13, 148, 136);
                 doc.text(`${noteType} — ${time}`, margin, y);
                 y += 6;
+                if (note.labels && note.labels.length > 0) {
+                    doc.setFontSize(9);
+                    doc.setTextColor(120, 120, 180);
+                    doc.text('Labels: ' + note.labels.join(', '), margin, y);
+                    y += 5;
+                }
                 doc.setFontSize(10);
                 doc.setTextColor(60);
                 const lines = doc.splitTextToSize(note.generated_note, maxWidth);
@@ -3898,6 +3913,12 @@
                 doc.setTextColor(13, 148, 136);
                 doc.text(entry.title, margin, y);
                 y += 6;
+                if (entry.labels && entry.labels.length > 0) {
+                    doc.setFontSize(9);
+                    doc.setTextColor(120, 120, 180);
+                    doc.text('Labels: ' + entry.labels.join(', '), margin, y);
+                    y += 5;
+                }
                 entry.medications.forEach(med => {
                     checkPageBreak(6);
                     doc.setFontSize(10);
@@ -3938,6 +3959,12 @@
                 doc.setTextColor(13, 148, 136);
                 doc.text(entry.title || 'HEP', margin, y);
                 y += 6;
+                if (entry.labels && entry.labels.length > 0) {
+                    doc.setFontSize(9);
+                    doc.setTextColor(120, 120, 180);
+                    doc.text('Labels: ' + entry.labels.join(', '), margin, y);
+                    y += 5;
+                }
                 entry.exercises.forEach((ex, i) => {
                     checkPageBreak(14);
                     doc.setFontSize(10);
