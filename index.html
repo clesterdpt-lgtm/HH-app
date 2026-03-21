@@ -2002,7 +2002,29 @@
                         <button class="btn btn-outline" onclick="downloadHepPdf('grid')">📄 PDF (Grid)</button>
                         <button class="btn btn-outline" onclick="emailHep()">✉️ Email</button>
                         <button class="btn btn-outline" onclick="printHep()">🖨️ Print</button>
+                        <button class="btn btn-outline" onclick="generateHepDoc()">📋 EMR Doc</button>
                         <button class="btn btn-outline" style="margin-left:auto; color:var(--red); border-color:var(--red);" onclick="clearCurrentHep()">🗑️ Clear</button>
+                    </div>
+                </div>
+                <!-- HEP Documentation Output -->
+                <div id="hep-doc-card" class="card" style="display:none; margin-top:16px;">
+                    <div class="card-header">
+                        <div class="card-header-icon">📋</div>
+                        <div class="card-header-text">
+                            <h2>EMR Documentation</h2>
+                            <p>Edit below, then copy to your EMR</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-actions" style="margin-bottom:10px;">
+                            <div class="result-buttons" style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn btn-copy" onclick="copyHepDoc()">📋 Copy</button>
+                                <button class="btn btn-copy" onclick="emailHepDoc()">✉️ Email</button>
+                                <button class="btn btn-copy" onclick="downloadHepDocPdf()">📥 PDF</button>
+                                <button class="btn btn-copy" onclick="closeHepDoc()" style="margin-left:auto; color:var(--red);">✕ Close</button>
+                            </div>
+                        </div>
+                        <textarea class="result-content" id="hep-doc-result" rows="14" placeholder="Documentation will appear here..."></textarea>
                     </div>
                 </div>
             </div>
@@ -7200,6 +7222,7 @@
                             <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'single')">📄 PDF (List)</button>
                             <button class="btn btn-outline" onclick="exportHepHistoryPdf(${entry.id},'grid')">📄 PDF (Grid)</button>
                             <button class="btn btn-outline" onclick="emailHepHistory(${entry.id})">✉️ Email</button>
+                            <button class="btn btn-outline" onclick="generateHepHistoryDoc(${entry.id})">📋 EMR Doc</button>
                             <button class="btn btn-outline" style="color:var(--red); border-color:var(--red);" onclick="deleteHepHistoryEntry(${entry.id})">🗑️ Delete</button>
                         </div>
                     </div>
@@ -7459,6 +7482,107 @@
         const subject = entry.title + ' - Home Exercise Program';
         const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
         window.open(mailto, '_blank');
+    }
+
+    // ── HEP EMR Documentation ──────────────────────────
+    function formatHepDocText(exercises, title, labels) {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        let doc = 'HOME EXERCISE PROGRAM\n';
+        doc += '='.repeat(40) + '\n';
+        if (title) doc += 'Program: ' + title + '\n';
+        doc += 'Date: ' + dateStr + ' ' + timeStr + '\n';
+        if (labels && labels.length > 0) doc += 'Labels: ' + labels.join(', ') + '\n';
+        doc += 'Total Exercises: ' + exercises.length + '\n';
+        doc += '='.repeat(40) + '\n\n';
+
+        // Group exercises by category
+        const categories = {};
+        exercises.forEach(ex => {
+            const cat = ex.category || 'General';
+            if (!categories[cat]) categories[cat] = [];
+            categories[cat].push(ex);
+        });
+
+        let num = 1;
+        Object.keys(categories).forEach(cat => {
+            const catLabel = (HEP_CATEGORIES.find(c => c.key === cat) || {}).label || cat.charAt(0).toUpperCase() + cat.slice(1);
+            doc += catLabel.toUpperCase() + '\n';
+            doc += '-'.repeat(30) + '\n';
+            categories[cat].forEach(ex => {
+                doc += num + '. ' + ex.name + '\n';
+                doc += '   Dosage: ' + ex.sets + ' set' + (ex.sets != 1 ? 's' : '') + ' x ' + ex.reps + ' rep' + (ex.reps != 1 ? 's' : '');
+                if (ex.hold_seconds > 0) doc += ', hold ' + ex.hold_seconds + ' seconds';
+                doc += '\n';
+                doc += '   Frequency: ' + ex.frequency + '\n';
+                doc += '   Instructions: ' + ex.instructions + '\n\n';
+                num++;
+            });
+        });
+
+        doc += '='.repeat(40) + '\n';
+        doc += 'Patient was instructed in the above home exercise program.\n';
+        doc += 'Patient demonstrated understanding and ability to perform exercises independently/with assistance.\n';
+        doc += 'Patient was advised to stop any exercise that causes increased pain and to contact their therapist.\n';
+
+        return doc;
+    }
+
+    function generateHepDoc() {
+        if (hepCurrentExercises.length === 0) { alert('No exercises in current program.'); return; }
+        const labels = getLabels('labels-hep');
+        const doc = formatHepDocText(hepCurrentExercises, null, labels);
+        const card = document.getElementById('hep-doc-card');
+        const textarea = document.getElementById('hep-doc-result');
+        textarea.value = doc;
+        card.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function generateHepHistoryDoc(id) {
+        const entry = hepHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        const doc = formatHepDocText(entry.exercises, entry.title, entry.labels);
+        const card = document.getElementById('hep-doc-card');
+        const textarea = document.getElementById('hep-doc-result');
+        textarea.value = doc;
+        card.style.display = 'block';
+        // Switch to current tab to show the doc card
+        switchHepSubTab('current');
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function copyHepDoc() {
+        const text = document.getElementById('hep-doc-result').value;
+        if (!text.trim()) return;
+        navigator.clipboard.writeText(text);
+        const btns = document.querySelectorAll('#hep-doc-card .btn-copy');
+        const btn = btns[0];
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    }
+
+    function emailHepDoc() {
+        const text = document.getElementById('hep-doc-result').value;
+        if (!text.trim()) return;
+        const subject = 'Home Exercise Program - EMR Documentation - ' + new Date().toLocaleDateString();
+        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+        window.open(mailto, '_blank');
+    }
+
+    function downloadHepDocPdf() {
+        const text = document.getElementById('hep-doc-result').value;
+        if (!text.trim()) return;
+        const sections = [{ heading: '', body: text }];
+        const pdf = buildPdf('Home Exercise Program - EMR Documentation', sections);
+        if (pdf) pdf.save('HEP_Documentation_' + new Date().toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function closeHepDoc() {
+        document.getElementById('hep-doc-card').style.display = 'none';
     }
 
     // ── HEP Export: Print ──────────────────────────────
