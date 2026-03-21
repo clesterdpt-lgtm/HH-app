@@ -7545,6 +7545,7 @@
             name: ex.name,
             category: ex.category,
             svg_key: ex.svg_key,
+            photo_url: ex.photo_url || null,
             instructions: ex.instructions,
             sets: 1,
             reps: 10,
@@ -7603,7 +7604,7 @@
         itemsEl.innerHTML = hepCurrentExercises.map((ex, i) => `
             <div class="hep-current-item">
                 <div class="hep-current-item-top">
-                    <div class="hep-current-item-svg">${getExerciseSvg(ex.svg_key)}</div>
+                    <div class="hep-current-item-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : getExerciseSvg(ex.svg_key)}</div>
                     <div class="hep-current-item-info">
                         <div class="hep-current-item-name">${ex.name}</div>
                         <div class="hep-current-item-instructions">${ex.instructions}</div>
