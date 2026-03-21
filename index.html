@@ -476,8 +476,10 @@
         .hep-sub-tab:hover { color: var(--gray-600); }
         .hep-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
         .hep-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-        .hep-lib-card { border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; background: var(--white); transition: box-shadow 0.2s, transform 0.15s; cursor: pointer; display: flex; flex-direction: column; }
+        .hep-lib-card { border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; background: var(--white); transition: box-shadow 0.2s, transform 0.15s; cursor: pointer; display: flex; flex-direction: column; position: relative; }
         .hep-lib-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .hep-lib-card-edit { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.92); border: 1px solid var(--gray-200); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; z-index: 2; transition: background 0.15s, border-color 0.15s; }
+        .hep-lib-card-edit:hover { background: var(--white); border-color: var(--teal); }
         .hep-lib-card-svg { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--gray-100); padding: 16px; }
         .hep-lib-card-svg svg { width: 80%; height: 80%; }
         .hep-lib-card-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
@@ -2010,7 +2012,7 @@
                 </div>
                 <div id="hep-custom-form" class="hep-custom-form" style="display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                        <h3 style="margin:0; font-size:16px; color:var(--navy);">Create Custom Exercise</h3>
+                        <h3 id="hep-custom-form-title" style="margin:0; font-size:16px; color:var(--navy);">Create Custom Exercise</h3>
                         <button class="btn btn-outline" onclick="hideAddCustomExercise()" style="padding:6px 12px; font-size:13px;">✕ Cancel</button>
                     </div>
                     <div class="form-group">
@@ -7321,6 +7323,8 @@
     let hepHistoryData = [];
     let hepLabelInitialized = false;
     let hepCustomExercisePhotoFile = null;
+    let hepEditingExerciseId = null;
+    let hepEditingExerciseExistingPhotoUrl = null;
 
     // SVG to data URL for PDF
     function svgToDataUrl(svgString, width, height) {
@@ -7410,6 +7414,7 @@
 
         grid.innerHTML = filtered.map(ex => `
             <div class="hep-lib-card" onclick="addToHep('${ex.id}')">
+                ${!ex.is_builtin ? `<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditExercise('${ex.id}')" title="Edit exercise">✏️</button>` : ''}
                 <div class="hep-lib-card-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" class="hep-lib-card-img">` : getExerciseSvg(ex.svg_key)}</div>
                 <div class="hep-lib-card-body">
                     <div class="hep-lib-card-name">${ex.name}</div>
@@ -7447,7 +7452,43 @@
         document.getElementById('hep-custom-form').style.display = 'none';
         document.getElementById('hep-custom-name').value = '';
         document.getElementById('hep-custom-instructions').value = '';
+        document.getElementById('hep-custom-form-title').textContent = 'Create Custom Exercise';
+        const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
+        if (saveBtn) saveBtn.textContent = 'Save to Library';
+        hepEditingExerciseId = null;
+        hepEditingExerciseExistingPhotoUrl = null;
         clearHepCustomPhoto();
+    }
+
+    function showEditExercise(id) {
+        const ex = hepCustomExercises.find(e => e.id === id);
+        if (!ex) return;
+
+        // Hide the library grid form if create form is open
+        hepEditingExerciseId = id;
+        hepEditingExerciseExistingPhotoUrl = ex.photo_url || null;
+        hepCustomExercisePhotoFile = null;
+
+        // Populate fields
+        document.getElementById('hep-custom-name').value = ex.name;
+        document.getElementById('hep-custom-category').value = ex.category;
+        document.getElementById('hep-custom-instructions').value = ex.instructions;
+
+        // Show existing photo or hide preview
+        if (ex.photo_url) {
+            document.getElementById('hep-photo-preview-img').src = ex.photo_url;
+            document.getElementById('hep-photo-preview-wrap').style.display = 'block';
+        } else {
+            document.getElementById('hep-photo-preview-wrap').style.display = 'none';
+        }
+
+        // Switch form to edit mode
+        document.getElementById('hep-custom-form-title').textContent = 'Edit Exercise';
+        const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
+        if (saveBtn) saveBtn.textContent = 'Save Changes';
+
+        document.getElementById('hep-custom-form').style.display = 'block';
+        document.getElementById('hep-custom-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function handleHepPhotoSelected(input) {
@@ -7480,34 +7521,43 @@
         const saveBtn = document.querySelector('#hep-custom-form .btn-primary');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
 
-        let photo_url = null;
+        // Resolve photo_url: start from existing (edit mode) or null (create mode)
+        let photo_url = hepEditingExerciseId ? hepEditingExerciseExistingPhotoUrl : null;
+
         if (hepCustomExercisePhotoFile) {
+            // A new file was selected — upload it
             const ext = hepCustomExercisePhotoFile.name.split('.').pop().toLowerCase() || 'jpg';
             const path = `${currentUser.id}/${crypto.randomUUID()}.${ext}`;
             const { error: uploadError } = await sb.storage.from('exercise-photos').upload(path, hepCustomExercisePhotoFile, { upsert: false });
             if (uploadError) {
                 alert('Photo upload failed: ' + uploadError.message + '\n\nMake sure the "exercise-photos" storage bucket exists in your Supabase project.');
-                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = hepEditingExerciseId ? 'Save Changes' : 'Save to Library'; }
                 return;
             }
             const { data: urlData } = sb.storage.from('exercise-photos').getPublicUrl(path);
             photo_url = urlData.publicUrl;
+        } else if (hepEditingExerciseId && document.getElementById('hep-photo-preview-wrap').style.display === 'none') {
+            // In edit mode and preview was cleared — remove photo
+            photo_url = null;
         }
 
-        const entry = {
-            user_id: currentUser.id,
-            name,
-            category,
-            instructions,
-            svg_key: getGenericSvgForCategory(category),
-            ...(photo_url && { photo_url }),
-        };
+        if (hepEditingExerciseId) {
+            // ── Update existing exercise ──
+            const updates = { name, category, instructions, svg_key: getGenericSvgForCategory(category), photo_url };
+            const { data, error } = await sb.from('exercise_library').update(updates).eq('id', hepEditingExerciseId).select().single();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
+            if (error) { alert('Error updating exercise: ' + error.message); return; }
+            const idx = hepCustomExercises.findIndex(e => e.id === hepEditingExerciseId);
+            if (idx !== -1) hepCustomExercises[idx] = data;
+        } else {
+            // ── Create new exercise ──
+            const entry = { user_id: currentUser.id, name, category, instructions, svg_key: getGenericSvgForCategory(category), photo_url };
+            const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
+            if (error) { alert('Error saving exercise: ' + error.message); return; }
+            hepCustomExercises.unshift(data);
+        }
 
-        const { data, error } = await sb.from('exercise_library').insert(entry).select().single();
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
-        if (error) { alert('Error saving exercise: ' + error.message); return; }
-
-        hepCustomExercises.unshift(data);
         hideAddCustomExercise();
         renderHepLibrary();
     }
