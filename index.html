@@ -3737,6 +3737,12 @@
                     hepLabelInitialized = true;
                 }
             }
+            if (savedModule === 'education') {
+                renderEduGrid();
+            }
+            if (savedModule === 'vehicle') {
+                initVehicleTracker();
+            }
         } else if (savedTab && savedTab !== 'new') {
             showTab(savedTab);
         }
