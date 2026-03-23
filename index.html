@@ -10711,39 +10711,40 @@
     }
 
     async function refreshSearchLabels() {
-        const labelSet = new Set();
+        const labelMap = new Map(); // lowercase key → first-seen casing
+        function addLabel(l) { const key = l.toLowerCase(); if (!labelMap.has(key)) labelMap.set(key, l); }
 
         // Notes labels
         if (historyNotes && historyNotes.length > 0) {
-            historyNotes.forEach(n => (n.labels || []).forEach(l => labelSet.add(l)));
+            historyNotes.forEach(n => (n.labels || []).forEach(addLabel));
         } else {
             try {
                 const { data } = await sb.from('notes').select('labels');
-                (data || []).forEach(n => (n.labels || []).forEach(l => labelSet.add(l)));
+                (data || []).forEach(n => (n.labels || []).forEach(addLabel));
             } catch (e) { /* ignore */ }
         }
 
         // Med history labels
         if (medHistoryData && medHistoryData.length > 0) {
-            medHistoryData.forEach(e => (e.labels || []).forEach(l => labelSet.add(l)));
+            medHistoryData.forEach(e => (e.labels || []).forEach(addLabel));
         } else {
             try {
                 const { data } = await sb.from('med_history').select('labels');
-                (data || []).forEach(e => (e.labels || []).forEach(l => labelSet.add(l)));
+                (data || []).forEach(e => (e.labels || []).forEach(addLabel));
             } catch (e) { /* ignore */ }
         }
 
         // HEP history labels
         if (hepHistoryData && hepHistoryData.length > 0) {
-            hepHistoryData.forEach(e => (e.labels || []).forEach(l => labelSet.add(l)));
+            hepHistoryData.forEach(e => (e.labels || []).forEach(addLabel));
         } else {
             try {
                 const { data } = await sb.from('hep_history').select('labels');
-                (data || []).forEach(e => (e.labels || []).forEach(l => labelSet.add(l)));
+                (data || []).forEach(e => (e.labels || []).forEach(addLabel));
             } catch (e) { /* ignore */ }
         }
 
-        searchAllLabels = [...labelSet].sort();
+        searchAllLabels = [...labelMap.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     }
 
     function initSearchLabelInput(containerId) {
@@ -10831,7 +10832,7 @@
         const container = document.getElementById('labels-search');
         const tags = container.querySelectorAll('.label-tag');
         tags.forEach(tag => {
-            if (tag.firstChild.textContent === label) tag.remove();
+            if (tag.firstChild.textContent.toLowerCase() === label.toLowerCase()) tag.remove();
         });
         renderSearchFilterPills();
         executeSearch();
