@@ -1508,6 +1508,31 @@
         .vt-breakdown-table th { background:var(--gray-100); color:var(--navy); font-weight:600; padding:8px 10px; text-align:left; border-bottom:2px solid var(--gray-200); }
         .vt-breakdown-table td { padding:7px 10px; border-bottom:1px solid var(--gray-200); color:var(--gray-600); }
         .vt-breakdown-table tbody tr:last-child td { border-bottom:none; }
+
+        /* Header icon buttons (calendar + search) */
+        .header-icon-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 19px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .header-icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .header-icon-btn.active { background: rgba(13,148,136,0.25); color: var(--teal-light); }
+
+        /* Calendar header modal overlay */
+        #cal-header-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; align-items: flex-start; justify-content: center; padding: 20px 16px 40px; overflow-y: auto; }
+        #cal-header-modal.open { display: flex; }
+        .cal-modal-container { background: var(--cream); border-radius: 20px; width: 100%; max-width: 720px; padding: 28px 24px 24px; position: relative; box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); }
+        .cal-modal-close-btn { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--gray-400); font-size: 24px; cursor: pointer; padding: 2px 8px; border-radius: 6px; line-height: 1; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+        .cal-modal-close-btn:hover { color: var(--gray-800); background: var(--gray-200); }
+
+        /* Label search header panel (drops below header) */
+        #label-search-modal { display: none; position: fixed; top: 64px; left: 0; right: 0; z-index: 1050; justify-content: center; padding: 0 16px; }
+        #label-search-modal.open { display: flex; }
+        .label-search-inner { background: var(--white); border-radius: 0 0 16px 16px; width: 100%; max-width: 560px; padding: 14px 20px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 1px solid var(--gray-200); border-top: none; }
+        .label-search-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .label-search-title { font-size: 13px; font-weight: 600; color: var(--navy); letter-spacing: 0.2px; }
+        .label-search-close-btn { background: none; border: none; color: var(--gray-400); font-size: 20px; cursor: pointer; padding: 1px 6px; border-radius: 6px; line-height: 1; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+        .label-search-close-btn:hover { color: var(--gray-800); background: var(--gray-100); }
+        .label-search-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .label-search-row .form-input { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 13px; }
+        .label-search-row .select-wrapper { flex: 0 0 160px; }
+        .label-search-row .select-wrapper select { padding: 9px 28px 9px 12px; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -1522,6 +1547,8 @@
         </div>
     </div>
     <div class="header-right">
+        <button class="header-icon-btn" id="header-cal-btn" onclick="openHeaderCal()" title="Calendar" aria-label="Open calendar">📅</button>
+        <button class="header-icon-btn" id="header-search-btn" onclick="openHeaderSearch()" title="Search notes" aria-label="Search notes by label">🔍</button>
         <div class="offline-badge" id="offline-badge">⚡ Offline</div>
         <div class="header-badge">Personal Testing</div>
         <span class="user-email" id="user-email"></span>
@@ -1560,6 +1587,100 @@
             <span class="sidebar-item-icon">🚗</span> Vehicle Tracking
         </div>
     </nav>
+</div>
+
+<!-- Calendar Header Modal -->
+<div id="cal-header-modal" onclick="if(event.target===this)closeHeaderCal()">
+    <div class="cal-modal-container">
+        <button class="cal-modal-close-btn" onclick="closeHeaderCal()" aria-label="Close calendar">&times;</button>
+        <div id="view-calendar">
+            <div class="page-title">Calendar</div>
+            <div class="page-subtitle">View notes, medications, and recordings by date.</div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">📅</div>
+                    <div class="card-header-text">
+                        <h2 id="cal-month-title">March 2026</h2>
+                        <p>Click a day to see its items</p>
+                    </div>
+                    <div class="cal-nav-btns">
+                        <button class="btn btn-outline" onclick="calPrevMonth()">&larr; Prev</button>
+                        <button class="btn btn-outline" onclick="calToday()">Today</button>
+                        <button class="btn btn-outline" onclick="calNextMonth()">Next &rarr;</button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding:16px;">
+                    <div class="cal-grid" id="cal-grid"></div>
+                    <div class="cal-legend">
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#8b5cf6;"></div> HEP</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
+                    </div>
+                </div>
+            </div>
+            <div id="cal-day-detail" style="display:none; margin-top:16px;">
+                <div class="day-group" style="margin-bottom:0;">
+                    <div class="day-group-header">
+                        <div>
+                            <div class="day-group-title" id="cal-detail-title"></div>
+                            <div class="day-group-count" id="cal-detail-count"></div>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="cal-export-btn" onclick="openCalDayExport()" style="display:none;">📤 Export Day</button>
+                    </div>
+                </div>
+                <div id="cal-detail-list" style="margin-top:8px;"></div>
+            </div>
+
+            <!-- Calendar Day Export Modal -->
+            <div class="cal-export-overlay" id="cal-export-overlay" onclick="if(event.target===this)closeCalDayExport()">
+                <div class="cal-export-modal">
+                    <div class="cal-export-modal-title">📤 Export Day</div>
+                    <div class="cal-export-select-all">
+                        <input type="checkbox" id="cal-export-all" onchange="toggleCalExportAll()">
+                        <label for="cal-export-all">Select All</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-notes">
+                        <input type="checkbox" id="cal-export-notes">
+                        <label for="cal-export-notes" id="cal-export-notes-label">Documentation</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-meds">
+                        <input type="checkbox" id="cal-export-meds">
+                        <label for="cal-export-meds" id="cal-export-meds-label">Medication List</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-heps">
+                        <input type="checkbox" id="cal-export-heps">
+                        <label for="cal-export-heps" id="cal-export-heps-label">Home Exercise Program</label>
+                    </div>
+                    <div class="cal-export-actions">
+                        <button class="btn btn-outline btn-sm" onclick="calExportEmail()">✉️ Email</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportPdf()">📄 PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportCopy()">📋 Copy</button>
+                    </div>
+                    <button class="cal-export-close" onclick="closeCalDayExport()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Label Search Header Panel -->
+<div id="label-search-modal" onclick="if(event.target===this)closeHeaderSearch()">
+    <div class="label-search-inner">
+        <div class="label-search-header">
+            <span class="label-search-title">Search Notes</span>
+            <button class="label-search-close-btn" onclick="closeHeaderSearch()" aria-label="Close search">&times;</button>
+        </div>
+        <div class="label-search-row">
+            <input type="text" id="header-search-text" class="form-input" placeholder="Search notes..." onkeydown="if(event.key==='Enter')doHeaderSearch()">
+            <div class="select-wrapper">
+                <select id="header-label-filter">
+                    <option value="">All Labels</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="doHeaderSearch()">Go</button>
+        </div>
+    </div>
 </div>
 
 <!-- Auth Screen -->
@@ -2460,74 +2581,6 @@
             </div>
         </div>
 
-        <div id="view-calendar" style="display:none;">
-            <div class="page-title">Calendar</div>
-            <div class="page-subtitle">View notes, medications, and recordings by date.</div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-header-icon">📅</div>
-                    <div class="card-header-text">
-                        <h2 id="cal-month-title">March 2026</h2>
-                        <p>Click a day to see its items</p>
-                    </div>
-                    <div class="cal-nav-btns">
-                        <button class="btn btn-outline" onclick="calPrevMonth()">&larr; Prev</button>
-                        <button class="btn btn-outline" onclick="calToday()">Today</button>
-                        <button class="btn btn-outline" onclick="calNextMonth()">Next &rarr;</button>
-                    </div>
-                </div>
-                <div class="card-body" style="padding:16px;">
-                    <div class="cal-grid" id="cal-grid"></div>
-                    <div class="cal-legend">
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#8b5cf6;"></div> HEP</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
-                    </div>
-                </div>
-            </div>
-            <div id="cal-day-detail" style="display:none; margin-top:16px;">
-                <div class="day-group" style="margin-bottom:0;">
-                    <div class="day-group-header">
-                        <div>
-                            <div class="day-group-title" id="cal-detail-title"></div>
-                            <div class="day-group-count" id="cal-detail-count"></div>
-                        </div>
-                        <button class="btn btn-outline btn-sm" id="cal-export-btn" onclick="openCalDayExport()" style="display:none;">📤 Export Day</button>
-                    </div>
-                </div>
-                <div id="cal-detail-list" style="margin-top:8px;"></div>
-            </div>
-
-            <!-- Calendar Day Export Modal -->
-            <div class="cal-export-overlay" id="cal-export-overlay" onclick="if(event.target===this)closeCalDayExport()">
-                <div class="cal-export-modal">
-                    <div class="cal-export-modal-title">📤 Export Day</div>
-                    <div class="cal-export-select-all">
-                        <input type="checkbox" id="cal-export-all" onchange="toggleCalExportAll()">
-                        <label for="cal-export-all">Select All</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-notes">
-                        <input type="checkbox" id="cal-export-notes">
-                        <label for="cal-export-notes" id="cal-export-notes-label">Documentation</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-meds">
-                        <input type="checkbox" id="cal-export-meds">
-                        <label for="cal-export-meds" id="cal-export-meds-label">Medication List</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-heps">
-                        <input type="checkbox" id="cal-export-heps">
-                        <label for="cal-export-heps" id="cal-export-heps-label">Home Exercise Program</label>
-                    </div>
-                    <div class="cal-export-actions">
-                        <button class="btn btn-outline btn-sm" onclick="calExportEmail()">✉️ Email</button>
-                        <button class="btn btn-outline btn-sm" onclick="calExportPdf()">📄 PDF</button>
-                        <button class="btn btn-outline btn-sm" onclick="calExportCopy()">📋 Copy</button>
-                    </div>
-                    <button class="cal-export-close" onclick="closeCalDayExport()">Cancel</button>
-                </div>
-            </div>
-        </div>
     </main>
 
     <!-- Assist Panel Overlay (mobile backdrop) -->
@@ -2710,7 +2763,7 @@
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'notes';
-    const moduleViews = ['medication', 'calendar', 'hep', 'education', 'vehicle'];
+    const moduleViews = ['medication', 'hep', 'education', 'vehicle'];
     const notesViews = ['new', 'pending', 'history', 'templates'];
 
     function toggleSidebar() {
@@ -2727,6 +2780,12 @@
         });
         // Close sidebar
         toggleSidebar();
+
+        // Calendar is now an overlay modal accessible from the header
+        if (module === 'calendar') {
+            openHeaderCal();
+            return;
+        }
 
         if (module === 'notes') {
             // Show notes tab bar and current notes view
@@ -2751,9 +2810,6 @@
                     document.getElementById('labels-med').dataset.initialized = 'true';
                 }
             }
-            if (module === 'calendar') {
-                loadCalendarData();
-            }
             if (module === 'hep') {
                 loadCustomExercises().then(() => {
                     populateHepCategoryDropdowns();
@@ -2777,10 +2833,75 @@
         }
     }
 
-    // Close sidebar with ESC key
+    // ── Header Calendar Modal ────────────────────────────────
+    function openHeaderCal() {
+        document.getElementById('cal-header-modal').classList.add('open');
+        document.getElementById('header-cal-btn').classList.add('active');
+        loadCalendarData();
+    }
+    function closeHeaderCal() {
+        document.getElementById('cal-header-modal').classList.remove('open');
+        document.getElementById('header-cal-btn').classList.remove('active');
+        // Reset sidebar active if calendar was triggering it
+        const calSidebarItem = document.querySelector('.sidebar-item[data-module="calendar"]');
+        if (calSidebarItem) calSidebarItem.classList.remove('active');
+    }
+
+    // ── Header Label Search Panel ────────────────────────────
+    function openHeaderSearch() {
+        const modal = document.getElementById('label-search-modal');
+        if (modal.classList.contains('open')) { closeHeaderSearch(); return; }
+        // Populate label dropdown from currently known labels
+        const select = document.getElementById('header-label-filter');
+        select.innerHTML = '<option value="">All Labels</option>';
+        (allLabels || []).forEach(label => {
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            select.appendChild(opt);
+        });
+        modal.classList.add('open');
+        document.getElementById('header-search-btn').classList.add('active');
+        setTimeout(() => document.getElementById('header-search-text').focus(), 50);
+    }
+    function closeHeaderSearch() {
+        document.getElementById('label-search-modal').classList.remove('open');
+        document.getElementById('header-search-btn').classList.remove('active');
+    }
+    function doHeaderSearch() {
+        const text = document.getElementById('header-search-text').value.trim();
+        const label = document.getElementById('header-label-filter').value;
+        closeHeaderSearch();
+        // Navigate to Notes > History and apply filters
+        const goToHistory = () => {
+            showTab('history');
+            setTimeout(() => {
+                if (text) document.getElementById('history-search').value = text;
+                if (label) document.getElementById('label-filter-select').value = label;
+                applyHistoryFilters();
+            }, 80);
+        };
+        if (currentModule !== 'notes') {
+            // Switch to notes module first, then navigate
+            currentModule = 'notes';
+            localStorage.setItem('carenote-active-module', 'notes');
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.module === 'notes');
+            });
+            document.querySelector('.nav-tabs').style.display = 'flex';
+            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
+            goToHistory();
+        } else {
+            goToHistory();
+        }
+    }
+
+    // Close header modals with ESC key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) {
-            toggleSidebar();
+        if (e.key === 'Escape') {
+            if (document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+            if (document.getElementById('cal-header-modal').classList.contains('open')) closeHeaderCal();
+            if (document.getElementById('label-search-modal').classList.contains('open')) closeHeaderSearch();
         }
     });
 
@@ -3741,6 +3862,10 @@
         const savedModule = localStorage.getItem('carenote-active-module');
         const savedTab = localStorage.getItem('carenote-active-tab');
         if (savedModule && savedModule !== 'notes') {
+            // Calendar is now a modal overlay — skip the module restore for it
+            if (savedModule === 'calendar') {
+                // Don't auto-open the calendar on page load; just fall through to notes default
+            } else {
             // Switch to non-notes module without toggling sidebar
             currentModule = savedModule;
             document.querySelectorAll('.sidebar-item').forEach(el => {
@@ -3756,9 +3881,6 @@
                     initLabelInput('labels-med');
                     document.getElementById('labels-med').dataset.initialized = 'true';
                 }
-            }
-            if (savedModule === 'calendar') {
-                loadCalendarData();
             }
             if (savedModule === 'hep') {
                 loadCustomExercises().then(() => {
@@ -3780,6 +3902,7 @@
             if (savedModule === 'vehicle') {
                 initVehicleTracker();
             }
+            } // end else (not calendar)
         } else if (savedTab && savedTab !== 'new') {
             showTab(savedTab);
         }
