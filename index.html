@@ -1533,6 +1533,47 @@
         .label-search-row .form-input { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 13px; }
         .label-search-row .select-wrapper { flex: 0 0 160px; }
         .label-search-row .select-wrapper select { padding: 9px 28px 9px 12px; font-size: 13px; }
+
+        /* ── Search Module ────────────────────────────── */
+        .search-filters-card { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-200); padding: 20px; margin-bottom: 16px; }
+        .search-label-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .search-label-row .label-input-wrapper { flex: 1; position: relative; }
+        .search-active-filters { display: none; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .search-filter-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--teal-light); color: var(--navy); font-size: 13px; font-weight: 500; padding: 4px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; }
+        .search-filter-pill .remove-pill { cursor: pointer; font-size: 15px; line-height: 1; margin-left: 2px; color: var(--gray-500); }
+        .search-filter-pill .remove-pill:hover { color: var(--red, #ef4444); }
+        .search-type-toggles { display: flex; gap: 8px; }
+        .search-type-toggle { padding: 6px 16px; border-radius: 20px; border: 1px solid var(--gray-300); background: var(--white); color: var(--gray-500); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+        .search-type-toggle.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
+        .search-type-toggle:hover { border-color: var(--teal); }
+        .search-results-count { font-size: 14px; font-weight: 600; color: var(--gray-600); margin-bottom: 12px; }
+        .search-empty-state { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .search-empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+        .search-empty-state p { font-size: 15px; margin: 0; }
+        .search-result-item { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-200); margin-bottom: 8px; overflow: hidden; transition: box-shadow 0.2s; }
+        .search-result-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .search-result-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; gap: 12px; }
+        .search-result-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; overflow: hidden; }
+        .search-result-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .search-source-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+        .search-source-badge.notes { background: rgba(13,148,136,0.12); color: var(--teal); }
+        .search-source-badge.hep { background: rgba(99,102,241,0.1); color: #6366f1; }
+        .search-source-badge.medications { background: rgba(249,115,22,0.1); color: var(--orange); }
+        .search-result-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--gray-100); font-size: 14px; color: var(--gray-700); line-height: 1.6; }
+        .search-result-body.open { display: block; }
+        .search-result-header .history-chevron.open { transform: rotate(180deg); }
+        .search-kebab-wrap { position: relative; }
+        .search-kebab-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--gray-400); padding: 4px 6px; border-radius: 6px; line-height: 1; }
+        .search-kebab-btn:hover { background: var(--gray-100); color: var(--gray-700); }
+        .search-kebab-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 50; min-width: 150px; padding: 4px; }
+        .search-kebab-menu.open { display: block; }
+        .search-kebab-menu button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: none; background: none; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--gray-700); font-family: 'DM Sans', sans-serif; }
+        .search-kebab-menu button:hover { background: var(--gray-100); }
+        .search-bulk-bar { display: none; position: sticky; bottom: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-top: 1px solid var(--gray-200); padding: 12px 16px; gap: 10px; justify-content: flex-end; border-radius: 0 0 12px 12px; z-index: 10; }
+        @media (max-width: 600px) {
+            .search-type-toggles { flex-wrap: wrap; }
+            .search-result-left { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
@@ -1585,6 +1626,9 @@
         </div>
         <div class="sidebar-item" data-module="vehicle" onclick="switchModule('vehicle')">
             <span class="sidebar-item-icon">🚗</span> Vehicle Tracking
+        </div>
+        <div class="sidebar-item" data-module="search" onclick="switchModule('search')">
+            <span class="sidebar-item-icon">🔍</span> Label Search
         </div>
     </nav>
 </div>
@@ -2580,6 +2624,38 @@
                 </div>
             </div>
         </div>
+
+        <div id="view-search" style="display:none;">
+            <div class="page-title">Label Search</div>
+            <div class="page-subtitle">Search across notes, exercise programs, and medication lists by label.</div>
+            <div class="search-filters-card">
+                <div class="search-label-row">
+                    <div class="label-input-wrapper">
+                        <div class="label-input-container" id="labels-search" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="Type a label to search..." autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-search"></div>
+                    </div>
+                </div>
+                <div class="search-active-filters" id="search-active-filters"></div>
+                <div class="search-type-toggles">
+                    <button class="search-type-toggle active" data-type="notes" onclick="toggleSearchType(this)">Notes</button>
+                    <button class="search-type-toggle active" data-type="hep" onclick="toggleSearchType(this)">HEP</button>
+                    <button class="search-type-toggle active" data-type="medications" onclick="toggleSearchType(this)">Medications</button>
+                </div>
+            </div>
+            <div class="search-empty-state" id="search-empty-state">
+                <div class="search-empty-state-icon">🔍</div>
+                <p>Add a label above to search across your notes, HEP entries, and medications.</p>
+            </div>
+            <div class="search-results-count" id="search-results-count" style="display:none;"></div>
+            <div id="search-results-list"></div>
+            <div class="search-bulk-bar" id="search-bulk-export">
+                <button class="btn btn-outline" onclick="searchExportPdf()">📥 Export PDF</button>
+                <button class="btn btn-outline" onclick="searchEmailAll()">✉️ Email All</button>
+            </div>
+        </div>
+
 
     </main>
 
@@ -10726,6 +10802,519 @@
 
         XLSX.writeFile(wb, 'CareNote_Vehicle_Log_' + monthLabel + '.xlsx');
     }
+
+    // ══════════════════════════════════════════════════════════
+    // ██  SEARCH MODULE
+    // ══════════════════════════════════════════════════════════
+
+    moduleViews.push('search');
+
+    let searchAllLabels = [];
+    let searchActiveTypes = { notes: true, hep: true, medications: true };
+    let searchCachedResults = [];
+    let searchInitialized = false;
+
+    // Auto-init when view becomes visible
+    const searchViewEl = document.getElementById('view-search');
+    if (searchViewEl) {
+        const searchViewObserver = new MutationObserver(() => {
+            if (searchViewEl.style.display === 'block') {
+                if (!searchInitialized) {
+                    initSearchModule();
+                    searchInitialized = true;
+                }
+                refreshSearchLabels();
+            }
+        });
+        searchViewObserver.observe(searchViewEl, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    async function initSearchModule() {
+        initSearchLabelInput('labels-search');
+        await refreshSearchLabels();
+    }
+
+    async function refreshSearchLabels() {
+        const labelMap = new Map(); // lowercase key → first-seen casing
+        function addLabel(l) { const key = l.toLowerCase(); if (!labelMap.has(key)) labelMap.set(key, l); }
+
+        // Notes labels
+        if (historyNotes && historyNotes.length > 0) {
+            historyNotes.forEach(n => (n.labels || []).forEach(addLabel));
+        } else {
+            try {
+                const { data } = await sb.from('notes').select('labels');
+                (data || []).forEach(n => (n.labels || []).forEach(addLabel));
+            } catch (e) { /* ignore */ }
+        }
+
+        // Med history labels
+        if (medHistoryData && medHistoryData.length > 0) {
+            medHistoryData.forEach(e => (e.labels || []).forEach(addLabel));
+        } else {
+            try {
+                const { data } = await sb.from('med_history').select('labels');
+                (data || []).forEach(e => (e.labels || []).forEach(addLabel));
+            } catch (e) { /* ignore */ }
+        }
+
+        // HEP history labels
+        if (hepHistoryData && hepHistoryData.length > 0) {
+            hepHistoryData.forEach(e => (e.labels || []).forEach(addLabel));
+        } else {
+            try {
+                const { data } = await sb.from('hep_history').select('labels');
+                (data || []).forEach(e => (e.labels || []).forEach(addLabel));
+            } catch (e) { /* ignore */ }
+        }
+
+        searchAllLabels = [...labelMap.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    }
+
+    function initSearchLabelInput(containerId) {
+        const container = document.getElementById(containerId);
+        const input = container.querySelector('.label-input');
+        const suggestionsId = containerId.replace('labels-', 'suggestions-');
+        const suggestionsEl = document.getElementById(suggestionsId);
+
+        function afterLabelChange() {
+            renderSearchFilterPills();
+            executeSearch();
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab' || e.key === '.') {
+                e.preventDefault();
+                addLabelFromInput(containerId);
+                afterLabelChange();
+            }
+            if (e.key === ' ' && input.value.endsWith(' ')) {
+                e.preventDefault();
+                addLabelFromInput(containerId);
+                afterLabelChange();
+            }
+            if (e.key === 'Backspace' && input.value === '') {
+                const tags = container.querySelectorAll('.label-tag');
+                if (tags.length > 0) {
+                    tags[tags.length - 1].remove();
+                    afterLabelChange();
+                }
+            }
+        });
+
+        input.addEventListener('input', () => {
+            if (input.value.includes(',') || input.value.includes('.')) {
+                addLabelFromInput(containerId);
+                afterLabelChange();
+                return;
+            }
+            const val = input.value.trim().toLowerCase();
+            if (!val) { suggestionsEl.style.display = 'none'; return; }
+            const currentLabels = getLabels(containerId);
+            const matches = searchAllLabels.filter(l =>
+                l.toLowerCase().includes(val) && !currentLabels.map(c => c.toLowerCase()).includes(l.toLowerCase())
+            );
+            if (matches.length === 0) { suggestionsEl.style.display = 'none'; return; }
+            suggestionsEl.innerHTML = matches.map(m =>
+                `<div class="suggestion-item">${m}</div>`
+            ).join('');
+            suggestionsEl.style.display = 'block';
+            suggestionsEl.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    addLabel(containerId, item.textContent);
+                    input.value = '';
+                    suggestionsEl.style.display = 'none';
+                    afterLabelChange();
+                });
+            });
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => { suggestionsEl.style.display = 'none'; }, 150);
+            if (input.value.trim()) {
+                addLabelFromInput(containerId);
+                afterLabelChange();
+            }
+        });
+    }
+
+    function renderSearchFilterPills() {
+        const labels = getLabels('labels-search');
+        const container = document.getElementById('search-active-filters');
+        if (labels.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+        container.innerHTML = labels.map(l =>
+            `<span class="search-filter-pill">${escapeHtml(l)}<span class="remove-pill" onclick="removeSearchLabel('${l.replace(/'/g, "\\'")}')">×</span></span>`
+        ).join('');
+    }
+
+    function removeSearchLabel(label) {
+        const container = document.getElementById('labels-search');
+        const tags = container.querySelectorAll('.label-tag');
+        tags.forEach(tag => {
+            if (tag.firstChild.textContent.toLowerCase() === label.toLowerCase()) tag.remove();
+        });
+        renderSearchFilterPills();
+        executeSearch();
+    }
+
+    function toggleSearchType(btn) {
+        const type = btn.dataset.type;
+        searchActiveTypes[type] = !searchActiveTypes[type];
+        btn.classList.toggle('active', searchActiveTypes[type]);
+        executeSearch();
+    }
+
+    async function executeSearch() {
+        const labels = getLabels('labels-search');
+        const resultsEl = document.getElementById('search-results-list');
+        const countEl = document.getElementById('search-results-count');
+        const emptyEl = document.getElementById('search-empty-state');
+        const bulkEl = document.getElementById('search-bulk-export');
+
+        if (labels.length === 0) {
+            resultsEl.innerHTML = '';
+            countEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            bulkEl.style.display = 'none';
+            searchCachedResults = [];
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        let results = [];
+
+        // Notes
+        if (searchActiveTypes.notes) {
+            let notes = historyNotes;
+            if (!notes || notes.length === 0) {
+                const { data } = await sb.from('notes').select('*').order('created_at', { ascending: false });
+                notes = data || [];
+                historyNotes = notes;
+            }
+            notes.forEach(n => {
+                const noteLabels = (n.labels || []).map(l => l.toLowerCase());
+                const allMatch = labels.every(fl => noteLabels.includes(fl.toLowerCase()));
+                if (allMatch) {
+                    results.push({
+                        source: 'notes',
+                        id: n.id,
+                        date: n.created_at,
+                        title: n.note_type.replace(/\b\w/g, l => l.toUpperCase()),
+                        labels: n.labels || [],
+                        preview: (n.generated_note || '').replace(/<[^>]*>/g, '').substring(0, 80),
+                        raw: n
+                    });
+                }
+            });
+        }
+
+        // Medications
+        if (searchActiveTypes.medications) {
+            let meds = medHistoryData;
+            if (!meds || meds.length === 0) {
+                const { data } = await sb.from('med_history').select('*').order('saved_at', { ascending: false });
+                meds = data || [];
+                medHistoryData = meds;
+            }
+            meds.forEach(e => {
+                const entryLabels = (e.labels || []).map(l => l.toLowerCase());
+                const allMatch = labels.every(fl => entryLabels.includes(fl.toLowerCase()));
+                if (allMatch) {
+                    results.push({
+                        source: 'medications',
+                        id: e.id,
+                        date: e.saved_at,
+                        title: e.title || 'Medication List',
+                        labels: e.labels || [],
+                        preview: (e.medications || []).map(m => m.name).join(', ').substring(0, 80),
+                        raw: e
+                    });
+                }
+            });
+        }
+
+        // HEP
+        if (searchActiveTypes.hep) {
+            let heps = hepHistoryData;
+            if (!heps || heps.length === 0) {
+                const { data } = await sb.from('hep_history').select('*').order('saved_at', { ascending: false });
+                heps = data || [];
+                hepHistoryData = heps;
+            }
+            heps.forEach(e => {
+                const entryLabels = (e.labels || []).map(l => l.toLowerCase());
+                const allMatch = labels.every(fl => entryLabels.includes(fl.toLowerCase()));
+                if (allMatch) {
+                    results.push({
+                        source: 'hep',
+                        id: e.id,
+                        date: e.saved_at,
+                        title: e.title || 'Exercise Program',
+                        labels: e.labels || [],
+                        preview: (e.exercises || []).map(ex => ex.name).join(', ').substring(0, 80),
+                        raw: e
+                    });
+                }
+            });
+        }
+
+        // Sort by date descending
+        results.sort((a, b) => new Date(b.date) - new Date(a.date));
+        searchCachedResults = results;
+
+        // Render count
+        countEl.textContent = `${results.length} result${results.length !== 1 ? 's' : ''}`;
+        countEl.style.display = results.length > 0 ? 'block' : 'none';
+
+        if (results.length === 0) {
+            resultsEl.innerHTML = '<div class="search-empty-state"><div class="search-empty-state-icon">🔍</div><p>No items match all selected labels.</p></div>';
+            bulkEl.style.display = 'none';
+            return;
+        }
+
+        bulkEl.style.display = 'flex';
+        renderSearchResults(results);
+    }
+
+    function renderSearchResults(results) {
+        const listEl = document.getElementById('search-results-list');
+        listEl.innerHTML = results.map(r => {
+            const dateObj = new Date(r.date);
+            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const labels = renderLabelBadges(r.labels, 'history-label-badge');
+            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : 'Meds';
+
+            return `
+                <div class="search-result-item" id="search-item-${r.source}-${r.id}">
+                    <div class="search-result-header" onclick="toggleSearchResult('${r.source}', '${r.id}')">
+                        <div class="search-result-left">
+                            <span class="search-source-badge ${r.source}">${sourceLabel}</span>
+                            <span style="font-weight:500; font-size:14px;">${escapeHtml(r.title)}</span>
+                            ${labels}
+                            <span class="history-preview">${escapeHtml(r.preview)}</span>
+                        </div>
+                        <div class="search-result-right">
+                            <span class="history-time">${dateStr} ${timeStr}</span>
+                            <span class="history-chevron" id="search-chevron-${r.source}-${r.id}">▼</span>
+                            <div class="search-kebab-wrap">
+                                <button class="search-kebab-btn" onclick="event.stopPropagation(); toggleSearchKebab(event, '${r.source}', '${r.id}')" title="Actions">⋮</button>
+                                <div class="search-kebab-menu" id="search-kebab-${r.source}-${r.id}">
+                                    <button onclick="copySearchItem('${r.source}', '${r.id}'); closeAllSearchKebabs();">📋 Copy</button>
+                                    <button onclick="emailSearchItem('${r.source}', '${r.id}'); closeAllSearchKebabs();">✉️ Email</button>
+                                    <button onclick="pdfSearchItem('${r.source}', '${r.id}'); closeAllSearchKebabs();">📥 PDF</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="search-result-body" id="search-body-${r.source}-${r.id}"></div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleSearchResult(source, id) {
+        const body = document.getElementById(`search-body-${source}-${id}`);
+        const chevron = document.getElementById(`search-chevron-${source}-${id}`);
+        if (!body) return;
+
+        if (body.classList.contains('open')) {
+            body.classList.remove('open');
+            if (chevron) chevron.classList.remove('open');
+            return;
+        }
+
+        if (!body.dataset.loaded) {
+            const result = searchCachedResults.find(r => r.source === source && r.id == id);
+            if (!result) return;
+            body.innerHTML = formatSearchBody(result);
+            body.dataset.loaded = 'true';
+        }
+
+        body.classList.add('open');
+        if (chevron) chevron.classList.add('open');
+    }
+
+    function formatSearchBody(result) {
+        if (result.source === 'notes') {
+            return `<div class="history-note-text" style="padding-top:12px;">${result.raw.generated_note}</div>`;
+        }
+        if (result.source === 'medications') {
+            const meds = result.raw.medications || [];
+            if (meds.length === 0) return '<p style="padding-top:12px; color:var(--gray-400);">No medications.</p>';
+            return '<div style="padding-top:12px;">' + meds.map(m => {
+                const parts = [m.name, m.dose, m.frequency, m.route].filter(Boolean);
+                return `<div style="padding:6px 0; border-bottom:1px solid var(--gray-100);">${escapeHtml(parts.join(' | '))}${m.notes ? ' — ' + escapeHtml(m.notes) : ''}</div>`;
+            }).join('') + '</div>';
+        }
+        if (result.source === 'hep') {
+            const exercises = result.raw.exercises || [];
+            if (exercises.length === 0) return '<p style="padding-top:12px; color:var(--gray-400);">No exercises.</p>';
+            return '<div style="padding-top:12px;">' + exercises.map((ex, i) => `
+                <div style="padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                    <strong>${i + 1}. ${escapeHtml(ex.name)}</strong>
+                    <div style="font-size:13px; color:var(--gray-600);">${ex.sets || 0} sets × ${ex.reps || 0} reps${ex.hold_seconds > 0 ? ' (hold ' + ex.hold_seconds + 's)' : ''} · ${escapeHtml(ex.frequency || '')}</div>
+                    ${ex.instructions ? '<div style="font-size:13px; color:var(--gray-500); margin-top:2px;">' + escapeHtml(ex.instructions) + '</div>' : ''}
+                </div>
+            `).join('') + '</div>';
+        }
+        return '';
+    }
+
+    // Kebab menu management
+    function toggleSearchKebab(e, source, id) {
+        e.stopPropagation();
+        const menu = document.getElementById(`search-kebab-${source}-${id}`);
+        const isOpen = menu && menu.classList.contains('open');
+        closeAllSearchKebabs();
+        if (menu && !isOpen) menu.classList.add('open');
+    }
+
+    function closeAllSearchKebabs() {
+        document.querySelectorAll('.search-kebab-menu.open').forEach(m => m.classList.remove('open'));
+    }
+
+    document.addEventListener('click', closeAllSearchKebabs);
+
+    // Per-item exports
+    function copySearchItem(source, id) {
+        const result = searchCachedResults.find(r => r.source === source && r.id == id);
+        if (!result) return;
+        let text = '';
+        if (source === 'notes') {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = result.raw.generated_note;
+            text = tmp.textContent || tmp.innerText || '';
+        } else if (source === 'medications') {
+            text = (result.raw.medications || []).map(m => {
+                const parts = [m.name, m.dose, m.frequency, m.route].filter(Boolean);
+                let line = parts.join(' | ');
+                if (m.notes) line += ' | ' + m.notes;
+                return line;
+            }).join('\n');
+        } else if (source === 'hep') {
+            text = formatHepText(result.raw.exercises, result.raw.title);
+        }
+        navigator.clipboard.writeText(text);
+    }
+
+    function emailSearchItem(source, id) {
+        if (source === 'notes') {
+            emailHistoryNote(id);
+        } else if (source === 'medications') {
+            emailMedHistoryEntry(id);
+        } else if (source === 'hep') {
+            emailHepHistory(id);
+        }
+    }
+
+    function pdfSearchItem(source, id) {
+        if (source === 'notes') {
+            downloadHistoryNotePdf(id);
+        } else if (source === 'medications') {
+            exportMedHistoryPdf(id);
+        } else if (source === 'hep') {
+            exportHepHistoryPdf(id, 'single');
+        }
+    }
+
+    // Bulk export — PDF
+    function searchExportPdf() {
+        if (searchCachedResults.length === 0) return;
+        const sections = [];
+
+        const noteResults = searchCachedResults.filter(r => r.source === 'notes');
+        const medResults = searchCachedResults.filter(r => r.source === 'medications');
+        const hepResults = searchCachedResults.filter(r => r.source === 'hep');
+
+        if (noteResults.length > 0) {
+            sections.push({
+                heading: 'Clinical Notes (' + noteResults.length + ')',
+                notes: noteResults.map(r => {
+                    const d = new Date(r.date);
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = r.raw.generated_note;
+                    const plainText = tmp.textContent || tmp.innerText || '';
+                    return { type: r.title, date: dateStr + ' ' + timeStr, labels: r.labels, text: plainText };
+                })
+            });
+        }
+
+        if (medResults.length > 0) {
+            sections.push({
+                heading: 'Medication Lists (' + medResults.length + ')',
+                notes: medResults.map(r => {
+                    const d = new Date(r.date);
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const medLines = (r.raw.medications || []).map(m => {
+                        const parts = [m.name, m.dose, m.frequency, m.route].filter(Boolean);
+                        let line = parts.join(' | ');
+                        if (m.notes) line += ' | ' + m.notes;
+                        return line;
+                    }).join('\n');
+                    return { type: r.title, date: dateStr, labels: r.labels, text: medLines };
+                })
+            });
+        }
+
+        if (hepResults.length > 0) {
+            sections.push({
+                heading: 'Exercise Programs (' + hepResults.length + ')',
+                notes: hepResults.map(r => {
+                    const d = new Date(r.date);
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return { type: r.title, date: dateStr, labels: r.labels, text: formatHepText(r.raw.exercises, r.raw.title) };
+                })
+            });
+        }
+
+        const filterLabels = getLabels('labels-search');
+        const doc = buildPdf('Label Search: ' + filterLabels.join(', '), sections);
+        if (!doc) return;
+        doc.save('CareNote-Search-' + new Date().toISOString().slice(0, 10) + '.pdf');
+    }
+
+    // Bulk export — Email
+    function searchEmailAll() {
+        if (searchCachedResults.length === 0) return;
+        const filterLabels = getLabels('labels-search');
+        let bodyParts = [];
+
+        searchCachedResults.forEach(r => {
+            const d = new Date(r.date);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : 'Medication List';
+            let text = '';
+
+            if (r.source === 'notes') {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = r.raw.generated_note;
+                text = tmp.textContent || tmp.innerText || '';
+            } else if (r.source === 'medications') {
+                text = (r.raw.medications || []).map(m => {
+                    const parts = [m.name, m.dose, m.frequency, m.route].filter(Boolean);
+                    return parts.join(' | ');
+                }).join('\n');
+            } else if (r.source === 'hep') {
+                text = formatHepText(r.raw.exercises, r.raw.title);
+            }
+
+            bodyParts.push(`--- ${sourceLabel}: ${r.title} (${dateStr}) ---\nLabels: ${r.labels.join(', ')}\n\n${text}`);
+        });
+
+        const subject = encodeURIComponent('CareNote Export — Labels: ' + filterLabels.join(', '));
+        const body = encodeURIComponent(bodyParts.join('\n\n'));
+        const to = encodeURIComponent(defaultEmail);
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    }
+
 </script>
 
 <!-- Dim screen overlay during recording -->
