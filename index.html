@@ -1595,9 +1595,6 @@
         <div class="sidebar-item" data-module="medication" onclick="switchModule('medication')">
             <span class="sidebar-item-icon">💊</span> Medication Manager
         </div>
-        <div class="sidebar-item" data-module="calendar" onclick="switchModule('calendar')">
-            <span class="sidebar-item-icon">📅</span> Calendar
-        </div>
         <div class="sidebar-item" data-module="hep" onclick="switchModule('hep')">
             <span class="sidebar-item-icon">🏋️</span> Home Exercise Program
         </div>
@@ -1606,9 +1603,6 @@
         </div>
         <div class="sidebar-item" data-module="vehicle" onclick="switchModule('vehicle')">
             <span class="sidebar-item-icon">🚗</span> Vehicle Tracking
-        </div>
-        <div class="sidebar-item" data-module="search" onclick="switchModule('search')">
-            <span class="sidebar-item-icon">🔍</span> Label Search
         </div>
     </nav>
 </div>
@@ -2795,7 +2789,7 @@
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'notes';
-    const moduleViews = ['medication', 'hep', 'education', 'vehicle', 'calendar'];
+    const moduleViews = ['medication', 'hep', 'education', 'vehicle', 'calendar', 'search'];
     const notesViews = ['new', 'pending', 'history', 'templates'];
 
     function toggleSidebar() {
@@ -2810,8 +2804,9 @@
         document.querySelectorAll('.sidebar-item').forEach(el => {
             el.classList.toggle('active', el.dataset.module === module);
         });
-        // Close sidebar
-        toggleSidebar();
+        // Close sidebar (only if open)
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-backdrop').classList.remove('open');
 
         if (module === 'notes') {
             // Show notes tab bar and current notes view
