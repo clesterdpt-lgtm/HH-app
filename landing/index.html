@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareNote — AI Documentation & Workflow Support for Home Health Clinicians</title>
+  <meta name="description" content="CareNote helps home health clinicians document faster, manage medications, build home exercise programs, and reduce after-hours charting with a workflow built for the field." />
+  <style>
+    :root {
+      --navy: #0f2744;
+      --navy-2: #16385e;
+      --navy-3: #21466f;
+      --teal: #0d9488;
+      --teal-2: #14b8a6;
+      --teal-3: #99f6e4;
+      --cream: #f7f4ee;
+      --white: #ffffff;
+      --slate: #334155;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --soft-2: #eef6f5;
+      --shadow: 0 24px 60px rgba(15, 39, 68, 0.12);
+      --shadow-soft: 0 12px 30px rgba(15, 39, 68, 0.08);
+      --radius: 24px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--slate);
+      background:
+        radial-gradient(circle at top left, rgba(20,184,166,0.07), transparent 32%),
+        linear-gradient(180deg, #f7f4ee 0%, #ffffff 58%);
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(14px);
+      background: rgba(247, 244, 238, 0.86);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+      z-index: 20;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 76px;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.03em;
+    }
+
+    .brand-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--teal), var(--navy));
+      color: white;
+      font-size: 20px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--teal);
+      color: white;
+      box-shadow: 0 14px 30px rgba(13, 148, 136, 0.22);
+    }
+    .btn-primary:hover { background: var(--teal-2); transform: translateY(-1px); }
+    .btn-secondary {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--navy);
+    }
+    .btn-secondary:hover { border-color: rgba(15,39,68,0.18); transform: translateY(-1px); }
+
+    .hero { padding: 74px 0 52px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(13, 148, 136, 0.08);
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 0.86rem;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(2.7rem, 5vw, 4.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      color: var(--navy);
+      max-width: 760px;
+    }
+
+    .hero p {
+      font-size: 1.12rem;
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 0 30px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .trust-row {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 640px;
+    }
+
+    .visual-glow {
+      position: absolute;
+      inset: 30px 40px auto auto;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(20,184,166,0.18), transparent 68%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .dashboard-mock {
+      position: relative;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+      border: 1px solid rgba(226,232,240,0.95);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mock-topbar {
+      background: linear-gradient(135deg, var(--navy), var(--navy-3));
+      color: white;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mock-topbar strong { display: block; font-size: 1rem; }
+    .mock-topbar span { font-size: 0.84rem; color: rgba(255,255,255,0.74); }
+
+    .mock-pill {
+      background: rgba(20,184,166,0.18);
+      border: 1px solid rgba(153,246,228,0.25);
+      color: var(--teal-3);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mock-body {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .mock-note-box,
+    .mock-result-box,
+    .mock-side-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+    }
+
+    .mock-note-box { padding: 16px; }
+    .mock-note-lines { display: grid; gap: 10px; }
+    .mock-line {
+      height: 11px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #dbe8f0 0%, #edf3f8 100%);
+    }
+    .mock-line.short { width: 48%; }
+    .mock-line.medium { width: 78%; }
+
+    .mock-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mock-chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--soft-2);
+      color: var(--teal);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .mock-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 16px;
+    }
+
+    .mock-result-box { padding: 16px; background: #fbfdfd; }
+    .mock-result-box h4,
+    .mock-side-card h4 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: 0.98rem;
+    }
+
+    .mock-section {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      margin-bottom: 10px;
+    }
+
+    .mock-section strong { display: block; color: var(--navy); font-size: 0.86rem; margin-bottom: 4px; }
+    .mock-section p { margin: 0; color: var(--muted); font-size: 0.83rem; line-height: 1.45; }
+
+    .mock-side-stack { display: grid; gap: 12px; }
+    .mock-side-card { padding: 15px; }
+
+    .mini-list { display: grid; gap: 8px; }
+    .mini-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: var(--soft);
+      color: var(--slate);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .mini-row span:last-child { color: var(--muted); font-weight: 500; }
+
+    section { padding: 44px 0; }
+    .section-head { max-width: 760px; margin-bottom: 26px; }
+    .section-head h2 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: clamp(1.9rem, 3vw, 3rem);
+      letter-spacing: -0.03em;
+    }
+    .section-head p { margin: 0; color: var(--muted); font-size: 1.06rem; }
+
+    .pain-grid, .feature-grid, .audience-grid { display: grid; gap: 20px; }
+    .pain-grid { grid-template-columns: repeat(3, 1fr); }
+    .feature-grid { grid-template-columns: repeat(2, 1fr); }
+    .audience-grid { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .card h3 { margin: 0 0 10px; color: var(--navy); font-size: 1.12rem; }
+    .card p { margin: 0; }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      background: rgba(13, 148, 136, 0.1);
+      margin-bottom: 16px;
+    }
+
+    .split-band {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .panel-dark {
+      background: linear-gradient(135deg, var(--navy), var(--navy-2));
+      color: white;
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-dark h2, .panel-dark h3 { color: white; }
+    .panel-dark p { color: rgba(255,255,255,0.8); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .step {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .step-num {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--teal);
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: white;
+    }
+
+    .panel-light {
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .benefit-list { display: grid; gap: 12px; margin-top: 8px; }
+    .benefit {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: white;
+      border: 1px solid var(--line);
+    }
+    .benefit strong { color: var(--navy); display: block; margin-bottom: 4px; }
+
+    .proof-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .proof {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .proof strong {
+      display: block;
+      font-size: 1.65rem;
+      color: var(--navy);
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .cta { padding: 56px 0 82px; }
+    .cta-box {
+      background: linear-gradient(180deg, #ffffff, #f8fbfb);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      padding: 38px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .cta-copy h2 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      letter-spacing: -0.03em;
+    }
+
+    .cta-copy p { margin: 0; color: var(--muted); max-width: 700px; }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 26px 0 44px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-grid,
+      .split-band,
+      .pain-grid,
+      .feature-grid,
+      .audience-grid,
+      .proof-strip,
+      .cta-box,
+      .mock-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-visual { min-height: auto; }
+    }
+
+    @media (max-width: 720px) {
+      .nav-links { display: none; }
+      .hero { padding-top: 44px; }
+      h1 { font-size: 2.55rem; }
+      .wrap { padding: 0 18px; }
+      .card, .panel-dark, .panel-light, .cta-box, .dashboard-mock { padding: 22px; }
+      .mock-topbar, .mock-body { padding-left: 16px; padding-right: 16px; }
+      .steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <div class="brand-badge">✚</div>
+        <div>
+          <div>CareNote</div>
+          <small>Documentation & workflow support for home health</small>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#audience">Who it's for</a>
+        <a href="#contact" class="btn btn-primary">Request Early Access</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Built specifically for home health clinicians</div>
+          <h1>Clinical documentation that keeps up with the pace of home health.</h1>
+          <p>
+            CareNote helps home health clinicians capture visit details faster, generate cleaner documentation,
+            manage medication workflows, create home exercise programs, and stay organized across the entire visit day —
+            without adding more friction to field work.
+          </p>
+          <div class="hero-actions">
+            <a href="#contact" class="btn btn-primary">Request Early Access</a>
+            <a href="#features" class="btn btn-secondary">See What It Does</a>
+          </div>
+          <div class="trust-row">
+            <span>Voice capture + transcription</span>
+            <span>AI-generated visit notes</span>
+            <span>Medication workflow support</span>
+            <span>HEP builder + exports</span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="visual-glow"></div>
+          <div class="dashboard-mock">
+            <div class="mock-topbar">
+              <div>
+                <strong>CareNote</strong>
+                <span>Routine Visit · AI-assisted documentation</span>
+              </div>
+              <div class="mock-pill">Field-ready workflow</div>
+            </div>
+            <div class="mock-body">
+              <div class="mock-note-box">
+                <div class="mock-note-lines">
+                  <div class="mock-line"></div>
+                  <div class="mock-line medium"></div>
+                  <div class="mock-line"></div>
+                  <div class="mock-line short"></div>
+                </div>
+                <div class="mock-controls">
+                  <div class="mock-chip">🎙️ Record</div>
+                  <div class="mock-chip">🧠 Assist</div>
+                  <div class="mock-chip">📄 Generate Note</div>
+                </div>
+              </div>
+
+              <div class="mock-grid">
+                <div class="mock-result-box">
+                  <h4>Generated Clinical Note</h4>
+                  <div class="mock-section">
+                    <strong>Subjective</strong>
+                    <p>Patient reports improved tolerance with transfers and less fatigue during household ambulation.</p>
+                  </div>
+                  <div class="mock-section">
+                    <strong>Assessment</strong>
+                    <p>Skilled PT remains indicated to address balance deficits, activity tolerance, and safety in the home setting.</p>
+                  </div>
+                  <div class="mock-section">
+                    <strong>Plan</strong>
+                    <p>Continue gait training, balance tasks, and HEP progression with caregiver education.</p>
+                  </div>
+                </div>
+
+                <div class="mock-side-stack">
+                  <div class="mock-side-card">
+                    <h4>Medication Snapshot</h4>
+                    <div class="mini-list">
+                      <div class="mini-row"><span>Lisinopril</span><span>10 mg daily</span></div>
+                      <div class="mini-row"><span>Metformin</span><span>500 mg BID</span></div>
+                      <div class="mini-row"><span>Lasix</span><span>40 mg daily</span></div>
+                    </div>
+                  </div>
+                  <div class="mock-side-card">
+                    <h4>HEP Builder</h4>
+                    <div class="mini-list">
+                      <div class="mini-row"><span>Sit to Stand</span><span>2 x 10</span></div>
+                      <div class="mini-row"><span>Marching</span><span>2 x 20</span></div>
+                      <div class="mini-row"><span>Tandem Balance</span><span>30 sec x 3</span></div>
+                    </div>
+                  </div>
+                  <div class="mock-side-card">
+                    <h4>Calendar View</h4>
+                    <div class="mini-list">
+                      <div class="mini-row"><span>Notes</span><span>3 visits</span></div>
+                      <div class="mini-row"><span>Meds</span><span>1 review</span></div>
+                      <div class="mini-row"><span>HEPs</span><span>2 updated</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Built around the real friction of home health</h2>
+          <p>
+            CareNote is designed for clinicians who spend their day moving between homes, juggling documentation,
+            patient education, medication review, and everything else that somehow ends up getting charted after hours.
+          </p>
+        </div>
+
+        <div class="pain-grid">
+          <div class="card">
+            <div class="icon">📝</div>
+            <h3>Documentation spillover</h3>
+            <p>Capture the visit while it's fresh and turn rough observations into structured clinical notes with less end-of-day cleanup.</p>
+          </div>
+          <div class="card">
+            <div class="icon">💊</div>
+            <h3>Medication complexity</h3>
+            <p>Keep medication review, history, and documentation support closer to the clinical workflow instead of scattered across separate tools.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🚙</div>
+            <h3>Field-based reality</h3>
+            <p>Home health is mobile, inconsistent, and messy. CareNote is being built for clinicians working in the field, not behind a front desk.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>More than AI notes</h2>
+          <p>
+            The goal is not to tack AI onto charting. The goal is to support the actual workflow of a home health visit — from capture to organization to export.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="card">
+            <div class="icon">🎙️</div>
+            <h3>Voice capture + transcription</h3>
+            <p>Record your observations naturally and convert them into usable text for note generation, clarification, and documentation cleanup.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🤖</div>
+            <h3>AI-generated clinical notes</h3>
+            <p>Generate structured notes for evaluations, routine visits, reassessments, recerts, discharges, and more from real-world visit details.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🧠</div>
+            <h3>Assist before finalizing</h3>
+            <p>Use AI to identify missing details, tighten your raw notes, and improve documentation quality before the final note is exported.</p>
+          </div>
+          <div class="card">
+            <div class="icon">💊</div>
+            <h3>Medication manager</h3>
+            <p>Track medications, save medication history, and support reconciliation-style workflows in a way that fits home visit documentation.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🏃</div>
+            <h3>Home exercise program builder</h3>
+            <p>Create and manage HEPs with structured exercise selection, patient-friendly output, and documentation support for the clinical record.</p>
+          </div>
+          <div class="card">
+            <div class="icon">📆</div>
+            <h3>Unified history + calendar</h3>
+            <p>See note activity, medication history, and HEP changes together by date so your workflow is easier to track over time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <div class="wrap split-band">
+        <div class="panel-dark">
+          <div class="section-head" style="margin-bottom: 0; max-width: 100%;">
+            <h2>A workflow designed for the actual home visit</h2>
+            <p>
+              CareNote is meant to support how clinicians already think and work in home health — before the visit, during the visit, and when wrapping documentation up later.
+            </p>
+          </div>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <h3>Capture</h3>
+              <p>Use voice or text to grab what happened while the visit is still fresh.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <h3>Generate</h3>
+              <p>Turn rough notes into structured clinical documentation matched to the visit type.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <h3>Refine</h3>
+              <p>Fill gaps, clarify findings, and improve note quality before finalizing.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <h3>Export</h3>
+              <p>Copy, email, print, or save outputs in formats that fit real clinical workflows.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-light">
+          <div class="section-head" style="margin-bottom: 16px; max-width: 100%;">
+            <h2>Designed for the field, not just the desk</h2>
+            <p>
+              Home health care happens across driveways, kitchens, living rooms, and spotty cell service. CareNote is being shaped around that reality.
+            </p>
+          </div>
+          <div class="benefit-list">
+            <div class="benefit">
+              <strong>Mobile-first workflow</strong>
+              Capture and organize information while moving between visits instead of rebuilding the day from memory later.
+            </div>
+            <div class="benefit">
+              <strong>Offline-aware behavior</strong>
+              Queue work locally and keep going when connectivity is inconsistent.
+            </div>
+            <div class="benefit">
+              <strong>Practical exports</strong>
+              Notes, PDFs, email outputs, and documentation support designed for how clinicians actually need to share or transfer information.
+            </div>
+            <div class="benefit">
+              <strong>Less after-hours charting</strong>
+              The entire point is to reduce friction, reduce rework, and reduce the amount of unfinished documentation following you home.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Why this matters</h2>
+          <p>
+            Home health clinicians spend too much energy on workflow drag that has nothing to do with actual patient care. CareNote is built to cut that drag down.
+          </p>
+        </div>
+        <div class="proof-strip">
+          <div class="proof"><strong>Faster</strong><span>visit documentation from raw observations and dictation</span></div>
+          <div class="proof"><strong>Cleaner</strong><span>notes with structure, guidance, and refinement support</span></div>
+          <div class="proof"><strong>Broader</strong><span>workflow support beyond notes alone</span></div>
+          <div class="proof"><strong>Field-ready</strong><span>designed around real home health use</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="audience">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Who CareNote is for</h2>
+          <p>
+            If your work happens in patients' homes and your documentation load follows you from visit to visit, this is the kind of workflow CareNote is meant to support.
+          </p>
+        </div>
+
+        <div class="audience-grid">
+          <div class="card"><h3>Physical therapists</h3><p>Support evaluations, reassessments, HEP creation, gait and balance documentation, and ongoing visit notes.</p></div>
+          <div class="card"><h3>Occupational therapists</h3><p>Document function-focused interventions, patient education, home-based training, and daily living support more efficiently.</p></div>
+          <div class="card"><h3>Speech-language pathologists</h3><p>Capture observations clearly, organize visit details, and support consistent documentation across episodes of care.</p></div>
+          <div class="card"><h3>Home health nurses & clinicians</h3><p>Support structured note creation, medication workflows, and longitudinal care tracking across the home setting.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="wrap">
+        <div class="cta-box">
+          <div class="cta-copy">
+            <h2>Want to follow CareNote as it develops?</h2>
+            <p>
+              If you're a home health clinician interested in early access, product updates, or sharing what documentation friction you wish an app would actually solve, get in touch.
+            </p>
+          </div>
+          <a class="btn btn-primary" href="mailto:clesterdpt@gmail.com?subject=CareNote%20Interest">Email Chris</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      CareNote is being designed to help home health clinicians document faster, stay organized, and reduce the administrative drag that too often steals time from patient care.
+    </div>
+  </footer>
+</body>
+</html>
