@@ -456,6 +456,7 @@
         .cal-dot.meds { background: var(--orange); }
         .cal-dot.pending { background: var(--red); }
         .cal-dot.hep { background: #8b5cf6; }
+        .cal-dot.edu { background: #10b981; }
         .cal-nav-btns { margin-left: auto; display: flex; gap: 6px; }
         .cal-nav-btns .btn { min-height: 36px; padding: 6px 14px; font-size: 13px; }
         .cal-item { border: 1px solid var(--gray-200); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; background: var(--white); transition: box-shadow 0.2s; }
@@ -1589,6 +1590,7 @@
         .search-source-badge.notes { background: rgba(13,148,136,0.12); color: var(--teal); }
         .search-source-badge.hep { background: rgba(99,102,241,0.1); color: #6366f1; }
         .search-source-badge.medications { background: rgba(249,115,22,0.1); color: var(--orange); }
+        .search-source-badge.edu { background: rgba(16,185,129,0.1); color: #10b981; }
         .search-result-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--gray-100); font-size: 14px; color: var(--gray-700); line-height: 1.6; }
         .search-result-body.open { display: block; }
         .search-result-header .history-chevron.open { transform: rotate(180deg); }
@@ -2703,6 +2705,7 @@
                     <button class="search-type-toggle active" data-type="notes" onclick="toggleSearchType(this)">Notes</button>
                     <button class="search-type-toggle active" data-type="hep" onclick="toggleSearchType(this)">HEP</button>
                     <button class="search-type-toggle active" data-type="medications" onclick="toggleSearchType(this)">Medications</button>
+                    <button class="search-type-toggle active" data-type="edu" onclick="toggleSearchType(this)">Patient Ed</button>
                 </div>
             </div>
             <div class="search-empty-state" id="search-empty-state">
@@ -4068,6 +4071,17 @@
             calDataMap[key].heps.push(entry);
         });
 
+        // Load Patient Education list history
+        if (!eduListHistoryData || eduListHistoryData.length === 0) {
+            await loadEduListHistory();
+        }
+        (eduListHistoryData || []).forEach(entry => {
+            const key = toDateKey(entry.saved_at);
+            if (!calDataMap[key]) calDataMap[key] = { notes: [], meds: [], heps: [], edus: [], pendingRec: [], pendingNotes: [] };
+            if (!calDataMap[key].edus) calDataMap[key].edus = [];
+            calDataMap[key].edus.push(entry);
+        });
+
         // Pending recordings from IndexedDB global
         (pendingRecordings || []).forEach(rec => {
             const key = toDateKey(new Date(rec.id));
@@ -4159,6 +4173,7 @@
             if (data.notes.length > 0) dots.innerHTML += '<div class="cal-dot notes"></div>';
             if (data.meds.length > 0) dots.innerHTML += '<div class="cal-dot meds"></div>';
             if (data.heps && data.heps.length > 0) dots.innerHTML += '<div class="cal-dot hep"></div>';
+            if (data.edus && data.edus.length > 0) dots.innerHTML += '<div class="cal-dot edu"></div>';
             if (data.pendingRec.length > 0 || data.pendingNotes.length > 0) dots.innerHTML += '<div class="cal-dot pending"></div>';
             if (dots.innerHTML) cell.appendChild(dots);
         }
@@ -4185,9 +4200,9 @@
             return;
         }
 
-        const totalItems = data.notes.length + data.meds.length + (data.heps || []).length + data.pendingRec.length + data.pendingNotes.length;
+        const totalItems = data.notes.length + data.meds.length + (data.heps || []).length + (data.edus || []).length + data.pendingRec.length + data.pendingNotes.length;
         countEl.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
-        const hasExportable = data.notes.length > 0 || data.meds.length > 0 || (data.heps || []).length > 0;
+        const hasExportable = data.notes.length > 0 || data.meds.length > 0 || (data.heps || []).length > 0 || (data.edus || []).length > 0;
         exportBtn.style.display = hasExportable ? '' : 'none';
 
         listEl.innerHTML = '';
@@ -4242,6 +4257,24 @@
                     <span class="cal-item-time">${time}</span>
                 </div>
                 ${exNames ? `<div class="cal-item-preview">${exNames}</div>` : ''}`;
+            listEl.appendChild(el);
+        });
+
+        // Patient Education lists
+        (data.edus || []).forEach(entry => {
+            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const modCount = entry.modules ? entry.modules.length : 0;
+            const modNames = entry.modules ? entry.modules.map(m => m.title).join(', ') : '';
+            const el = document.createElement('div');
+            el.className = 'cal-item';
+            el.innerHTML = `
+                <div class="cal-item-row">
+                    <span class="cal-item-type" style="background:rgba(16,185,129,0.12); color:#10b981;">Patient Ed</span>
+                    <span style="font-size:13px; color:var(--gray-600);">${modCount} module${modCount !== 1 ? 's' : ''}</span>
+                    ${renderLabelBadges(entry.labels, 'history-label-badge')}
+                    <span class="cal-item-time">${time}</span>
+                </div>
+                ${modNames ? `<div class="cal-item-preview">${modNames}</div>` : ''}`;
             listEl.appendChild(el);
         });
 
@@ -11318,7 +11351,7 @@
     moduleViews.push('search');
 
     let searchAllLabels = [];
-    let searchActiveTypes = { notes: true, hep: true, medications: true };
+    let searchActiveTypes = { notes: true, hep: true, medications: true, edu: true };
     let searchCachedResults = [];
     let searchInitialized = false;
 
@@ -11372,6 +11405,16 @@
         } else {
             try {
                 const { data } = await sb.from('hep_history').select('labels');
+                (data || []).forEach(e => (e.labels || []).forEach(addLabel));
+            } catch (e) { /* ignore */ }
+        }
+
+        // Patient Education list labels
+        if (eduListHistoryData && eduListHistoryData.length > 0) {
+            eduListHistoryData.forEach(e => (e.labels || []).forEach(addLabel));
+        } else {
+            try {
+                const { data } = await sb.from('edu_list_history').select('labels');
                 (data || []).forEach(e => (e.labels || []).forEach(addLabel));
             } catch (e) { /* ignore */ }
         }
@@ -11571,6 +11614,31 @@
             });
         }
 
+        // Patient Education lists
+        if (searchActiveTypes.edu) {
+            let edus = eduListHistoryData;
+            if (!edus || edus.length === 0) {
+                const { data } = await sb.from('edu_list_history').select('*').order('saved_at', { ascending: false });
+                edus = data || [];
+                eduListHistoryData = edus;
+            }
+            edus.forEach(e => {
+                const entryLabels = (e.labels || []).map(l => l.toLowerCase());
+                const allMatch = labels.every(fl => entryLabels.includes(fl.toLowerCase()));
+                if (allMatch) {
+                    results.push({
+                        source: 'edu',
+                        id: e.id,
+                        date: e.saved_at,
+                        title: e.title || 'Patient Education List',
+                        labels: e.labels || [],
+                        preview: (e.modules || []).map(m => m.title).join(', ').substring(0, 80),
+                        raw: e
+                    });
+                }
+            });
+        }
+
         // Sort by date descending
         results.sort((a, b) => new Date(b.date) - new Date(a.date));
         searchCachedResults = results;
@@ -11596,7 +11664,7 @@
             const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             const labels = renderLabelBadges(r.labels, 'history-label-badge');
-            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : 'Meds';
+            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : r.source === 'edu' ? 'Patient Ed' : 'Meds';
 
             return `
                 <div class="search-result-item" id="search-item-${r.source}-${r.id}">
@@ -11671,6 +11739,17 @@
                 </div>
             `).join('') + '</div>';
         }
+        if (result.source === 'edu') {
+            const modules = result.raw.modules || [];
+            if (modules.length === 0) return '<p style="padding-top:12px; color:var(--gray-400);">No modules.</p>';
+            return '<div style="padding-top:12px;">' + modules.map((m, i) => `
+                <div style="padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                    <strong>${i + 1}. ${escapeHtml(m.title)}</strong>
+                    <div style="font-size:13px; color:var(--gray-600);">${escapeHtml(m.category || '')}</div>
+                    ${m.overview ? '<div style="font-size:13px; color:var(--gray-500); margin-top:2px;">' + escapeHtml(m.overview.substring(0, 160)) + (m.overview.length > 160 ? '…' : '') + '</div>' : ''}
+                </div>
+            `).join('') + '</div>';
+        }
         return '';
     }
 
@@ -11707,6 +11786,8 @@
             }).join('\n');
         } else if (source === 'hep') {
             text = formatHepText(result.raw.exercises, result.raw.title);
+        } else if (source === 'edu') {
+            text = formatEduListText(result.raw.modules || [], result.raw.title);
         }
         navigator.clipboard.writeText(text);
     }
@@ -11718,6 +11799,8 @@
             emailMedHistoryEntry(id);
         } else if (source === 'hep') {
             emailHepHistory(id);
+        } else if (source === 'edu') {
+            emailEduListHistory(id);
         }
     }
 
@@ -11728,6 +11811,8 @@
             exportMedHistoryPdf(id);
         } else if (source === 'hep') {
             exportHepHistoryPdf(id, 'single');
+        } else if (source === 'edu') {
+            downloadEduListHistoryPdf(id);
         }
     }
 
@@ -11739,6 +11824,7 @@
         const noteResults = searchCachedResults.filter(r => r.source === 'notes');
         const medResults = searchCachedResults.filter(r => r.source === 'medications');
         const hepResults = searchCachedResults.filter(r => r.source === 'hep');
+        const eduResults = searchCachedResults.filter(r => r.source === 'edu');
 
         if (noteResults.length > 0) {
             sections.push({
@@ -11783,6 +11869,17 @@
             });
         }
 
+        if (eduResults.length > 0) {
+            sections.push({
+                heading: 'Patient Education Lists (' + eduResults.length + ')',
+                notes: eduResults.map(r => {
+                    const d = new Date(r.date);
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return { type: r.title, date: dateStr, labels: r.labels, text: formatEduListText(r.raw.modules || [], r.raw.title) };
+                })
+            });
+        }
+
         const filterLabels = getLabels('labels-search');
         const doc = buildPdf('Label Search: ' + filterLabels.join(', '), sections);
         if (!doc) return;
@@ -11798,7 +11895,7 @@
         searchCachedResults.forEach(r => {
             const d = new Date(r.date);
             const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : 'Medication List';
+            const sourceLabel = r.source === 'notes' ? 'Note' : r.source === 'hep' ? 'HEP' : r.source === 'edu' ? 'Patient Ed' : 'Medication List';
             let text = '';
 
             if (r.source === 'notes') {
@@ -11812,6 +11909,8 @@
                 }).join('\n');
             } else if (r.source === 'hep') {
                 text = formatHepText(r.raw.exercises, r.raw.title);
+            } else if (r.source === 'edu') {
+                text = formatEduListText(r.raw.modules || [], r.raw.title);
             }
 
             bodyParts.push(`--- ${sourceLabel}: ${r.title} (${dateStr}) ---\nLabels: ${r.labels.join(', ')}\n\n${text}`);
