@@ -615,12 +615,60 @@
             .edu-modal-export .btn { flex: 1; text-align: center; font-size: 12px; padding: 8px 8px; }
         }
 
+        /* ── Patient Education List Builder ── */
+        .edu-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
+        .edu-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+        .edu-sub-tab:hover { color: var(--gray-600); }
+        .edu-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+        .edu-card-add-btn { padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--teal); background: rgba(13,148,136,0.06); border-top: 1px solid var(--gray-100); border-left: 1px solid var(--gray-100); transition: background 0.15s; cursor: pointer; flex: 0 0 90px; display: flex; align-items: center; justify-content: center; }
+        .edu-card-add-btn:hover { background: rgba(13,148,136,0.14); }
+        .edu-card-footer-row { display: flex; border-top: 1px solid var(--gray-100); }
+        .edu-card-footer-row .edu-card-footer { border-top: none; flex: 1; }
+        .edu-list-item { border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 10px; background: var(--white); overflow: hidden; display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; }
+        .edu-list-item-icon { font-size: 26px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(13,148,136,0.07); border-radius: 10px; }
+        .edu-list-item-info { flex: 1; min-width: 0; }
+        .edu-list-item-title { font-weight: 600; font-size: 14px; color: var(--navy); }
+        .edu-list-item-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--teal); margin-top: 3px; }
+        .edu-list-item-overview { font-size: 12px; color: var(--gray-500); margin-top: 5px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .edu-list-item-remove { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 18px; padding: 4px 6px; line-height: 1; border-radius: 6px; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+        .edu-list-item-remove:hover { color: var(--red); background: rgba(239,68,68,0.08); }
+        .edu-list-current-empty { text-align: center; padding: 60px 24px; color: var(--gray-400); }
+        .edu-list-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
+        .edu-list-history-item { border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); margin-bottom: 10px; overflow: hidden; }
+        .edu-list-history-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; gap: 10px; }
+        .edu-list-history-left { display: flex; flex-direction: column; gap: 4px; flex: 1; cursor: pointer; min-width: 0; }
+        .edu-list-history-title { font-weight: 600; font-size: 14px; color: var(--navy); }
+        .edu-list-history-count { font-size: 12px; color: var(--gray-400); }
+        .edu-list-history-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .edu-list-history-time { font-size: 12px; color: var(--gray-400); }
+        .edu-list-history-chevron { font-size: 12px; color: var(--gray-400); cursor: pointer; user-select: none; transition: transform 0.2s; }
+        .edu-list-history-chevron.open { transform: rotate(180deg); }
+        .edu-list-history-body { display: none; padding: 0 16px 14px; border-top: 1px solid var(--gray-100); }
+        .edu-list-history-body.open { display: block; }
+        .edu-list-history-module { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+        .edu-list-history-module:last-of-type { border-bottom: none; }
+        .edu-list-history-module-icon { font-size: 20px; flex-shrink: 0; }
+        .edu-list-history-module-info { flex: 1; }
+        .edu-list-history-module-name { font-weight: 600; font-size: 13px; color: var(--navy); }
+        .edu-list-history-module-cat { font-size: 11px; color: var(--teal); }
+        .edu-list-kebab-wrap { position: relative; }
+        .edu-list-kebab-btn { background: none; border: 1px solid var(--gray-200); color: var(--gray-500); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 16px; transition: background 0.15s; }
+        .edu-list-kebab-btn:hover { background: var(--gray-100); }
+        .edu-list-kebab-menu { position: absolute; right: 0; top: calc(100% + 4px); background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 50; min-width: 170px; overflow: hidden; display: none; }
+        .edu-list-kebab-menu.open { display: block; }
+        .edu-list-kebab-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--gray-700); text-align: left; transition: background 0.1s; font-family: 'DM Sans', sans-serif; }
+        .edu-list-kebab-menu button:hover { background: var(--gray-100); }
+        .edu-list-kebab-danger { color: var(--red) !important; }
+        .edu-list-history-empty { text-align: center; padding: 60px 24px; color: var(--gray-400); }
+        .edu-list-history-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
         @media print {
             body * { visibility: hidden; }
             #med-print-area, #med-print-area * { visibility: visible; }
             #hep-print-area, #hep-print-area * { visibility: visible; }
             #edu-print-area, #edu-print-area * { visibility: visible; }
-            #med-print-area, #hep-print-area, #edu-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
+            #edu-list-print-area, #edu-list-print-area * { visibility: visible; }
+            #med-print-area, #hep-print-area, #edu-print-area, #edu-list-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; }
             .edu-print-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #0f2744; }
             .edu-print-app { font-size: 13px; font-weight: 700; color: #0f2744; }
             .edu-print-date { font-size: 11px; color: #888; }
@@ -799,6 +847,8 @@
             .hep-sub-tab { padding: 10px 16px; font-size: 13px; }
             .hep-lib-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
             .hep-current-item-top { flex-direction: column; gap: 10px; }
+            /* Edu List */
+            .edu-sub-tab { padding: 10px 14px; font-size: 13px; }
             .hep-current-item-svg { width: 60px; height: 60px; }
             .hep-current-item-fields { gap: 8px; }
             .hep-current-item-actions { flex-direction: row; }
@@ -2333,27 +2383,86 @@
                 </div>
             </div>
 
-            <div class="card" style="margin-bottom:16px;">
-                <div class="card-body" style="padding:14px;">
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                        <input type="text" class="form-input" id="edu-search" placeholder="Search conditions..." oninput="renderEduGrid()" style="flex:1; min-width:160px;">
-                        <div class="select-wrapper" style="min-width:160px;">
-                            <select id="edu-category-filter" onchange="renderEduGrid()">
-                                <option value="">All Categories</option>
-                                <option value="Cardiac">Cardiac</option>
-                                <option value="Pulmonary">Pulmonary</option>
-                                <option value="Endocrine">Endocrine</option>
-                                <option value="Wound Care">Wound Care</option>
-                                <option value="Safety">Safety</option>
-                                <option value="Medications">Medications</option>
-                                <option value="Neurological">Neurological</option>
-                            </select>
+            <div class="edu-sub-tabs">
+                <button class="edu-sub-tab active" onclick="switchEduSubTab('modules')">📚 Modules</button>
+                <button class="edu-sub-tab" onclick="switchEduSubTab('current')">📋 Current List</button>
+                <button class="edu-sub-tab" onclick="switchEduSubTab('history')">📜 History</button>
+            </div>
+
+            <!-- MODULES TAB -->
+            <div id="edu-modules-view">
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-body" style="padding:14px;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <input type="text" class="form-input" id="edu-search" placeholder="Search conditions..." oninput="renderEduGrid()" style="flex:1; min-width:160px;">
+                            <div class="select-wrapper" style="min-width:160px;">
+                                <select id="edu-category-filter" onchange="renderEduGrid()">
+                                    <option value="">All Categories</option>
+                                    <option value="Cardiac">Cardiac</option>
+                                    <option value="Pulmonary">Pulmonary</option>
+                                    <option value="Endocrine">Endocrine</option>
+                                    <option value="Wound Care">Wound Care</option>
+                                    <option value="Safety">Safety</option>
+                                    <option value="Medications">Medications</option>
+                                    <option value="Neurological">Neurological</option>
+                                </select>
+                            </div>
                         </div>
+                    </div>
+                </div>
+                <div id="edu-grid" class="edu-grid"></div>
+            </div>
+
+            <!-- CURRENT LIST TAB -->
+            <div id="edu-list-current-view" style="display:none;">
+                <div id="edu-list-current-empty" class="edu-list-current-empty">
+                    <div class="edu-list-current-empty-icon">📋</div>
+                    <p>No modules added yet</p>
+                    <p style="font-size:13px; margin-top:4px;">Go to the Modules tab and click "+ Add to List" to build a patient education packet</p>
+                </div>
+                <div id="edu-list-current-items"></div>
+                <div id="edu-list-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label">Labels</label>
+                        <div id="labels-edu-list" class="label-input-container" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-edu-list"></div>
+                    </div>
+                    <div class="hep-action-grid">
+                        <button class="btn btn-primary hep-action-full" onclick="saveEduListToHistory()">💾 Save to History</button>
+                        <div class="hep-dropdown" id="eduListMoreActionsContainer">
+                            <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleEduListDropdown(event)">⚡ More Actions ▾</button>
+                            <div class="hep-dropdown-menu" id="eduListDropdownMenu">
+                                <button class="hep-dropdown-item" onclick="emailEduList(); closeEduListDropdown()">✉️ Email</button>
+                                <button class="hep-dropdown-item" onclick="downloadEduListCurrentPdf(); closeEduListDropdown()">📄 Download PDF</button>
+                                <button class="hep-dropdown-item" onclick="printEduListCurrent(); closeEduListDropdown()">🖨️ Print</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline hep-action-danger" onclick="clearCurrentEduList()">🗑️ Clear</button>
                     </div>
                 </div>
             </div>
 
-            <div id="edu-grid" class="edu-grid"></div>
+            <!-- HISTORY TAB -->
+            <div id="edu-list-history-view" style="display:none;">
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="form-input" id="edu-list-history-search" placeholder="Search education history..." oninput="applyEduListHistoryFilters()" style="flex:1; min-width:180px;">
+                    <div class="select-wrapper" style="min-width:140px;">
+                        <select id="edu-list-history-label-filter" onchange="applyEduListHistoryFilters()">
+                            <option value="">All Labels</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" id="sort-toggle-edu-list-history" onclick="toggleSortOrder('eduListHistory', () => applyEduListHistoryFilters())">Newest ↓</button>
+                </div>
+                <div id="edu-list-history-list">
+                    <div class="edu-list-history-empty">
+                        <div class="edu-list-history-empty-icon">📋</div>
+                        <p>No saved education lists yet</p>
+                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save packets</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Education Module Detail Panel -->
             <div id="edu-modal-overlay" class="edu-modal-overlay" onclick="closeEduModule()"></div>
@@ -2367,6 +2476,7 @@
                     <button class="edu-modal-close" onclick="closeEduModule()" aria-label="Close">&times;</button>
                 </div>
                 <div class="edu-modal-export">
+                    <button class="btn btn-primary btn-sm" id="edu-modal-add-btn" onclick="addToEduList(eduActiveModule && eduActiveModule.id)">+ Add to List</button>
                     <button class="btn btn-outline btn-sm" onclick="emailEduModule()">✉️ Email</button>
                     <button class="btn btn-outline btn-sm" onclick="downloadEduPdf()">⬇️ Download PDF</button>
                     <button class="btn btn-outline btn-sm" onclick="printEduModule()">🖨️ Print</button>
@@ -2375,6 +2485,7 @@
             </div>
 
             <div id="edu-print-area" style="display:none;"></div>
+            <div id="edu-list-print-area" style="display:none;"></div>
         </div>
 
         <div id="view-vehicle" style="display:none;">
@@ -2847,6 +2958,14 @@
             }
             if (module === 'education') {
                 renderEduGrid();
+                loadEduListCurrentFromDB().then(data => {
+                    eduCurrentList = data;
+                    renderEduList();
+                });
+                if (!eduListLabelInitialized) {
+                    initLabelInput('labels-edu-list');
+                    eduListLabelInitialized = true;
+                }
             }
             if (module === 'vehicle') {
                 initVehicleTracker();
@@ -2867,7 +2986,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 8);
+            const req = indexedDB.open('carenote', 9);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -2890,6 +3009,9 @@
                 }
                 if (!db.objectStoreNames.contains('hepCurrent')) {
                     db.createObjectStore('hepCurrent', { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains('eduListCurrent')) {
+                    db.createObjectStore('eduListCurrent', { keyPath: '_idx', autoIncrement: true });
                 }
                 if (!db.objectStoreNames.contains('mileageLogs')) {
                     const ml = db.createObjectStore('mileageLogs', { keyPath: 'id', autoIncrement: true });
@@ -3857,6 +3979,14 @@
             }
             if (savedModule === 'education') {
                 renderEduGrid();
+                loadEduListCurrentFromDB().then(data => {
+                    eduCurrentList = data;
+                    renderEduList();
+                });
+                if (!eduListLabelInitialized) {
+                    initLabelInput('labels-edu-list');
+                    eduListLabelInitialized = true;
+                }
             }
             if (savedModule === 'vehicle') {
                 initVehicleTracker();
@@ -8998,6 +9128,9 @@
     ];
 
     let eduActiveModule = null;
+    let eduCurrentList = [];
+    let eduListHistoryData = [];
+    let eduListLabelInitialized = false;
 
     function renderEduGrid() {
         const search = (document.getElementById('edu-search')?.value || '').toLowerCase().trim();
@@ -9034,7 +9167,10 @@
                     <div class="edu-card-title">${m.title}</div>
                     <div class="edu-card-desc">${m.overview}</div>
                 </div>
-                <div class="edu-card-footer">View Module &rarr;</div>
+                <div class="edu-card-footer-row">
+                    <div class="edu-card-footer">View Module &rarr;</div>
+                    <div class="edu-card-add-btn" id="edu-add-btn-${m.id}" onclick="event.stopPropagation(); addToEduList('${m.id}')">+ Add to List</div>
+                </div>
             </div>
         `).join('');
     }
@@ -9296,6 +9432,495 @@
         area.style.display = 'block';
         window.print();
         setTimeout(() => { area.style.display = 'none'; }, 500);
+    }
+
+    // ── Patient Education List Builder ──────────────────────────────
+
+    async function saveEduListCurrentToDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('eduListCurrent', 'readwrite');
+            const store = tx.objectStore('eduListCurrent');
+            store.clear();
+            eduCurrentList.forEach((m, i) => store.put({ ...m, _idx: i + 1 }));
+        } catch (e) { console.log('EduList save error:', e); }
+    }
+
+    async function loadEduListCurrentFromDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('eduListCurrent', 'readonly');
+            const store = tx.objectStore('eduListCurrent');
+            const req = store.getAll();
+            return new Promise(resolve => {
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        } catch (e) { return []; }
+    }
+
+    function switchEduSubTab(tab) {
+        document.querySelectorAll('.edu-sub-tab').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`.edu-sub-tab[onclick="switchEduSubTab('${tab}')"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        document.getElementById('edu-modules-view').style.display = tab === 'modules' ? 'block' : 'none';
+        document.getElementById('edu-list-current-view').style.display = tab === 'current' ? 'block' : 'none';
+        document.getElementById('edu-list-history-view').style.display = tab === 'history' ? 'block' : 'none';
+        if (tab === 'modules') renderEduGrid();
+        if (tab === 'current') renderEduList();
+        if (tab === 'history') loadEduListHistory().then(() => renderEduListHistory());
+    }
+
+    function addToEduList(id) {
+        if (!id) return;
+        const m = EDUCATION_MODULES.find(x => x.id === id);
+        if (!m) return;
+
+        const btn = document.getElementById('edu-add-btn-' + id);
+        const modalBtn = document.getElementById('edu-modal-add-btn');
+
+        if (eduCurrentList.some(x => x.id === id)) {
+            if (btn) {
+                btn.textContent = '✓ Already Added';
+                btn.style.background = 'var(--gray-200)';
+                btn.style.color = 'var(--gray-500)';
+                setTimeout(() => { btn.textContent = '+ Add to List'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+            }
+            if (modalBtn) {
+                const orig = modalBtn.textContent;
+                modalBtn.textContent = '✓ Already in List';
+                setTimeout(() => { modalBtn.textContent = orig; }, 1500);
+            }
+            return;
+        }
+
+        eduCurrentList.push({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview });
+        saveEduListCurrentToDB();
+
+        if (btn) {
+            btn.textContent = '✓ Added';
+            btn.style.background = 'var(--teal)';
+            btn.style.color = '#fff';
+            setTimeout(() => { btn.textContent = '+ Add to List'; btn.style.background = ''; btn.style.color = ''; }, 1500);
+        }
+        if (modalBtn && eduActiveModule && eduActiveModule.id === id) {
+            const orig = modalBtn.textContent;
+            modalBtn.textContent = '✓ Added!';
+            setTimeout(() => { if (modalBtn) modalBtn.textContent = orig; }, 1500);
+        }
+    }
+
+    function removeFromEduList(index) {
+        eduCurrentList.splice(index, 1);
+        saveEduListCurrentToDB();
+        renderEduList();
+    }
+
+    function clearCurrentEduList() {
+        if (eduCurrentList.length === 0) return;
+        if (!confirm('Clear all modules from the current list?')) return;
+        eduCurrentList = [];
+        saveEduListCurrentToDB();
+        renderEduList();
+    }
+
+    function renderEduList() {
+        const emptyEl = document.getElementById('edu-list-current-empty');
+        const itemsEl = document.getElementById('edu-list-current-items');
+        const exportEl = document.getElementById('edu-list-export-row');
+        if (!emptyEl) return;
+
+        if (eduCurrentList.length === 0) {
+            emptyEl.style.display = 'block';
+            itemsEl.innerHTML = '';
+            exportEl.style.display = 'none';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        exportEl.style.display = 'block';
+
+        itemsEl.innerHTML = eduCurrentList.map((m, i) => `
+            <div class="edu-list-item">
+                <div class="edu-list-item-icon">${m.icon}</div>
+                <div class="edu-list-item-info">
+                    <div class="edu-list-item-title">${m.title}</div>
+                    <div class="edu-list-item-category">${m.category}</div>
+                    <div class="edu-list-item-overview">${m.overview}</div>
+                </div>
+                <button class="edu-list-item-remove" onclick="removeFromEduList(${i})" title="Remove">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function loadEduListHistory() {
+        if (!currentUser) { eduListHistoryData = []; return eduListHistoryData; }
+        const { data, error } = await sb.from('edu_list_history').select('*').order('saved_at', { ascending: false });
+        if (error) { console.log('EduList history load error:', error.message); eduListHistoryData = []; return eduListHistoryData; }
+        eduListHistoryData = data || [];
+        return eduListHistoryData;
+    }
+
+    async function saveEduListToHistory() {
+        if (!currentUser) { alert('Please sign in to save education lists.'); return; }
+        if (eduCurrentList.length === 0) { alert('No modules to save. Add modules first.'); return; }
+
+        const labels = getLabels('labels-edu-list');
+        const now = new Date();
+        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const title = prompt('Name this education list (or leave blank for date):', '') || defaultTitle;
+
+        const entry = {
+            user_id: currentUser.id,
+            title: title.trim(),
+            modules: eduCurrentList.map(m => ({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview })),
+            labels: labels,
+            saved_at: now.toISOString(),
+        };
+
+        const { data, error } = await sb.from('edu_list_history').insert(entry).select().single();
+        if (error) { alert('Error saving list: ' + error.message); return; }
+
+        eduListHistoryData.unshift(data);
+
+        const btn = document.querySelector('[onclick="saveEduListToHistory()"]');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ Saved!';
+            btn.style.color = 'var(--green)';
+            btn.style.borderColor = 'var(--green)';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+        }
+    }
+
+    function renderEduListHistory(searchQuery, filterLabel) {
+        const listEl = document.getElementById('edu-list-history-list');
+        if (!listEl) return;
+        let filtered = [...eduListHistoryData];
+
+        if (searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(entry =>
+                entry.title.toLowerCase().includes(q) ||
+                (entry.modules || []).some(m => m.title.toLowerCase().includes(q))
+            );
+        }
+        if (filterLabel) {
+            filtered = filtered.filter(entry => entry.labels && entry.labels.includes(filterLabel));
+        }
+
+        filtered.sort((a, b) => getSortOrder('eduListHistory') === 'desc'
+            ? new Date(b.saved_at) - new Date(a.saved_at)
+            : new Date(a.saved_at) - new Date(b.saved_at));
+        updateSortToggleBtn('sort-toggle-edu-list-history', 'eduListHistory');
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div class="edu-list-history-empty"><div class="edu-list-history-empty-icon">📋</div><p>No saved education lists yet</p><p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save packets</p></div>`;
+            return;
+        }
+
+        refreshEduListHistoryLabelFilter();
+
+        listEl.innerHTML = filtered.map(entry => {
+            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
+            return `
+                <div class="edu-list-history-item">
+                    <div class="edu-list-history-header">
+                        <div class="edu-list-history-left" onclick="toggleEduListHistory(${entry.id})">
+                            <span class="edu-list-history-title">${entry.title}</span>
+                            <span class="edu-list-history-count">${(entry.modules || []).length} module${(entry.modules || []).length !== 1 ? 's' : ''}</span>
+                            ${labels}
+                        </div>
+                        <div class="edu-list-history-right">
+                            <span class="edu-list-history-time">${time}</span>
+                            <span class="edu-list-history-chevron" id="edu-list-chevron-${entry.id}" onclick="toggleEduListHistory(${entry.id})">▼</span>
+                            <div class="edu-list-kebab-wrap">
+                                <button class="edu-list-kebab-btn" onclick="toggleEduListKebab(event, ${entry.id})" title="Actions">⋮</button>
+                                <div class="edu-list-kebab-menu" id="edu-list-kebab-${entry.id}">
+                                    <button onclick="loadEduListHistoryEntry(${entry.id}); closeAllEduListKebabs();">📋 Load to Current</button>
+                                    <button onclick="emailEduListHistory(${entry.id}); closeAllEduListKebabs();">✉️ Email</button>
+                                    <button onclick="downloadEduListHistoryPdf(${entry.id}); closeAllEduListKebabs();">📄 PDF</button>
+                                    <button onclick="printEduListHistory(${entry.id}); closeAllEduListKebabs();">🖨️ Print</button>
+                                    <button onclick="toggleEduListHistoryLabels(${entry.id}); closeAllEduListKebabs();">🏷️ Label</button>
+                                    <button class="edu-list-kebab-danger" onclick="deleteEduListHistoryEntry(${entry.id}); closeAllEduListKebabs();">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edu-list-history-body" id="edu-list-body-${entry.id}">
+                        ${(entry.modules || []).map(m => `
+                            <div class="edu-list-history-module">
+                                <div class="edu-list-history-module-icon">${m.icon}</div>
+                                <div class="edu-list-history-module-info">
+                                    <div class="edu-list-history-module-name">${m.title}</div>
+                                    <div class="edu-list-history-module-cat">${m.category}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="history-label-editor" id="edu-list-label-editor-${entry.id}" style="display:none;">
+                            <div class="label-input-wrapper">
+                                <div class="label-input-container" id="labels-edu-list-history-${entry.id}" onclick="this.querySelector('.label-input').focus()">
+                                    <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                </div>
+                                <div class="label-suggestions" id="suggestions-edu-list-history-${entry.id}"></div>
+                            </div>
+                            <div class="history-label-actions">
+                                <button class="btn btn-outline btn-sm" onclick="cancelEduListHistoryLabels(${entry.id})">Cancel</button>
+                                <button class="btn btn-primary btn-sm" onclick="saveEduListHistoryLabels(${entry.id})">Save Labels</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function applyEduListHistoryFilters() {
+        const search = document.getElementById('edu-list-history-search')?.value || '';
+        const label = document.getElementById('edu-list-history-label-filter')?.value || '';
+        renderEduListHistory(search, label);
+    }
+
+    function refreshEduListHistoryLabelFilter() {
+        const select = document.getElementById('edu-list-history-label-filter');
+        if (!select) return;
+        const current = select.value;
+        const allLabels = new Set();
+        eduListHistoryData.forEach(e => (e.labels || []).forEach(l => allLabels.add(l)));
+        select.innerHTML = '<option value="">All Labels</option>' +
+            [...allLabels].sort().map(l => `<option value="${l}" ${l === current ? 'selected' : ''}>${l}</option>`).join('');
+    }
+
+    function toggleEduListHistory(id) {
+        const body = document.getElementById('edu-list-body-' + id);
+        const chevron = document.getElementById('edu-list-chevron-' + id);
+        if (!body) return;
+        const isOpen = body.classList.toggle('open');
+        if (chevron) chevron.classList.toggle('open', isOpen);
+    }
+
+    function toggleEduListKebab(e, id) {
+        e.stopPropagation();
+        closeAllEduListKebabs();
+        const menu = document.getElementById('edu-list-kebab-' + id);
+        if (menu) menu.classList.toggle('open');
+    }
+
+    function closeAllEduListKebabs() {
+        document.querySelectorAll('.edu-list-kebab-menu.open').forEach(m => m.classList.remove('open'));
+    }
+
+    function loadEduListHistoryEntry(id) {
+        const entry = eduListHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        eduCurrentList = (entry.modules || []).map(m => ({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview }));
+        saveEduListCurrentToDB();
+        switchEduSubTab('current');
+    }
+
+    async function deleteEduListHistoryEntry(id) {
+        if (!confirm('Delete this saved list? This cannot be undone.')) return;
+        const { error } = await sb.from('edu_list_history').delete().eq('id', id);
+        if (error) { alert('Error deleting: ' + error.message); return; }
+        eduListHistoryData = eduListHistoryData.filter(e => e.id !== id);
+        renderEduListHistory(
+            document.getElementById('edu-list-history-search')?.value || '',
+            document.getElementById('edu-list-history-label-filter')?.value || ''
+        );
+    }
+
+    function toggleEduListHistoryLabels(id) {
+        const editor = document.getElementById('edu-list-label-editor-' + id);
+        if (!editor) return;
+        const body = document.getElementById('edu-list-body-' + id);
+        if (body && !body.classList.contains('open')) toggleEduListHistory(id);
+        const isVisible = editor.style.display !== 'none' && editor.style.display !== '';
+        editor.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+            const entry = eduListHistoryData.find(e => e.id === id);
+            initLabelInput('labels-edu-list-history-' + id);
+            if (entry && entry.labels) {
+                entry.labels.forEach(l => addLabel('labels-edu-list-history-' + id, l));
+            }
+        }
+    }
+
+    function cancelEduListHistoryLabels(id) {
+        const editor = document.getElementById('edu-list-label-editor-' + id);
+        if (editor) editor.style.display = 'none';
+    }
+
+    async function saveEduListHistoryLabels(id) {
+        const labels = getLabels('labels-edu-list-history-' + id);
+        const { error } = await sb.from('edu_list_history').update({ labels }).eq('id', id);
+        if (error) { alert('Error saving labels: ' + error.message); return; }
+        const entry = eduListHistoryData.find(e => e.id === id);
+        if (entry) entry.labels = labels;
+        cancelEduListHistoryLabels(id);
+        renderEduListHistory(
+            document.getElementById('edu-list-history-search')?.value || '',
+            document.getElementById('edu-list-history-label-filter')?.value || ''
+        );
+    }
+
+    function formatEduListText(modules, title) {
+        const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        let text = 'PATIENT EDUCATION PACKET\n';
+        text += (title || 'Education List') + '\n';
+        text += 'Generated: ' + dateStr + '\n';
+        text += modules.length + ' module' + (modules.length !== 1 ? 's' : '') + '\n';
+        text += '='.repeat(50) + '\n\n';
+        modules.forEach((m, i) => {
+            text += (i + 1) + '. ' + m.title + ' (' + m.category + ')\n';
+            text += '   ' + m.overview + '\n\n';
+        });
+        return text;
+    }
+
+    function emailEduList() {
+        if (eduCurrentList.length === 0) return;
+        const text = formatEduListText(eduCurrentList);
+        const subject = 'Patient Education Packet - ' + new Date().toLocaleDateString();
+        window.open(`mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function emailEduListHistory(id) {
+        const entry = eduListHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        const text = formatEduListText(entry.modules || [], entry.title);
+        const subject = entry.title + ' - Patient Education Packet';
+        window.open(`mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function downloadEduListPdf(modules, title) {
+        if (!window.jspdf) { alert('PDF library is still loading. Please try again.'); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - margin * 2;
+        let y = margin;
+
+        function checkPageBreak(needed) {
+            if (y + needed > pageHeight - 20) { doc.addPage(); y = margin; }
+        }
+
+        // Header bar
+        doc.setFillColor(15, 39, 68);
+        doc.rect(0, 0, pageWidth, 18, 'F');
+        doc.setFontSize(14);
+        doc.setTextColor(255);
+        doc.text('CareNote', margin, 12);
+        doc.setFontSize(10);
+        doc.text('Patient Education Packet', pageWidth - margin, 12, { align: 'right' });
+        y = 26;
+
+        // Title
+        doc.setFontSize(17);
+        doc.setTextColor(15, 39, 68);
+        const titleLines = doc.splitTextToSize(title || 'Patient Education Packet', maxWidth);
+        titleLines.forEach(line => { doc.text(line, margin, y); y += 7; });
+
+        // Date
+        doc.setFontSize(9);
+        doc.setTextColor(160);
+        doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), margin, y + 2);
+        y += 12;
+
+        // Divider
+        doc.setDrawColor(220);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 8;
+
+        // Modules
+        modules.forEach((m, i) => {
+            checkPageBreak(28);
+            doc.setFontSize(9);
+            doc.setTextColor(13, 148, 136);
+            doc.text(m.category.toUpperCase(), margin, y);
+            y += 5;
+            doc.setFontSize(13);
+            doc.setTextColor(15, 39, 68);
+            const nameLines = doc.splitTextToSize((i + 1) + '. ' + m.title, maxWidth);
+            nameLines.forEach(line => { checkPageBreak(6); doc.text(line, margin, y); y += 6; });
+            doc.setFontSize(10);
+            doc.setTextColor(80);
+            const overviewLines = doc.splitTextToSize(m.overview, maxWidth);
+            overviewLines.forEach(line => { checkPageBreak(5); doc.text(line, margin + 3, y); y += 4.5; });
+            y += 5;
+            if (i < modules.length - 1) {
+                doc.setDrawColor(235);
+                doc.line(margin, y, pageWidth - margin, y);
+                y += 6;
+            }
+        });
+
+        // Page numbers
+        const pages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(160);
+            doc.text('CareNote', margin, pageHeight - 10);
+            doc.text('Page ' + i + ' of ' + pages, pageWidth - margin, pageHeight - 10, { align: 'right' });
+        }
+
+        doc.save('PatientEducationPacket_' + new Date().toISOString().slice(0, 10) + '.pdf');
+    }
+
+    function downloadEduListCurrentPdf() {
+        if (eduCurrentList.length === 0) return;
+        downloadEduListPdf(eduCurrentList, 'Patient Education Packet');
+    }
+
+    function downloadEduListHistoryPdf(id) {
+        const entry = eduListHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        downloadEduListPdf(entry.modules || [], entry.title);
+    }
+
+    function printEduListModules(modules, title) {
+        const area = document.getElementById('edu-list-print-area');
+        const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        area.innerHTML = `
+            <div class="edu-print-header">
+                <div class="edu-print-app">CareNote &middot; Patient Education Packet</div>
+                <div class="edu-print-date">${dateStr}</div>
+            </div>
+            <div class="edu-print-title">${title || 'Patient Education Packet'}</div>
+            <div class="edu-print-text">${modules.length} module${modules.length !== 1 ? 's' : ''}</div>
+            ${modules.map((m, i) => `
+                <div class="edu-print-section-title">${i + 1}. ${m.icon} ${m.title}</div>
+                <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#0d9488; margin-bottom:4px;">${m.category}</div>
+                <p class="edu-print-text">${m.overview}</p>
+            `).join('')}
+        `;
+        area.style.display = 'block';
+        window.print();
+        setTimeout(() => { area.style.display = 'none'; }, 500);
+    }
+
+    function printEduListCurrent() {
+        if (eduCurrentList.length === 0) return;
+        printEduListModules(eduCurrentList, 'Patient Education Packet');
+    }
+
+    function printEduListHistory(id) {
+        const entry = eduListHistoryData.find(e => e.id === id);
+        if (!entry) return;
+        printEduListModules(entry.modules || [], entry.title);
+    }
+
+    function toggleEduListDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('eduListDropdownMenu').classList.toggle('open');
+    }
+
+    function closeEduListDropdown() {
+        const menu = document.getElementById('eduListDropdownMenu');
+        if (menu) menu.classList.remove('open');
     }
 
     // ── PDF Generation ──────────────────────────────────────────────
