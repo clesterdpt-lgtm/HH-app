@@ -1573,10 +1573,12 @@
         .search-filter-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--teal-light); color: var(--navy); font-size: 13px; font-weight: 500; padding: 4px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; }
         .search-filter-pill .remove-pill { cursor: pointer; font-size: 15px; line-height: 1; margin-left: 2px; color: var(--gray-500); }
         .search-filter-pill .remove-pill:hover { color: var(--red, #ef4444); }
-        .search-type-toggles { display: flex; gap: 8px; }
-        .search-type-toggle { padding: 6px 16px; border-radius: 20px; border: 1px solid var(--gray-300); background: var(--white); color: var(--gray-500); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+        .search-type-section { border-top: 1px solid var(--gray-100); padding-top: 14px; margin-top: 4px; }
+        .search-type-label { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+        .search-type-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .search-type-toggle { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--gray-300); background: var(--white); color: var(--gray-500); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; text-align: center; }
         .search-type-toggle.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
-        .search-type-toggle:hover { border-color: var(--teal); }
+        .search-type-toggle:not(.active):hover { border-color: var(--teal); color: var(--teal); }
         .search-results-count { font-size: 14px; font-weight: 600; color: var(--gray-600); margin-bottom: 12px; }
         .search-empty-state { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .search-empty-state-icon { font-size: 48px; margin-bottom: 12px; }
@@ -1603,7 +1605,6 @@
         .search-kebab-menu button:hover { background: var(--gray-100); }
         .search-bulk-bar { display: none; position: sticky; bottom: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-top: 1px solid var(--gray-200); padding: 12px 16px; gap: 10px; justify-content: flex-end; border-radius: 0 0 12px 12px; z-index: 10; }
         @media (max-width: 600px) {
-            .search-type-toggles { flex-wrap: wrap; }
             .search-result-left { flex-wrap: wrap; }
         }
     </style>
@@ -2701,11 +2702,14 @@
                     </div>
                 </div>
                 <div class="search-active-filters" id="search-active-filters"></div>
-                <div class="search-type-toggles">
-                    <button class="search-type-toggle active" data-type="notes" onclick="toggleSearchType(this)">Notes</button>
-                    <button class="search-type-toggle active" data-type="hep" onclick="toggleSearchType(this)">HEP</button>
-                    <button class="search-type-toggle active" data-type="medications" onclick="toggleSearchType(this)">Medications</button>
-                    <button class="search-type-toggle active" data-type="edu" onclick="toggleSearchType(this)">Patient Ed</button>
+                <div class="search-type-section">
+                    <div class="search-type-label">Search in</div>
+                    <div class="search-type-toggles">
+                        <button class="search-type-toggle active" data-type="notes" onclick="toggleSearchType(this)">Notes</button>
+                        <button class="search-type-toggle active" data-type="hep" onclick="toggleSearchType(this)">HEP</button>
+                        <button class="search-type-toggle active" data-type="medications" onclick="toggleSearchType(this)">Medications</button>
+                        <button class="search-type-toggle active" data-type="edu" onclick="toggleSearchType(this)">Patient Ed</button>
+                    </div>
                 </div>
             </div>
             <div class="search-empty-state" id="search-empty-state">
