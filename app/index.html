@@ -2408,10 +2408,46 @@
                                     <option value="Safety">Safety</option>
                                     <option value="Medications">Medications</option>
                                     <option value="Neurological">Neurological</option>
+                                    <option value="Custom">Custom</option>
                                 </select>
                             </div>
+                            <button class="btn btn-outline" onclick="showAddCustomEduModule()">+ Custom Module</button>
                         </div>
                     </div>
+                </div>
+                <div id="edu-custom-module-form" class="hep-custom-form" style="display:none; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <h3 id="edu-custom-module-form-title" style="margin:0; font-size:16px; color:var(--navy);">Create Custom Module</h3>
+                        <button class="btn btn-outline" onclick="hideAddCustomEduModule()" style="padding:6px 12px; font-size:13px;">✕ Cancel</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Title *</label>
+                        <input type="text" class="form-input" id="edu-custom-title" placeholder="e.g. Lymphedema Management">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <div class="select-wrapper">
+                            <select id="edu-custom-category">
+                                <option value="Cardiac">Cardiac</option>
+                                <option value="Pulmonary">Pulmonary</option>
+                                <option value="Endocrine">Endocrine</option>
+                                <option value="Wound Care">Wound Care</option>
+                                <option value="Safety">Safety</option>
+                                <option value="Medications">Medications</option>
+                                <option value="Neurological">Neurological</option>
+                                <option value="Custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(optional — paste an emoji)</span></label>
+                        <input type="text" class="form-input" id="edu-custom-icon" placeholder="📝" style="max-width:80px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Overview / Content *</label>
+                        <textarea class="form-input" id="edu-custom-overview" rows="5" placeholder="Education content for the patient..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCustomEduModule()">Save to Library</button>
                 </div>
                 <div id="edu-grid" class="edu-grid"></div>
             </div>
@@ -2964,7 +3000,7 @@
                 }
             }
             if (module === 'education') {
-                renderEduGrid();
+                loadCustomEduModules().then(() => renderEduGrid());
                 loadEduListCurrentFromDB().then(data => {
                     eduCurrentList = data;
                     renderEduList();
@@ -3985,7 +4021,7 @@
                 }
             }
             if (savedModule === 'education') {
-                renderEduGrid();
+                loadCustomEduModules().then(() => renderEduGrid());
                 loadEduListCurrentFromDB().then(data => {
                     eduCurrentList = data;
                     renderEduList();
@@ -9207,6 +9243,107 @@
     let eduCurrentList = [];
     let eduListHistoryData = [];
     let eduListLabelInitialized = false;
+    let eduCustomModules = [];
+    let eduEditingCustomModuleId = null;
+
+    // ── Custom Education Modules (Supabase) ──────────────────────────────
+    async function loadCustomEduModules() {
+        if (!currentUser) { eduCustomModules = []; return; }
+        const { data, error } = await sb.from('edu_custom_modules').select('*').order('created_at', { ascending: false });
+        if (error) { console.log('Custom edu modules load error:', error.message); eduCustomModules = []; return; }
+        eduCustomModules = data || [];
+    }
+
+    function getFullEduModuleLibrary() {
+        const custom = eduCustomModules.map(m => ({
+            id: m.id,
+            _db_id: m.id,
+            title: m.title,
+            icon: m.icon || '📝',
+            category: m.category,
+            overview: m.overview,
+            keyPoints: [],
+            callDoctor: [],
+            resources: [],
+            is_custom: true,
+        }));
+        return [...EDUCATION_MODULES, ...custom];
+    }
+
+    function findEduModule(id) {
+        return getFullEduModuleLibrary().find(x => x.id === id);
+    }
+
+    function showAddCustomEduModule() {
+        document.getElementById('edu-custom-module-form').style.display = 'block';
+    }
+
+    function hideAddCustomEduModule() {
+        document.getElementById('edu-custom-module-form').style.display = 'none';
+        document.getElementById('edu-custom-title').value = '';
+        document.getElementById('edu-custom-overview').value = '';
+        document.getElementById('edu-custom-icon').value = '';
+        document.getElementById('edu-custom-module-form-title').textContent = 'Create Custom Module';
+        const saveBtn = document.querySelector('#edu-custom-module-form .btn-primary');
+        if (saveBtn) saveBtn.textContent = 'Save to Library';
+        eduEditingCustomModuleId = null;
+    }
+
+    function showEditCustomEduModule(id) {
+        const m = eduCustomModules.find(x => x.id === id);
+        if (!m) return;
+        eduEditingCustomModuleId = id;
+        document.getElementById('edu-custom-title').value = m.title;
+        document.getElementById('edu-custom-category').value = m.category;
+        document.getElementById('edu-custom-icon').value = m.icon || '';
+        document.getElementById('edu-custom-overview').value = m.overview;
+        document.getElementById('edu-custom-module-form-title').textContent = 'Edit Custom Module';
+        const saveBtn = document.querySelector('#edu-custom-module-form .btn-primary');
+        if (saveBtn) saveBtn.textContent = 'Save Changes';
+        document.getElementById('edu-custom-module-form').style.display = 'block';
+        document.getElementById('edu-custom-module-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function saveCustomEduModule() {
+        const title = document.getElementById('edu-custom-title').value.trim();
+        const category = document.getElementById('edu-custom-category').value;
+        const icon = document.getElementById('edu-custom-icon').value.trim() || '📝';
+        const overview = document.getElementById('edu-custom-overview').value.trim();
+
+        if (!title) { alert('Please enter a title.'); return; }
+        if (!overview) { alert('Please enter content/overview.'); return; }
+        if (!currentUser) { alert('Please sign in to save custom modules.'); return; }
+
+        const saveBtn = document.querySelector('#edu-custom-module-form .btn-primary');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
+        if (eduEditingCustomModuleId) {
+            const updates = { title, category, icon, overview };
+            const { data, error } = await sb.from('edu_custom_modules').update(updates).eq('id', eduEditingCustomModuleId).select().single();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
+            if (error) { alert('Error updating module: ' + error.message); return; }
+            const idx = eduCustomModules.findIndex(m => m.id === eduEditingCustomModuleId);
+            if (idx !== -1) eduCustomModules[idx] = data;
+        } else {
+            const entry = { user_id: currentUser.id, title, category, icon, overview };
+            const { data, error } = await sb.from('edu_custom_modules').insert(entry).select().single();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Library'; }
+            if (error) { alert('Error saving module: ' + error.message); return; }
+            eduCustomModules.unshift(data);
+        }
+
+        hideAddCustomEduModule();
+        renderEduGrid();
+    }
+
+    async function deleteCustomEduModule(id) {
+        showConfirm('Delete Module', 'Remove this custom module from your library?', async () => {
+            const { error } = await sb.from('edu_custom_modules').delete().eq('id', id);
+            if (error) { alert('Error deleting: ' + error.message); return; }
+            eduCustomModules = eduCustomModules.filter(m => m.id !== id);
+            renderEduGrid();
+        });
+    }
 
     function renderEduGrid() {
         const search = (document.getElementById('edu-search')?.value || '').toLowerCase().trim();
@@ -9214,7 +9351,7 @@
         const grid = document.getElementById('edu-grid');
         if (!grid) return;
 
-        const filtered = EDUCATION_MODULES.filter(m => {
+        const filtered = getFullEduModuleLibrary().filter(m => {
             const matchSearch = !search ||
                 m.title.toLowerCase().includes(search) ||
                 m.category.toLowerCase().includes(search) ||
@@ -9233,8 +9370,9 @@
         }
 
         grid.innerHTML = filtered.map(m => `
-            <div class="edu-card" onclick="openEduModule('${m.id}')" role="button" tabindex="0"
+            <div class="edu-card" style="${m.is_custom ? 'position:relative;' : ''}" onclick="openEduModule('${m.id}')" role="button" tabindex="0"
                  onkeydown="if(event.key==='Enter'||event.key===' '){openEduModule('${m.id}')}">
+                ${m.is_custom ? `<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditCustomEduModule('${m._db_id}')" title="Edit module">✏️</button>` : ''}
                 <div class="edu-card-icon-area">
                     <div class="edu-card-icon">${m.icon}</div>
                     <div class="edu-card-category">${m.category}</div>
@@ -9252,7 +9390,7 @@
     }
 
     function openEduModule(id) {
-        const m = EDUCATION_MODULES.find(x => x.id === id);
+        const m = findEduModule(id);
         if (!m) return;
         eduActiveModule = m;
 
@@ -9265,6 +9403,7 @@
                 <div class="edu-section-title">Overview</div>
                 <div class="edu-section-text">${m.overview}</div>
             </div>
+            ${m.keyPoints && m.keyPoints.length > 0 ? `
             <div class="edu-section">
                 <div class="edu-section-title">Key Points</div>
                 <ul class="edu-key-points">
@@ -9275,7 +9414,8 @@
                         </li>
                     `).join('')}
                 </ul>
-            </div>
+            </div>` : ''}
+            ${m.callDoctor && m.callDoctor.length > 0 ? `
             <div class="edu-section">
                 <div class="edu-section-title">When to Call Your Doctor or 911</div>
                 <ul class="edu-warning-list">
@@ -9285,7 +9425,8 @@
                         </li>
                     `).join('')}
                 </ul>
-            </div>
+            </div>` : ''}
+            ${m.resources && m.resources.length > 0 ? `
             <div class="edu-section">
                 <div class="edu-section-title">Helpful Resources</div>
                 <div class="edu-resources">
@@ -9296,7 +9437,7 @@
                         </div>
                     `).join('')}
                 </div>
-            </div>
+            </div>` : ''}
         `;
 
         document.getElementById('edu-modal-overlay').classList.add('open');
@@ -9549,7 +9690,7 @@
 
     function addToEduList(id) {
         if (!id) return;
-        const m = EDUCATION_MODULES.find(x => x.id === id);
+        const m = findEduModule(id);
         if (!m) return;
 
         const btn = document.getElementById('edu-add-btn-' + id);
