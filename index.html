@@ -55,6 +55,9 @@
         .user-email { color: var(--gray-400); font-size: 13px; }
         .btn-signout { background: rgba(255,255,255,0.08); color: var(--gray-400); border: 1px solid rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
         .btn-signout:hover { background: rgba(255,255,255,0.15); color: var(--white); }
+        .mobile-login { display: none; color: var(--white); background: var(--teal); border: none; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; text-decoration: none; cursor: pointer; transition: background 0.2s; }
+        .mobile-login:hover { background: #0b7a70; }
+        @media (max-width: 720px) { .mobile-login { display: inline-flex; align-items: center; } }
 
         /* Hamburger button */
         .hamburger-btn { background: none; border: none; color: var(--white); font-size: 22px; cursor: pointer; padding: 6px 10px; margin-right: 6px; border-radius: 6px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
@@ -1626,6 +1629,7 @@
         <div class="header-badge">Personal Testing</div>
         <span class="user-email" id="user-email"></span>
         <button class="btn-signout" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+        <a class="mobile-login" href="../app/">Log In</a>
     </div>
 </header>
 
