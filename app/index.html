@@ -2554,15 +2554,15 @@
                         <label class="form-label">Overview</label>
                         <textarea class="form-input" id="edu-edit-overview" rows="4" style="resize:vertical;"></textarea>
                     </div>
-                    <div class="form-group" style="margin-bottom:0;">
+                    <div id="edu-edit-keypoints-group" class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Key Points <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(one per line)</span></label>
                         <textarea class="form-input" id="edu-edit-keypoints" rows="8" style="resize:vertical;"></textarea>
                     </div>
-                    <div class="form-group" style="margin-bottom:0;">
+                    <div id="edu-edit-calldoctor-group" class="form-group" style="margin-bottom:0;">
                         <label class="form-label">When to Call Doctor / 911 <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(prefix with "911: " for emergencies, one per line)</span></label>
                         <textarea class="form-input" id="edu-edit-calldoctor" rows="6" style="resize:vertical;"></textarea>
                     </div>
-                    <div class="form-group" style="margin-bottom:0;">
+                    <div id="edu-edit-resources-group" class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Resources <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(format: Name | Description, one per line)</span></label>
                         <textarea class="form-input" id="edu-edit-resources" rows="4" style="resize:vertical;"></textarea>
                     </div>
@@ -9444,23 +9444,32 @@
 
     // ── Edit Modal Logic ───────────────────────────────────────────
     function openEduEditModal(id) {
-        const m = getEffectiveModule(id);
+        const isBuiltin = !!EDUCATION_MODULES.find(x => x.id === id);
+        const customModule = !isBuiltin ? eduCustomModules.find(x => x.id === id) : null;
+        const m = isBuiltin ? getEffectiveModule(id) : customModule;
         if (!m) return;
-        eduEditContext = { type: 'module', id };
-        document.getElementById('edu-edit-modal-icon').textContent = m.icon;
+        eduEditContext = { type: isBuiltin ? 'module' : 'custom', id };
+        document.getElementById('edu-edit-modal-icon').textContent = m.icon || '📝';
         document.getElementById('edu-edit-modal-heading').textContent = 'Edit Module';
         document.getElementById('edu-edit-modal-subtitle').textContent = m.title;
         document.getElementById('edu-edit-title').value = m.title;
-        document.getElementById('edu-edit-icon').value = m.icon;
+        document.getElementById('edu-edit-icon').value = m.icon || '';
         document.getElementById('edu-edit-overview').value = m.overview;
-        document.getElementById('edu-edit-keypoints').value = (m.keyPoints || []).join('\n');
-        document.getElementById('edu-edit-calldoctor').value = (m.callDoctor || []).map(w => w.is911 ? '911: ' + w.text : w.text).join('\n');
-        document.getElementById('edu-edit-resources').value = (m.resources || []).map(r => r.name + ' | ' + r.desc).join('\n');
+        // Built-in-only fields: show for built-ins, hide for custom modules
+        const builtinDisplay = isBuiltin ? '' : 'none';
+        document.getElementById('edu-edit-keypoints-group').style.display = builtinDisplay;
+        document.getElementById('edu-edit-calldoctor-group').style.display = builtinDisplay;
+        document.getElementById('edu-edit-resources-group').style.display = builtinDisplay;
+        if (isBuiltin) {
+            document.getElementById('edu-edit-keypoints').value = (m.keyPoints || []).join('\n');
+            document.getElementById('edu-edit-calldoctor').value = (m.callDoctor || []).map(w => w.is911 ? '911: ' + w.text : w.text).join('\n');
+            document.getElementById('edu-edit-resources').value = (m.resources || []).map(r => r.name + ' | ' + r.desc).join('\n');
+        }
         const saveBtn = document.getElementById('edu-edit-save-btn');
         saveBtn.textContent = '💾 Save Permanently';
         saveBtn.onclick = saveEduModuleEdit;
         const revertBtn = document.getElementById('edu-edit-revert-btn');
-        revertBtn.style.display = eduModuleOverrides[id] ? 'inline-flex' : 'none';
+        revertBtn.style.display = (isBuiltin && eduModuleOverrides[id]) ? 'inline-flex' : 'none';
         document.getElementById('edu-edit-modal-overlay').classList.add('open');
         const modal = document.getElementById('edu-edit-modal');
         modal.classList.add('open');
@@ -9478,6 +9487,9 @@
         document.getElementById('edu-edit-title').value = m.title || '';
         document.getElementById('edu-edit-icon').value = m.icon || '';
         document.getElementById('edu-edit-overview').value = m.overview || '';
+        document.getElementById('edu-edit-keypoints-group').style.display = '';
+        document.getElementById('edu-edit-calldoctor-group').style.display = '';
+        document.getElementById('edu-edit-resources-group').style.display = '';
         document.getElementById('edu-edit-keypoints').value = (m.keyPoints || base.keyPoints || []).join('\n');
         document.getElementById('edu-edit-calldoctor').value = (m.callDoctor || base.callDoctor || []).map(w => w.is911 ? '911: ' + w.text : w.text).join('\n');
         document.getElementById('edu-edit-resources').value = (m.resources || base.resources || []).map(r => r.name + ' | ' + r.desc).join('\n');
@@ -9517,11 +9529,21 @@
     }
 
     async function saveEduModuleEdit() {
-        if (!eduEditContext || eduEditContext.type !== 'module') return;
+        if (!eduEditContext) return;
         const id = eduEditContext.id;
         const fields = parseEduEditFields();
-        eduModuleOverrides[id] = { id, ...fields };
-        await saveEduModuleOverrideToDB(id, fields);
+        if (eduEditContext.type === 'custom') {
+            // Save to Supabase
+            const updates = { title: fields.title, icon: fields.icon, overview: fields.overview };
+            const { data, error } = await sb.from('edu_custom_modules').update(updates).eq('id', id).select().single();
+            if (error) { alert('Error saving module: ' + error.message); return; }
+            const idx = eduCustomModules.findIndex(m => m.id === id);
+            if (idx !== -1) eduCustomModules[idx] = data;
+        } else {
+            // Save built-in override to IndexedDB
+            eduModuleOverrides[id] = { id, ...fields };
+            await saveEduModuleOverrideToDB(id, fields);
+        }
         closeEduEditModal();
         renderEduGrid();
     }
@@ -9574,22 +9596,15 @@
         grid.innerHTML = filtered.map(m => {
             const eff = m.is_custom ? m : getEffectiveModule(m.id);
             const hasOverride = !m.is_custom && !!eduModuleOverrides[m.id];
-            const cardStyle = m.is_custom ? 'position:relative;' : '';
-            const customTopEditBtn = m.is_custom
-                ? '<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditCustomEduModule(\'' + m._db_id + '\')" title="Edit module">✏️</button>'
-                : '';
             const overrideBadge = hasOverride ? ' <span title="Customized" style="font-size:10px;">✏️</span>' : '';
-            const builtinEditBtn = !m.is_custom
-                ? '<div class="edu-card-add-btn" style="background:var(--gray-50);color:var(--gray-600);border-left:1px solid var(--gray-100);" onclick="event.stopPropagation(); openEduEditModal(\'' + m.id + '\')">✏️ Edit</div>'
-                : '';
-            return '<div class="edu-card" style="' + cardStyle + '" onclick="openEduModule(\'' + m.id + '\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){openEduModule(\'' + m.id + '\')}">'
-                + customTopEditBtn
+            const editBtn = '<button class="hep-lib-card-edit" onclick="event.stopPropagation(); openEduEditModal(\'' + m.id + '\')" title="Edit module">✏️</button>';
+            return '<div class="edu-card" style="position:relative;" onclick="openEduModule(\'' + m.id + '\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){openEduModule(\'' + m.id + '\')}">'
+                + editBtn
                 + '<div class="edu-card-icon-area"><div class="edu-card-icon">' + eff.icon + '</div><div class="edu-card-category">' + eff.category + overrideBadge + '</div></div>'
                 + '<div class="edu-card-body"><div class="edu-card-title">' + eff.title + '</div><div class="edu-card-desc">' + eff.overview + '</div></div>'
                 + '<div class="edu-card-footer-row">'
                 + '<div class="edu-card-footer">View Module &rarr;</div>'
                 + '<div class="edu-card-add-btn" id="edu-add-btn-' + m.id + '" onclick="event.stopPropagation(); addToEduList(\'' + m.id + '\')">+ Add to List</div>'
-                + builtinEditBtn
                 + '</div></div>';
         }).join('');
     }
