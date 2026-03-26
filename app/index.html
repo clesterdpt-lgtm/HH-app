@@ -585,6 +585,8 @@
         .edu-modal-overlay.open { display: block; }
         .edu-modal { position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 620px; background: var(--white); z-index: 201; overflow-y: auto; display: none; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
         .edu-modal.open { display: flex; }
+        #edu-edit-modal-overlay { z-index: 202; }
+        #edu-edit-modal { z-index: 203; }
         .edu-modal-header { background: var(--navy); color: var(--white); padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px; position: sticky; top: 0; z-index: 2; }
         .edu-modal-header-icon { font-size: 30px; flex-shrink: 0; }
         .edu-modal-header-text { flex: 1; }
@@ -633,6 +635,8 @@
         .edu-list-item-overview { font-size: 12px; color: var(--gray-500); margin-top: 5px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .edu-list-item-remove { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 18px; padding: 4px 6px; line-height: 1; border-radius: 6px; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
         .edu-list-item-remove:hover { color: var(--red); background: rgba(239,68,68,0.08); }
+        .edu-list-item-edit { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 15px; padding: 4px 6px; line-height: 1; border-radius: 6px; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+        .edu-list-item-edit:hover { color: var(--teal); background: rgba(13,148,136,0.08); }
         .edu-list-current-empty { text-align: center; padding: 60px 24px; color: var(--gray-400); }
         .edu-list-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .edu-list-history-item { border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); margin-bottom: 10px; overflow: hidden; }
@@ -2525,6 +2529,50 @@
 
             <div id="edu-print-area" style="display:none;"></div>
             <div id="edu-list-print-area" style="display:none;"></div>
+
+            <!-- Education Module Edit Panel -->
+            <div id="edu-edit-modal-overlay" class="edu-modal-overlay" onclick="closeEduEditModal()"></div>
+            <div id="edu-edit-modal" class="edu-modal" role="dialog" aria-modal="true" aria-labelledby="edu-edit-modal-heading">
+                <div class="edu-modal-header">
+                    <div class="edu-modal-header-icon" id="edu-edit-modal-icon"></div>
+                    <div class="edu-modal-header-text">
+                        <div class="edu-modal-header-title" id="edu-edit-modal-heading"></div>
+                        <div class="edu-modal-header-subtitle" id="edu-edit-modal-subtitle"></div>
+                    </div>
+                    <button class="edu-modal-close" onclick="closeEduEditModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="edu-modal-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" id="edu-edit-title">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Icon (emoji)</label>
+                        <input type="text" class="form-input" id="edu-edit-icon" style="max-width:120px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Overview</label>
+                        <textarea class="form-input" id="edu-edit-overview" rows="4" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Key Points <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(one per line)</span></label>
+                        <textarea class="form-input" id="edu-edit-keypoints" rows="8" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">When to Call Doctor / 911 <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(prefix with "911: " for emergencies, one per line)</span></label>
+                        <textarea class="form-input" id="edu-edit-calldoctor" rows="6" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Resources <span style="font-weight:400; color:var(--gray-400); font-size:12px;">(format: Name | Description, one per line)</span></label>
+                        <textarea class="form-input" id="edu-edit-resources" rows="4" style="resize:vertical;"></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; padding-bottom:8px; align-items:center;">
+                        <button class="btn btn-primary" id="edu-edit-save-btn">💾 Save</button>
+                        <button class="btn btn-outline" onclick="closeEduEditModal()">Cancel</button>
+                        <button class="btn btn-outline" id="edu-edit-revert-btn" style="margin-left:auto; color:var(--red); border-color:var(--red); display:none;" onclick="revertEduModuleToDefault()">↩ Revert to Default</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="view-vehicle" style="display:none;">
@@ -3000,7 +3048,7 @@
                 }
             }
             if (module === 'education') {
-                loadCustomEduModules().then(() => renderEduGrid());
+                Promise.all([loadCustomEduModules(), loadEduModuleOverridesFromDB()]).then(() => renderEduGrid());
                 loadEduListCurrentFromDB().then(data => {
                     eduCurrentList = data;
                     renderEduList();
@@ -3029,7 +3077,7 @@
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 9);
+            const req = indexedDB.open('carenote', 10);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -3063,6 +3111,9 @@
                 if (!db.objectStoreNames.contains('vehicleExpenses')) {
                     const ve = db.createObjectStore('vehicleExpenses', { keyPath: 'id', autoIncrement: true });
                     ve.createIndex('date', 'date', { unique: false });
+                }
+                if (!db.objectStoreNames.contains('eduModuleOverrides')) {
+                    db.createObjectStore('eduModuleOverrides', { keyPath: 'id' });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -4021,7 +4072,7 @@
                 }
             }
             if (savedModule === 'education') {
-                loadCustomEduModules().then(() => renderEduGrid());
+                Promise.all([loadCustomEduModules(), loadEduModuleOverridesFromDB()]).then(() => renderEduGrid());
                 loadEduListCurrentFromDB().then(data => {
                     eduCurrentList = data;
                     renderEduList();
@@ -9245,6 +9296,8 @@
     let eduListLabelInitialized = false;
     let eduCustomModules = [];
     let eduEditingCustomModuleId = null;
+    let eduModuleOverrides = {}; // keyed by module id, stores permanent customizations for built-in modules
+    let eduEditContext = null;   // { type: 'module'|'list', id, listIndex }
 
     // ── Custom Education Modules (Supabase) ──────────────────────────────
     async function loadCustomEduModules() {
@@ -9345,6 +9398,154 @@
         });
     }
 
+    // ── Module Override Persistence ────────────────────────────────
+    async function saveEduModuleOverrideToDB(id, data) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('eduModuleOverrides', 'readwrite');
+            tx.objectStore('eduModuleOverrides').put({ id, ...data });
+        } catch(e) { console.log('EduOverride save error:', e); }
+    }
+
+    async function deleteEduModuleOverrideFromDB(id) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('eduModuleOverrides', 'readwrite');
+            tx.objectStore('eduModuleOverrides').delete(id);
+        } catch(e) { console.log('EduOverride delete error:', e); }
+    }
+
+    async function loadEduModuleOverridesFromDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction('eduModuleOverrides', 'readonly');
+            const store = tx.objectStore('eduModuleOverrides');
+            const req = store.getAll();
+            return new Promise(resolve => {
+                req.onsuccess = () => {
+                    const records = req.result || [];
+                    eduModuleOverrides = {};
+                    records.forEach(r => { eduModuleOverrides[r.id] = r; });
+                    resolve();
+                };
+                req.onerror = () => resolve();
+            });
+        } catch(e) { return; }
+    }
+
+    // Returns the effective module: applies any stored override for built-in modules
+    function getEffectiveModule(id) {
+        const base = EDUCATION_MODULES.find(x => x.id === id);
+        if (base) {
+            return eduModuleOverrides[id] ? { ...base, ...eduModuleOverrides[id] } : base;
+        }
+        return findEduModule(id); // custom modules returned as-is
+    }
+
+    // ── Edit Modal Logic ───────────────────────────────────────────
+    function openEduEditModal(id) {
+        const m = getEffectiveModule(id);
+        if (!m) return;
+        eduEditContext = { type: 'module', id };
+        document.getElementById('edu-edit-modal-icon').textContent = m.icon;
+        document.getElementById('edu-edit-modal-heading').textContent = 'Edit Module';
+        document.getElementById('edu-edit-modal-subtitle').textContent = m.title;
+        document.getElementById('edu-edit-title').value = m.title;
+        document.getElementById('edu-edit-icon').value = m.icon;
+        document.getElementById('edu-edit-overview').value = m.overview;
+        document.getElementById('edu-edit-keypoints').value = (m.keyPoints || []).join('\n');
+        document.getElementById('edu-edit-calldoctor').value = (m.callDoctor || []).map(w => w.is911 ? '911: ' + w.text : w.text).join('\n');
+        document.getElementById('edu-edit-resources').value = (m.resources || []).map(r => r.name + ' | ' + r.desc).join('\n');
+        const saveBtn = document.getElementById('edu-edit-save-btn');
+        saveBtn.textContent = '💾 Save Permanently';
+        saveBtn.onclick = saveEduModuleEdit;
+        const revertBtn = document.getElementById('edu-edit-revert-btn');
+        revertBtn.style.display = eduModuleOverrides[id] ? 'inline-flex' : 'none';
+        document.getElementById('edu-edit-modal-overlay').classList.add('open');
+        const modal = document.getElementById('edu-edit-modal');
+        modal.classList.add('open');
+        modal.scrollTop = 0;
+    }
+
+    function openEduListItemEdit(index) {
+        const m = eduCurrentList[index];
+        if (!m) return;
+        const base = getEffectiveModule(m.id) || {};
+        eduEditContext = { type: 'list', listIndex: index };
+        document.getElementById('edu-edit-modal-icon').textContent = m.icon || '';
+        document.getElementById('edu-edit-modal-heading').textContent = 'Edit List Entry';
+        document.getElementById('edu-edit-modal-subtitle').textContent = (m.title || '') + ' — changes apply to this list only';
+        document.getElementById('edu-edit-title').value = m.title || '';
+        document.getElementById('edu-edit-icon').value = m.icon || '';
+        document.getElementById('edu-edit-overview').value = m.overview || '';
+        document.getElementById('edu-edit-keypoints').value = (m.keyPoints || base.keyPoints || []).join('\n');
+        document.getElementById('edu-edit-calldoctor').value = (m.callDoctor || base.callDoctor || []).map(w => w.is911 ? '911: ' + w.text : w.text).join('\n');
+        document.getElementById('edu-edit-resources').value = (m.resources || base.resources || []).map(r => r.name + ' | ' + r.desc).join('\n');
+        const saveBtn = document.getElementById('edu-edit-save-btn');
+        saveBtn.textContent = '💾 Save for This List';
+        saveBtn.onclick = saveEduListItemEdit;
+        document.getElementById('edu-edit-revert-btn').style.display = 'none';
+        document.getElementById('edu-edit-modal-overlay').classList.add('open');
+        const modal = document.getElementById('edu-edit-modal');
+        modal.classList.add('open');
+        modal.scrollTop = 0;
+    }
+
+    function closeEduEditModal() {
+        eduEditContext = null;
+        document.getElementById('edu-edit-modal-overlay').classList.remove('open');
+        document.getElementById('edu-edit-modal').classList.remove('open');
+    }
+
+    function parseEduEditFields() {
+        return {
+            title: document.getElementById('edu-edit-title').value.trim(),
+            icon: document.getElementById('edu-edit-icon').value.trim(),
+            overview: document.getElementById('edu-edit-overview').value.trim(),
+            keyPoints: document.getElementById('edu-edit-keypoints').value.split('\n').map(s => s.trim()).filter(Boolean),
+            callDoctor: document.getElementById('edu-edit-calldoctor').value.split('\n').map(s => s.trim()).filter(Boolean).map(s => {
+                if (s.startsWith('911: ')) return { text: s.slice(5).trim(), is911: true };
+                if (s.startsWith('911:')) return { text: s.slice(4).trim(), is911: true };
+                return { text: s, is911: false };
+            }),
+            resources: document.getElementById('edu-edit-resources').value.split('\n').map(s => s.trim()).filter(Boolean).map(s => {
+                const idx = s.indexOf(' | ');
+                if (idx >= 0) return { name: s.slice(0, idx).trim(), desc: s.slice(idx + 3).trim() };
+                return { name: s, desc: '' };
+            })
+        };
+    }
+
+    async function saveEduModuleEdit() {
+        if (!eduEditContext || eduEditContext.type !== 'module') return;
+        const id = eduEditContext.id;
+        const fields = parseEduEditFields();
+        eduModuleOverrides[id] = { id, ...fields };
+        await saveEduModuleOverrideToDB(id, fields);
+        closeEduEditModal();
+        renderEduGrid();
+    }
+
+    async function revertEduModuleToDefault() {
+        if (!eduEditContext || eduEditContext.type !== 'module') return;
+        const id = eduEditContext.id;
+        if (!confirm('Revert "' + (EDUCATION_MODULES.find(x => x.id === id)?.title || id) + '" to its original default content? Your customizations will be permanently removed.')) return;
+        delete eduModuleOverrides[id];
+        await deleteEduModuleOverrideFromDB(id);
+        closeEduEditModal();
+        renderEduGrid();
+    }
+
+    function saveEduListItemEdit() {
+        if (!eduEditContext || eduEditContext.type !== 'list') return;
+        const index = eduEditContext.listIndex;
+        const fields = parseEduEditFields();
+        eduCurrentList[index] = { ...eduCurrentList[index], ...fields };
+        saveEduListCurrentToDB();
+        closeEduEditModal();
+        renderEduList();
+    }
+
     function renderEduGrid() {
         const search = (document.getElementById('edu-search')?.value || '').toLowerCase().trim();
         const category = document.getElementById('edu-category-filter')?.value || '';
@@ -9352,11 +9553,12 @@
         if (!grid) return;
 
         const filtered = getFullEduModuleLibrary().filter(m => {
+            const eff = m.is_custom ? m : getEffectiveModule(m.id);
             const matchSearch = !search ||
-                m.title.toLowerCase().includes(search) ||
-                m.category.toLowerCase().includes(search) ||
-                m.overview.toLowerCase().includes(search);
-            const matchCat = !category || m.category === category;
+                eff.title.toLowerCase().includes(search) ||
+                eff.category.toLowerCase().includes(search) ||
+                eff.overview.toLowerCase().includes(search);
+            const matchCat = !category || eff.category === category;
             return matchSearch && matchCat;
         });
 
@@ -9369,28 +9571,32 @@
             return;
         }
 
-        grid.innerHTML = filtered.map(m => `
+        grid.innerHTML = filtered.map(m => {
+            const eff = m.is_custom ? m : getEffectiveModule(m.id);
+            const hasOverride = !m.is_custom && !!eduModuleOverrides[m.id];
+            return `
             <div class="edu-card" style="${m.is_custom ? 'position:relative;' : ''}" onclick="openEduModule('${m.id}')" role="button" tabindex="0"
                  onkeydown="if(event.key==='Enter'||event.key===' '){openEduModule('${m.id}')}">
                 ${m.is_custom ? `<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditCustomEduModule('${m._db_id}')" title="Edit module">✏️</button>` : ''}
                 <div class="edu-card-icon-area">
-                    <div class="edu-card-icon">${m.icon}</div>
-                    <div class="edu-card-category">${m.category}</div>
+                    <div class="edu-card-icon">${eff.icon}</div>
+                    <div class="edu-card-category">${eff.category}${hasOverride ? ' <span title="Customized" style="font-size:10px;">✏️</span>' : ''}</div>
                 </div>
                 <div class="edu-card-body">
-                    <div class="edu-card-title">${m.title}</div>
-                    <div class="edu-card-desc">${m.overview}</div>
+                    <div class="edu-card-title">${eff.title}</div>
+                    <div class="edu-card-desc">${eff.overview}</div>
                 </div>
                 <div class="edu-card-footer-row">
                     <div class="edu-card-footer">View Module &rarr;</div>
                     <div class="edu-card-add-btn" id="edu-add-btn-${m.id}" onclick="event.stopPropagation(); addToEduList('${m.id}')">+ Add to List</div>
+                    ${!m.is_custom ? `<div class="edu-card-add-btn" style="background:var(--gray-50); color:var(--gray-600); border-left:1px solid var(--gray-100);" onclick="event.stopPropagation(); openEduEditModal('${m.id}')">✏️ Edit</div>` : ''}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function openEduModule(id) {
-        const m = findEduModule(id);
+        const m = getEffectiveModule(id);
         if (!m) return;
         eduActiveModule = m;
 
@@ -9690,7 +9896,7 @@
 
     function addToEduList(id) {
         if (!id) return;
-        const m = findEduModule(id);
+        const m = getEffectiveModule(id);
         if (!m) return;
 
         const btn = document.getElementById('edu-add-btn-' + id);
@@ -9711,7 +9917,7 @@
             return;
         }
 
-        eduCurrentList.push({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview });
+        eduCurrentList.push({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview, keyPoints: m.keyPoints || [], callDoctor: m.callDoctor || [], resources: m.resources || [] });
         saveEduListCurrentToDB();
 
         if (btn) {
@@ -9765,6 +9971,7 @@
                     <div class="edu-list-item-category">${m.category}</div>
                     <div class="edu-list-item-overview">${m.overview}</div>
                 </div>
+                <button class="edu-list-item-edit" onclick="openEduListItemEdit(${i})" title="Edit">✏️</button>
                 <button class="edu-list-item-remove" onclick="removeFromEduList(${i})" title="Remove">✕</button>
             </div>
         `).join('');
