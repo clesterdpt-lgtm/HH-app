@@ -9574,25 +9574,24 @@
         grid.innerHTML = filtered.map(m => {
             const eff = m.is_custom ? m : getEffectiveModule(m.id);
             const hasOverride = !m.is_custom && !!eduModuleOverrides[m.id];
-            return `
-            <div class="edu-card" style="${m.is_custom ? 'position:relative;' : ''}" onclick="openEduModule('${m.id}')" role="button" tabindex="0"
-                 onkeydown="if(event.key==='Enter'||event.key===' '){openEduModule('${m.id}')}">
-                ${m.is_custom ? `<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditCustomEduModule('${m._db_id}')" title="Edit module">✏️</button>` : ''}
-                <div class="edu-card-icon-area">
-                    <div class="edu-card-icon">${eff.icon}</div>
-                    <div class="edu-card-category">${eff.category}${hasOverride ? ' <span title="Customized" style="font-size:10px;">✏️</span>' : ''}</div>
-                </div>
-                <div class="edu-card-body">
-                    <div class="edu-card-title">${eff.title}</div>
-                    <div class="edu-card-desc">${eff.overview}</div>
-                </div>
-                <div class="edu-card-footer-row">
-                    <div class="edu-card-footer">View Module &rarr;</div>
-                    <div class="edu-card-add-btn" id="edu-add-btn-${m.id}" onclick="event.stopPropagation(); addToEduList('${m.id}')">+ Add to List</div>
-                    ${!m.is_custom ? `<div class="edu-card-add-btn" style="background:var(--gray-50); color:var(--gray-600); border-left:1px solid var(--gray-100);" onclick="event.stopPropagation(); openEduEditModal('${m.id}')">✏️ Edit</div>` : ''}
-                </div>
-            </div>
-        `}).join('');
+            const cardStyle = m.is_custom ? 'position:relative;' : '';
+            const customTopEditBtn = m.is_custom
+                ? '<button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditCustomEduModule(\'' + m._db_id + '\')" title="Edit module">✏️</button>'
+                : '';
+            const overrideBadge = hasOverride ? ' <span title="Customized" style="font-size:10px;">✏️</span>' : '';
+            const builtinEditBtn = !m.is_custom
+                ? '<div class="edu-card-add-btn" style="background:var(--gray-50);color:var(--gray-600);border-left:1px solid var(--gray-100);" onclick="event.stopPropagation(); openEduEditModal(\'' + m.id + '\')">✏️ Edit</div>'
+                : '';
+            return '<div class="edu-card" style="' + cardStyle + '" onclick="openEduModule(\'' + m.id + '\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){openEduModule(\'' + m.id + '\')}">'
+                + customTopEditBtn
+                + '<div class="edu-card-icon-area"><div class="edu-card-icon">' + eff.icon + '</div><div class="edu-card-category">' + eff.category + overrideBadge + '</div></div>'
+                + '<div class="edu-card-body"><div class="edu-card-title">' + eff.title + '</div><div class="edu-card-desc">' + eff.overview + '</div></div>'
+                + '<div class="edu-card-footer-row">'
+                + '<div class="edu-card-footer">View Module &rarr;</div>'
+                + '<div class="edu-card-add-btn" id="edu-add-btn-' + m.id + '" onclick="event.stopPropagation(); addToEduList(\'' + m.id + '\')">+ Add to List</div>'
+                + builtinEditBtn
+                + '</div></div>';
+        }).join('');
     }
 
     function openEduModule(id) {
