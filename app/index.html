@@ -52,9 +52,21 @@
         .header-right { display: flex; align-items: center; gap: 12px; }
         .header-badge { background: rgba(13,148,136,0.18); color: var(--teal-light); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.3); }
         .offline-badge { background: rgba(217,119,6,0.18); color: var(--orange); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(217,119,6,0.3); display: none; }
-        .user-email { color: var(--gray-400); font-size: 13px; }
-        .btn-signout { background: rgba(255,255,255,0.08); color: var(--gray-400); border: 1px solid rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
-        .btn-signout:hover { background: rgba(255,255,255,0.15); color: var(--white); }
+        /* Profile dropdown */
+        .profile-wrapper { position: relative; }
+        .profile-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--teal); border: 2px solid rgba(255,255,255,0.15); color: var(--white); font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.2s; text-transform: uppercase; line-height: 1; }
+        .profile-btn:hover { border-color: var(--teal-light); box-shadow: 0 0 0 3px rgba(13,148,136,0.25); }
+        .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 260px; background: var(--navy); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s ease; z-index: 1100; overflow: hidden; }
+        .profile-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+        .profile-dropdown-header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .profile-dropdown-email { color: var(--white); font-size: 13px; font-weight: 600; word-break: break-all; }
+        .profile-dropdown-label { color: var(--gray-400); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 500; }
+        .profile-dropdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.75); font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+        .profile-dropdown-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+        .profile-dropdown-item .pdi-icon { font-size: 16px; width: 20px; text-align: center; opacity: 0.8; }
+        .profile-dropdown-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0; }
+        .profile-dropdown-item.danger { color: rgba(239,68,68,0.85); }
+        .profile-dropdown-item.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
 
         /* Hamburger button */
         .hamburger-btn { background: none; border: none; color: var(--white); font-size: 22px; cursor: pointer; padding: 6px 10px; margin-right: 6px; border-radius: 6px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
@@ -701,8 +713,7 @@
             .header-right { gap: 8px; }
             .header-badge { display: none; }
             .offline-badge { font-size: 11px; padding: 4px 10px; }
-            .user-email { display: none; }
-            .btn-signout { padding: 8px 14px; font-size: 13px; }
+            .profile-dropdown { width: 220px; }
 
             /* Nav tabs */
             .nav-tabs { padding: 0; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -1629,8 +1640,22 @@
         <button class="header-icon-btn" id="header-search-btn" onclick="switchModule('search')" title="Search notes" aria-label="Search notes by label">🔍</button>
         <div class="offline-badge" id="offline-badge">⚡ Offline</div>
         <div class="header-badge">Personal Testing</div>
-        <span class="user-email" id="user-email"></span>
-        <button class="btn-signout" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+        <div class="profile-wrapper">
+            <button class="profile-btn" id="profile-btn" onclick="toggleProfileDropdown()" title="Profile" aria-label="Open profile menu"></button>
+            <div class="profile-dropdown" id="profile-dropdown">
+                <div class="profile-dropdown-header">
+                    <div class="profile-dropdown-label">Signed in as</div>
+                    <div class="profile-dropdown-email" id="profile-email"></div>
+                </div>
+                <button class="profile-dropdown-item" onclick="switchModule('settings'); closeProfileDropdown();">
+                    <span class="pdi-icon">⚙️</span> Settings
+                </button>
+                <div class="profile-dropdown-divider"></div>
+                <button class="profile-dropdown-item danger" onclick="signOut(); closeProfileDropdown();">
+                    <span class="pdi-icon">🚪</span> Sign Out
+                </button>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -2926,15 +2951,17 @@
     function showAuth() {
         document.getElementById('auth-screen').style.display = 'flex';
         document.getElementById('app-screen').style.display = 'none';
-        document.getElementById('signout-btn').style.display = 'none';
-        document.getElementById('user-email').innerText = '';
+        document.getElementById('profile-btn').style.display = 'none';
+        document.getElementById('profile-email').innerText = '';
     }
 
     async function showApp(email) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'block';
-        document.getElementById('signout-btn').style.display = 'inline-block';
-        document.getElementById('user-email').innerText = email;
+        const profileBtn = document.getElementById('profile-btn');
+        profileBtn.style.display = 'flex';
+        profileBtn.textContent = email.charAt(0).toUpperCase();
+        document.getElementById('profile-email').innerText = email;
         showInstallBanner();
         await loadUserTemplatesAndPrefs();
         loadSmartPhrases(); // load phrases for dot-prefix expansion (no await, non-blocking)
@@ -2988,6 +3015,18 @@
         if (tab === 'templates') loadTemplates();
         localStorage.setItem('carenote-active-tab', tab);
     }
+
+    // ── Profile Dropdown ──────────────────────────────────
+    function toggleProfileDropdown() {
+        document.getElementById('profile-dropdown').classList.toggle('open');
+    }
+    function closeProfileDropdown() {
+        document.getElementById('profile-dropdown').classList.remove('open');
+    }
+    document.addEventListener('click', function(e) {
+        const wrapper = document.querySelector('.profile-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) closeProfileDropdown();
+    });
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'notes';
