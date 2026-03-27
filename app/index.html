@@ -1580,7 +1580,11 @@
         .dash-action-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 12px; background: var(--white); border: 2px solid var(--gray-200); border-radius: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--gray-800); transition: all 0.2s; box-shadow: var(--shadow-sm); }
         .dash-action-btn:hover { border-color: var(--teal); color: var(--teal); transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .dash-action-icon { font-size: 28px; }
-        .dash-section { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); margin-bottom: 20px; overflow: hidden; }
+        .dash-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1100px) { .dash-grid { grid-template-columns: repeat(3, 1fr); } }
+        main.dash-wide { max-width: 1400px; }
+        .dash-section { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden; }
         .dash-section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--gray-200); }
         .dash-section-header h3 { font-size: 15px; font-weight: 600; color: var(--navy); margin: 0; }
         .dash-section-body { padding: 16px 20px; }
@@ -1869,53 +1873,55 @@
                 </button>
             </div>
 
-            <div class="dash-section">
-                <div class="dash-section-header">
-                    <h3>📋 Recent Notes</h3>
-                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('notes'); showTab('history', true);">View All</button>
+            <div class="dash-grid">
+                <div class="dash-section">
+                    <div class="dash-section-header">
+                        <h3>📋 Recent Notes</h3>
+                        <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('notes'); showTab('history', true);">View All</button>
+                    </div>
+                    <div class="dash-section-body" id="dash-notes-list">
+                        <div class="dash-loading">Loading...</div>
+                    </div>
                 </div>
-                <div class="dash-section-body" id="dash-notes-list">
-                    <div class="dash-loading">Loading...</div>
-                </div>
-            </div>
 
-            <div class="dash-section">
-                <div class="dash-section-header">
-                    <h3>💊 Recent Medications</h3>
-                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('medication');">View All</button>
+                <div class="dash-section">
+                    <div class="dash-section-header">
+                        <h3>💊 Recent Medications</h3>
+                        <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('medication');">View All</button>
+                    </div>
+                    <div class="dash-section-body" id="dash-meds-list">
+                        <div class="dash-loading">Loading...</div>
+                    </div>
                 </div>
-                <div class="dash-section-body" id="dash-meds-list">
-                    <div class="dash-loading">Loading...</div>
-                </div>
-            </div>
 
-            <div class="dash-section">
-                <div class="dash-section-header">
-                    <h3>🏋️ Recent Exercise Programs</h3>
-                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('hep');">View All</button>
+                <div class="dash-section">
+                    <div class="dash-section-header">
+                        <h3>🏋️ Recent Exercise Programs</h3>
+                        <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('hep');">View All</button>
+                    </div>
+                    <div class="dash-section-body" id="dash-hep-list">
+                        <div class="dash-loading">Loading...</div>
+                    </div>
                 </div>
-                <div class="dash-section-body" id="dash-hep-list">
-                    <div class="dash-loading">Loading...</div>
-                </div>
-            </div>
 
-            <div class="dash-section">
-                <div class="dash-section-header">
-                    <h3>📚 Recent Education Lists</h3>
-                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('education');">View All</button>
+                <div class="dash-section">
+                    <div class="dash-section-header">
+                        <h3>📚 Recent Education Lists</h3>
+                        <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('education');">View All</button>
+                    </div>
+                    <div class="dash-section-body" id="dash-edu-list">
+                        <div class="dash-loading">Loading...</div>
+                    </div>
                 </div>
-                <div class="dash-section-body" id="dash-edu-list">
-                    <div class="dash-loading">Loading...</div>
-                </div>
-            </div>
 
-            <div class="dash-section">
-                <div class="dash-section-header">
-                    <h3>🚗 Recent Mileage Logs</h3>
-                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('vehicle');">View All</button>
-                </div>
-                <div class="dash-section-body" id="dash-vehicle-list">
-                    <div class="dash-loading">Loading...</div>
+                <div class="dash-section">
+                    <div class="dash-section-header">
+                        <h3>🚗 Recent Mileage Logs</h3>
+                        <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('vehicle');">View All</button>
+                    </div>
+                    <div class="dash-section-body" id="dash-vehicle-list">
+                        <div class="dash-loading">Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3157,6 +3163,8 @@
         // Close sidebar (only if open)
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebar-backdrop').classList.remove('open');
+        // Widen main for dashboard
+        document.querySelector('main').classList.toggle('dash-wide', module === 'dashboard');
 
         if (module === 'notes') {
             // Show notes tab bar and current notes view
@@ -4303,6 +4311,7 @@
                 loadTemplates();
             }
             if (savedModule === 'dashboard') {
+                document.querySelector('main').classList.add('dash-wide');
                 loadDashboard();
             }
             } // end else (not calendar)
