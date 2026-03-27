@@ -1802,7 +1802,6 @@
         <button class="nav-tab active" id="tab-new" onclick="showTab('new')">New Note</button>
         <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">Pending <span class="tab-badge" id="pending-badge">0</span></button>
         <button class="nav-tab" id="tab-history" onclick="showTab('history')">History</button>
-        <button class="nav-tab" id="tab-templates" onclick="showTab('templates')">Settings</button>
     </div>
 
     <div class="install-banner" id="install-banner">
@@ -2023,7 +2022,7 @@
         </div>
 
         <!-- Templates Tab -->
-        <div id="view-templates" style="display:none">
+        <div id="view-settings" style="display:none">
             <div class="page-title">Settings</div>
             <div class="page-subtitle">Manage your email, output format, note templates, and smart phrases.</div>
 
@@ -3006,13 +3005,12 @@
     }
 
     function showTab(tab) {
-        ['new', 'pending', 'history', 'templates'].forEach(t => {
+        ['new', 'pending', 'history'].forEach(t => {
             document.getElementById(`view-${t}`).style.display = t === tab ? 'block' : 'none';
             document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
         });
         if (tab === 'history') loadHistory();
         if (tab === 'pending') { renderPendingList(); renderPendingNotesList(); }
-        if (tab === 'templates') loadTemplates();
         localStorage.setItem('carenote-active-tab', tab);
     }
 
@@ -3030,8 +3028,8 @@
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'notes';
-    const moduleViews = ['medication', 'hep', 'education', 'vehicle', 'calendar', 'search'];
-    const notesViews = ['new', 'pending', 'history', 'templates'];
+    const moduleViews = ['medication', 'hep', 'education', 'vehicle', 'calendar', 'search', 'settings'];
+    const notesViews = ['new', 'pending', 'history'];
 
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
@@ -3102,6 +3100,9 @@
             }
             if (module === 'calendar') {
                 loadCalendarData();
+            }
+            if (module === 'settings') {
+                loadTemplates();
             }
         }
     }
@@ -4124,8 +4125,15 @@
             if (savedModule === 'vehicle') {
                 initVehicleTracker();
             }
+            if (savedModule === 'settings') {
+                loadTemplates();
+            }
             } // end else (not calendar)
         } else if (savedTab && savedTab !== 'new') {
+            if (savedTab === 'templates') {
+                switchModule('settings');
+                return;
+            }
             showTab(savedTab);
         }
     }
