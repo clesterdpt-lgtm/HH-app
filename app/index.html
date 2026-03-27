@@ -44,7 +44,8 @@
 
         body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--gray-800); min-height: 100vh; }
 
-        header { background: var(--navy); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+        header { background: var(--navy); padding: 0 16px 0 12px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+        .header-left { display: flex; align-items: center; gap: 4px; }
         .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         .logo-text { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); letter-spacing: -0.3px; }
@@ -1653,12 +1654,14 @@
 <body>
 
 <header>
-    <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">☰</button>
-    <div class="logo" onclick="switchModule('dashboard')" style="cursor:pointer;" title="Go to Dashboard">
-        <div class="logo-icon">🩺</div>
-        <div>
-            <div class="logo-text">CareNote</div>
-            <div class="logo-tag">Documentation Assistant</div>
+    <div class="header-left">
+        <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu" aria-label="Open menu">☰</button>
+        <div class="logo" onclick="switchModule('dashboard')" style="cursor:pointer;" title="Go to Dashboard">
+            <div class="logo-icon">🩺</div>
+            <div>
+                <div class="logo-text">CareNote</div>
+                <div class="logo-tag">Documentation Assistant</div>
+            </div>
         </div>
     </div>
     <div class="header-right">
@@ -1719,76 +1722,6 @@
             <span class="sidebar-item-icon">⚙️</span> Settings
         </div>
     </nav>
-</div>
-
-<!-- Calendar Module View -->
-<div id="view-calendar" style="display:none;">
-            <div class="page-title">Calendar</div>
-            <div class="page-subtitle">View notes, medications, and recordings by date.</div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-header-icon">📅</div>
-                    <div class="card-header-text">
-                        <h2 id="cal-month-title">March 2026</h2>
-                        <p>Click a day to see its items</p>
-                    </div>
-                    <div class="cal-nav-btns">
-                        <button class="btn btn-outline" onclick="calPrevMonth()">&larr; Prev</button>
-                        <button class="btn btn-outline" onclick="calToday()">Today</button>
-                        <button class="btn btn-outline" onclick="calNextMonth()">Next &rarr;</button>
-                    </div>
-                </div>
-                <div class="card-body" style="padding:16px;">
-                    <div class="cal-grid" id="cal-grid"></div>
-                    <div class="cal-legend">
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#8b5cf6;"></div> HEP</div>
-                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
-                    </div>
-                </div>
-            </div>
-            <div id="cal-day-detail" style="display:none; margin-top:16px;">
-                <div class="day-group" style="margin-bottom:0;">
-                    <div class="day-group-header">
-                        <div>
-                            <div class="day-group-title" id="cal-detail-title"></div>
-                            <div class="day-group-count" id="cal-detail-count"></div>
-                        </div>
-                        <button class="btn btn-outline btn-sm" id="cal-export-btn" onclick="openCalDayExport()" style="display:none;">📤 Export Day</button>
-                    </div>
-                </div>
-                <div id="cal-detail-list" style="margin-top:8px;"></div>
-            </div>
-
-            <!-- Calendar Day Export Modal -->
-            <div class="cal-export-overlay" id="cal-export-overlay" onclick="if(event.target===this)closeCalDayExport()">
-                <div class="cal-export-modal">
-                    <div class="cal-export-modal-title">📤 Export Day</div>
-                    <div class="cal-export-select-all">
-                        <input type="checkbox" id="cal-export-all" onchange="toggleCalExportAll()">
-                        <label for="cal-export-all">Select All</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-notes">
-                        <input type="checkbox" id="cal-export-notes">
-                        <label for="cal-export-notes" id="cal-export-notes-label">Documentation</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-meds">
-                        <input type="checkbox" id="cal-export-meds">
-                        <label for="cal-export-meds" id="cal-export-meds-label">Medication List</label>
-                    </div>
-                    <div class="cal-export-category" id="cal-export-cat-heps">
-                        <input type="checkbox" id="cal-export-heps">
-                        <label for="cal-export-heps" id="cal-export-heps-label">Home Exercise Program</label>
-                    </div>
-                    <div class="cal-export-actions">
-                        <button class="btn btn-outline btn-sm" onclick="calExportEmail()">✉️ Email</button>
-                        <button class="btn btn-outline btn-sm" onclick="calExportPdf()">📄 PDF</button>
-                        <button class="btn btn-outline btn-sm" onclick="calExportCopy()">📋 Copy</button>
-                    </div>
-                    <button class="cal-export-close" onclick="closeCalDayExport()">Cancel</button>
-                </div>
-            </div>
 </div>
 
 <!-- Auth Screen -->
@@ -2945,6 +2878,75 @@
             </div>
         </div>
 
+
+        <!-- Calendar Module View -->
+        <div id="view-calendar" style="display:none;">
+            <div class="page-title">Calendar</div>
+            <div class="page-subtitle">View notes, medications, and recordings by date.</div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">📅</div>
+                    <div class="card-header-text">
+                        <h2 id="cal-month-title">March 2026</h2>
+                        <p>Click a day to see its items</p>
+                    </div>
+                    <div class="cal-nav-btns">
+                        <button class="btn btn-outline" onclick="calPrevMonth()">&larr; Prev</button>
+                        <button class="btn btn-outline" onclick="calToday()">Today</button>
+                        <button class="btn btn-outline" onclick="calNextMonth()">Next &rarr;</button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding:16px;">
+                    <div class="cal-grid" id="cal-grid"></div>
+                    <div class="cal-legend">
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--teal);"></div> Notes</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--orange);"></div> Medications</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#8b5cf6;"></div> HEP</div>
+                        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Pending</div>
+                    </div>
+                </div>
+            </div>
+            <div id="cal-day-detail" style="display:none; margin-top:16px;">
+                <div class="day-group" style="margin-bottom:0;">
+                    <div class="day-group-header">
+                        <div>
+                            <div class="day-group-title" id="cal-detail-title"></div>
+                            <div class="day-group-count" id="cal-detail-count"></div>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="cal-export-btn" onclick="openCalDayExport()" style="display:none;">📤 Export Day</button>
+                    </div>
+                </div>
+                <div id="cal-detail-list" style="margin-top:8px;"></div>
+            </div>
+            <!-- Calendar Day Export Modal -->
+            <div class="cal-export-overlay" id="cal-export-overlay" onclick="if(event.target===this)closeCalDayExport()">
+                <div class="cal-export-modal">
+                    <div class="cal-export-modal-title">📤 Export Day</div>
+                    <div class="cal-export-select-all">
+                        <input type="checkbox" id="cal-export-all" onchange="toggleCalExportAll()">
+                        <label for="cal-export-all">Select All</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-notes">
+                        <input type="checkbox" id="cal-export-notes">
+                        <label for="cal-export-notes" id="cal-export-notes-label">Documentation</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-meds">
+                        <input type="checkbox" id="cal-export-meds">
+                        <label for="cal-export-meds" id="cal-export-meds-label">Medication List</label>
+                    </div>
+                    <div class="cal-export-category" id="cal-export-cat-heps">
+                        <input type="checkbox" id="cal-export-heps">
+                        <label for="cal-export-heps" id="cal-export-heps-label">Home Exercise Program</label>
+                    </div>
+                    <div class="cal-export-actions">
+                        <button class="btn btn-outline btn-sm" onclick="calExportEmail()">✉️ Email</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportPdf()">📄 PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="calExportCopy()">📋 Copy</button>
+                    </div>
+                    <button class="cal-export-close" onclick="closeCalDayExport()">Cancel</button>
+                </div>
+            </div>
+        </div>
 
     </main>
 
