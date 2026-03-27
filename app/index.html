@@ -3004,7 +3004,7 @@
         showAuth();
     }
 
-    function showTab(tab) {
+    function showTab(tab, skipPushState) {
         ['new', 'pending', 'history'].forEach(t => {
             document.getElementById(`view-${t}`).style.display = t === tab ? 'block' : 'none';
             document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
@@ -3012,6 +3012,7 @@
         if (tab === 'history') loadHistory();
         if (tab === 'pending') { renderPendingList(); renderPendingNotesList(); }
         localStorage.setItem('carenote-active-tab', tab);
+        if (!skipPushState) history.pushState({ module: 'notes', tab: tab }, '');
     }
 
     // ── Profile Dropdown ──────────────────────────────────
@@ -3036,9 +3037,13 @@
         document.getElementById('sidebar-backdrop').classList.toggle('open');
     }
 
-    function switchModule(module) {
+    function switchModule(module, skipPushState) {
         currentModule = module;
         localStorage.setItem('carenote-active-module', module);
+        if (!skipPushState) {
+            const tab = module === 'notes' ? (localStorage.getItem('carenote-active-tab') || 'new') : null;
+            history.pushState({ module: module, tab: tab }, '');
+        }
         // Update sidebar active state
         document.querySelectorAll('.sidebar-item').forEach(el => {
             el.classList.toggle('active', el.dataset.module === module);
@@ -3051,10 +3056,10 @@
             // Show notes tab bar and current notes view
             document.querySelector('.nav-tabs').style.display = 'flex';
             moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
-            // Re-trigger current notes tab
-            const activeTab = document.querySelector('.nav-tab.active');
-            if (activeTab) activeTab.click();
-            else showTab('new');
+            // Re-trigger current notes tab (skip pushState since switchModule already pushed)
+            const activeTabEl = document.querySelector('.nav-tab.active');
+            const activeTabName = activeTabEl ? activeTabEl.id.replace('tab-', '') : 'new';
+            showTab(activeTabName, true);
         } else {
             // Hide notes tab bar and all notes views
             document.querySelector('.nav-tabs').style.display = 'none';
@@ -3106,6 +3111,16 @@
             }
         }
     }
+
+    // ── Browser back/forward button support ──────────────
+    window.addEventListener('popstate', (e) => {
+        if (!e.state) return;
+        const { module, tab } = e.state;
+        if (module) {
+            switchModule(module, true);
+            if (module === 'notes' && tab) showTab(tab, true);
+        }
+    });
 
     // Close sidebar with ESC key
     document.addEventListener('keydown', (e) => {
@@ -4134,8 +4149,12 @@
                 switchModule('settings');
                 return;
             }
-            showTab(savedTab);
+            showTab(savedTab, true);
         }
+        // Set initial history state so popstate has something to return to
+        const initModule = currentModule || 'notes';
+        const initTab = initModule === 'notes' ? (localStorage.getItem('carenote-active-tab') || 'new') : null;
+        history.replaceState({ module: initModule, tab: initTab }, '');
     }
 
     // ── Calendar Module ──────────────────────────────────
