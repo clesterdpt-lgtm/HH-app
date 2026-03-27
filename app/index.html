@@ -1575,6 +1575,27 @@
         .vt-breakdown-table td { padding:7px 10px; border-bottom:1px solid var(--gray-200); color:var(--gray-600); }
         .vt-breakdown-table tbody tr:last-child td { border-bottom:none; }
 
+        /* Dashboard */
+        .dash-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 32px; }
+        .dash-action-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 12px; background: var(--white); border: 2px solid var(--gray-200); border-radius: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--gray-800); transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .dash-action-btn:hover { border-color: var(--teal); color: var(--teal); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .dash-action-icon { font-size: 28px; }
+        .dash-section { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); margin-bottom: 20px; overflow: hidden; }
+        .dash-section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--gray-200); }
+        .dash-section-header h3 { font-size: 15px; font-weight: 600; color: var(--navy); margin: 0; }
+        .dash-section-body { padding: 16px 20px; }
+        .dash-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gray-100); gap: 12px; }
+        .dash-item:last-child { border-bottom: none; }
+        .dash-item-title { font-weight: 500; font-size: 14px; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dash-item-meta { font-size: 12px; color: var(--gray-400); white-space: nowrap; flex-shrink: 0; }
+        .dash-empty { color: var(--gray-400); font-size: 13px; font-style: italic; padding: 8px 0; }
+        .dash-loading { color: var(--gray-400); font-size: 13px; padding: 8px 0; }
+        @media (max-width: 600px) {
+            .dash-actions { grid-template-columns: repeat(2, 1fr); }
+            .dash-action-btn { padding: 16px 8px; font-size: 13px; }
+            .dash-action-icon { font-size: 24px; }
+        }
+
         /* Header icon buttons (calendar + search) */
         .header-icon-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 19px; cursor: pointer; padding: 6px 8px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1; }
         .header-icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
@@ -1671,7 +1692,10 @@
         </div>
     </div>
     <nav class="sidebar-nav">
-        <div class="sidebar-item active" data-module="notes" onclick="switchModule('notes')">
+        <div class="sidebar-item active" data-module="dashboard" onclick="switchModule('dashboard')">
+            <span class="sidebar-item-icon">🏠</span> Dashboard
+        </div>
+        <div class="sidebar-item" data-module="notes" onclick="switchModule('notes')">
             <span class="sidebar-item-icon">📋</span> Clinical Notes
         </div>
         <div class="sidebar-item" data-module="medication" onclick="switchModule('medication')">
@@ -1801,7 +1825,7 @@
 
 <!-- App Screen -->
 <div id="app-screen">
-    <div class="nav-tabs">
+    <div class="nav-tabs" style="display:none">
         <button class="nav-tab active" id="tab-new" onclick="showTab('new')">New Note</button>
         <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">Pending <span class="tab-badge" id="pending-badge">0</span></button>
         <button class="nav-tab" id="tab-history" onclick="showTab('history')">History</button>
@@ -1817,8 +1841,87 @@
     </div>
 
     <main>
+        <!-- Dashboard -->
+        <div id="view-dashboard">
+            <div class="page-title">Dashboard</div>
+            <div class="page-subtitle">Welcome back. Here's your recent activity.</div>
+
+            <div class="dash-actions">
+                <button class="dash-action-btn" onclick="switchModule('notes'); showTab('new', true);">
+                    <span class="dash-action-icon">📋</span>
+                    <span>New Note</span>
+                </button>
+                <button class="dash-action-btn" onclick="switchModule('medication');">
+                    <span class="dash-action-icon">💊</span>
+                    <span>New Med List</span>
+                </button>
+                <button class="dash-action-btn" onclick="switchModule('hep');">
+                    <span class="dash-action-icon">🏋️</span>
+                    <span>New HEP</span>
+                </button>
+                <button class="dash-action-btn" onclick="switchModule('education');">
+                    <span class="dash-action-icon">📚</span>
+                    <span>New Education</span>
+                </button>
+                <button class="dash-action-btn" onclick="switchModule('vehicle');">
+                    <span class="dash-action-icon">🚗</span>
+                    <span>New Mileage Log</span>
+                </button>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <h3>📋 Recent Notes</h3>
+                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('notes'); showTab('history', true);">View All</button>
+                </div>
+                <div class="dash-section-body" id="dash-notes-list">
+                    <div class="dash-loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <h3>💊 Recent Medications</h3>
+                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('medication');">View All</button>
+                </div>
+                <div class="dash-section-body" id="dash-meds-list">
+                    <div class="dash-loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <h3>🏋️ Recent Exercise Programs</h3>
+                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('hep');">View All</button>
+                </div>
+                <div class="dash-section-body" id="dash-hep-list">
+                    <div class="dash-loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <h3>📚 Recent Education Lists</h3>
+                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('education');">View All</button>
+                </div>
+                <div class="dash-section-body" id="dash-edu-list">
+                    <div class="dash-loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <h3>🚗 Recent Mileage Logs</h3>
+                    <button class="btn btn-outline" style="padding:5px 12px; font-size:12px;" onclick="switchModule('vehicle');">View All</button>
+                </div>
+                <div class="dash-section-body" id="dash-vehicle-list">
+                    <div class="dash-loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- New Note Tab -->
-        <div id="view-new">
+        <div id="view-new" style="display:none">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <div>
                     <div class="page-title">Clinical Documentation</div>
@@ -3031,8 +3134,8 @@
     });
 
     // ── Sidebar Navigation ──────────────────────────────────
-    let currentModule = 'notes';
-    const moduleViews = ['medication', 'hep', 'education', 'vehicle', 'calendar', 'search', 'settings'];
+    let currentModule = 'dashboard';
+    const moduleViews = ['dashboard', 'medication', 'hep', 'education', 'vehicle', 'calendar', 'search', 'settings'];
     const notesViews = ['new', 'pending', 'history'];
 
     function toggleSidebar() {
@@ -3112,7 +3215,60 @@
             if (module === 'settings') {
                 loadTemplates();
             }
+            if (module === 'dashboard') {
+                loadDashboard();
+            }
         }
+    }
+
+    // ── Dashboard ──────────────────────────────────────────
+    async function loadDashboard() {
+        const notesP = sb ? sb.from('notes').select('id,created_at,note_type,labels').order('created_at', { ascending: false }).limit(3).then(r => r.data || []) : Promise.resolve([]);
+        const hepP = sb ? sb.from('hep_history').select('id,title,saved_at,labels').order('saved_at', { ascending: false }).limit(3).then(r => r.data || []) : Promise.resolve([]);
+        const eduP = sb ? sb.from('edu_list_history').select('id,title,saved_at,labels').order('saved_at', { ascending: false }).limit(3).then(r => r.data || []) : Promise.resolve([]);
+        const medsP = loadMedsFromDB().catch(() => []);
+        const mileP = vtGetAllMileageLogs().catch(() => []);
+
+        const [notes, hepHistory, eduHistory, meds, mileageLogs] = await Promise.all([notesP, hepP, eduP, medsP, mileP]);
+
+        renderDashSection('dash-notes-list', notes, n => ({
+            title: (n.note_type || 'Clinical Note').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            meta: new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        }));
+
+        const recentMeds = meds.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 3);
+        renderDashSection('dash-meds-list', recentMeds, m => ({
+            title: m.name + (m.dose ? ' — ' + m.dose : ''),
+            meta: m.frequency || ''
+        }));
+
+        renderDashSection('dash-hep-list', hepHistory, h => ({
+            title: h.title || 'Exercise Program',
+            meta: h.saved_at ? new Date(h.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+        }));
+
+        renderDashSection('dash-edu-list', eduHistory, e => ({
+            title: e.title || 'Education List',
+            meta: e.saved_at ? new Date(e.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+        }));
+
+        const recentMiles = mileageLogs.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+        renderDashSection('dash-vehicle-list', recentMiles, v => ({
+            title: (v.totalMiles || 0) + ' miles' + (v.purpose ? ' — ' + v.purpose : ''),
+            meta: v.date || ''
+        }));
+    }
+
+    function renderDashSection(containerId, items, formatter) {
+        const el = document.getElementById(containerId);
+        if (!items || items.length === 0) {
+            el.innerHTML = '<div class="dash-empty">No items yet.</div>';
+            return;
+        }
+        el.innerHTML = items.map(item => {
+            const { title, meta } = formatter(item);
+            return '<div class="dash-item"><div class="dash-item-title">' + title + '</div><div class="dash-item-meta">' + meta + '</div></div>';
+        }).join('');
     }
 
     // ── Browser back/forward button support ──────────────
@@ -4146,16 +4302,22 @@
             if (savedModule === 'settings') {
                 loadTemplates();
             }
+            if (savedModule === 'dashboard') {
+                loadDashboard();
+            }
             } // end else (not calendar)
-        } else if (savedTab && savedTab !== 'new') {
+        } else if (savedModule === 'notes' && savedTab && savedTab !== 'new') {
             if (savedTab === 'templates') {
                 switchModule('settings');
                 return;
             }
             showTab(savedTab, true);
+        } else {
+            // Default to dashboard
+            switchModule('dashboard', true);
         }
         // Set initial history state so popstate has something to return to
-        const initModule = currentModule || 'notes';
+        const initModule = currentModule || 'dashboard';
         const initTab = initModule === 'notes' ? (localStorage.getItem('carenote-active-tab') || 'new') : null;
         history.replaceState({ module: initModule, tab: initTab }, '');
     }
