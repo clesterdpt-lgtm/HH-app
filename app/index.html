@@ -118,6 +118,8 @@
         .btn-auth:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13,148,136,0.35); }
         .auth-error { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); color: var(--red); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; display: none; }
         .auth-success { background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.2); color: var(--green); font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; display: none; }
+        .forgot-password-link { background: none; border: none; color: var(--teal); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; padding: 0; margin-top: 12px; display: block; text-align: center; width: 100%; }
+        .forgot-password-link:hover { text-decoration: underline; }
 
         #app-screen { display: none; }
         main { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
@@ -1744,6 +1746,17 @@
             </div>
             <button class="btn-auth" onclick="signIn()">Sign In →</button>
             <div class="auth-error" id="signin-error"></div>
+            <button class="forgot-password-link" onclick="showForgotPassword()">Forgot your password?</button>
+        </div>
+        <div id="forgot-form" style="display:none">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input class="form-input" type="email" id="forgot-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') sendPasswordReset()">
+            </div>
+            <button class="btn-auth" onclick="sendPasswordReset()">Send Reset Link →</button>
+            <div class="auth-error" id="forgot-error"></div>
+            <div class="auth-success" id="forgot-success"></div>
+            <button class="forgot-password-link" onclick="switchTab('signin')" style="margin-top:12px;">← Back to Sign In</button>
         </div>
         <div id="signup-form" style="display:none">
             <div class="form-group">
@@ -3088,8 +3101,33 @@
     function switchTab(tab) {
         document.getElementById('signin-form').style.display = tab === 'signin' ? 'block' : 'none';
         document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+        document.getElementById('forgot-form').style.display = tab === 'forgot' ? 'block' : 'none';
         document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
         document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+        document.querySelector('.auth-tabs').style.display = tab === 'forgot' ? 'none' : 'flex';
+        if (tab === 'signin' || tab === 'signup') {
+            document.querySelector('.auth-title').textContent = 'Welcome back';
+            document.querySelector('.auth-subtitle').textContent = 'Sign in to access your documentation assistant';
+        }
+    }
+
+    function showForgotPassword() {
+        switchTab('forgot');
+        document.querySelector('.auth-title').textContent = 'Reset Password';
+        document.querySelector('.auth-subtitle').textContent = 'Enter your email and we\'ll send you a reset link';
+        const emailVal = document.getElementById('signin-email').value;
+        if (emailVal) document.getElementById('forgot-email').value = emailVal;
+    }
+
+    async function sendPasswordReset() {
+        const email = document.getElementById('forgot-email').value;
+        const errEl = document.getElementById('forgot-error');
+        const successEl = document.getElementById('forgot-success');
+        errEl.style.display = 'none'; successEl.style.display = 'none';
+        if (!email) { errEl.innerText = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
+        const { error } = await sb.auth.resetPasswordForEmail(email);
+        if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
+        else { successEl.innerText = 'Check your email for the password reset link.'; successEl.style.display = 'block'; }
     }
 
     async function signIn() {
