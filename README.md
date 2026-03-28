@@ -17,11 +17,19 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 
 ### Modular Architecture
 - Sidebar navigation with collapsible module menu
+- **Dashboard**: Home screen with recent activity feed (notes, meds, HEPs, mileage) and quick-action buttons to each module
 - **Clinical Notes (CareNote)**: Primary documentation module
 - **Medication Manager**: Medication tracking and history
 - **Home Exercise Program (HEP)**: Exercise library and program builder
+- **Patient Education**: Condition-specific education modules with list builder and export
+- **Vehicle Tracker**: Mileage logging, expense tracking, and IRS deduction reports
 - **Calendar**: Unified date-based view across all modules
+- **Label Search**: Cross-module search by label across notes, meds, HEPs, and education lists
 - Active module and tab persist across page refreshes
+- **Browser history support**: Back/forward buttons navigate between modules and tabs
+- **Profile dropdown** in header with account email and sign-out
+- **Settings** accessible from both sidebar and profile dropdown
+- Clickable CareNote logo navigates back to Dashboard
 
 ### Note Generation
 - Record audio or type notes manually
@@ -120,6 +128,28 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Day export**: Email, copy, or PDF all items for a specific date
 - Aggregates data from Supabase notes, medication history, HEP history, and IndexedDB pending recordings/notes
 
+### Patient Education
+- **Built-in condition modules**: CHF, COPD, Orthostatic Hypotension, and more — each with overview, key points, when-to-call-doctor guidance, and resources
+- **Custom modules**: Create and edit your own education modules with title, category, icon, and overview content
+- **Edit built-in modules**: Customize any built-in module with revert-to-default option
+- **List builder**: Assemble patient-specific education packets from available modules
+- **History tab**: Saved education lists with labels, search, sort, and expandable detail
+- **Export**: PDF, email, and print — consistent with HEP export workflow
+- Integrated into Calendar (green dot indicators) and Label Search
+
+### Vehicle Tracker
+- **Mileage Log**: Record daily mileage with date, total miles, and purpose
+- **Expenses tab**: Track vehicle-related expenses
+- **IRS deduction calculator**: Automatic mileage deduction at the standard IRS rate ($0.67/mile)
+- **Year summary**: Annual mileage and expense totals with monthly breakdown
+- Data stored locally in IndexedDB
+
+### Label Search
+- Cross-module search by label across notes, medications, HEPs, and patient education lists
+- Case-insensitive label autocomplete
+- Results grouped by module type with export options (copy, email, PDF)
+- Redesigned toggle buttons for search type clarity
+
 ### History
 - All generated notes saved to Supabase
 - Grouped by date with expandable items
@@ -130,13 +160,22 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **3-dot overflow menu**: Consolidates all note actions (Copy, Edit, Email, PDF, Delete) into a clean ⋮ button
 - Mobile-optimized: text preview hidden on narrow screens for compact list view
 
+### Authentication
+- Email/password sign-up and sign-in
+- **Forgot password** flow with email reset link
+
 ## Project Structure
 
 ```
-index.html                          # Entire app (HTML + CSS + JS)
+index.html                          # Landing page
+app/
+  index.html                        # Main application (HTML + CSS + JS)
+landing/
+  index.html                        # Marketing landing page
 manifest.json                       # PWA manifest
 service-worker.js                   # Offline caching
 icons/                              # App icons (SVG + PNGs)
+docs/                               # Product documentation
 supabase/
   config.toml                       # Supabase project config
   functions/
@@ -146,6 +185,9 @@ supabase/
     generate-goals/index.ts         # Care plan goals edge function
     parse-medication/index.ts       # Medication extraction from audio
   migrations/                       # Database migration SQL files
+.github/
+  workflows/
+    pages.yml                       # GitHub Pages auto-deploy workflow
 ```
 
 ## Database Tables
@@ -158,6 +200,7 @@ supabase/
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
 - **exercise_library**: User-created custom exercises and per-user built-in overrides (id, user_id, name, category, instructions, svg_key, photo_url, builtin_id)
 - **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
+- **edu_custom_modules**: User-created patient education modules (id, user_id, title, category, icon, overview)
 
 ## Edge Functions
 
@@ -188,7 +231,7 @@ supabase functions deploy parse-medication
 
 - **Single HTML file**: No build step, no framework — keeps deployment simple via GitHub Pages
 - **Supabase Edge Functions**: Keeps API keys server-side (Anthropic, OpenAI)
-- **IndexedDB v7**: Seven stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`, `medLists`, `medHistory`, `hepCurrent`
+- **IndexedDB v10**: Eleven stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`, `medLists`, `medHistory`, `hepCurrent`, `eduListCurrent`, `mileageLogs`, `vehicleExpenses`, `eduModuleOverrides`
 - **Audio-first safety**: Recordings always persist to IndexedDB before transcription attempts, preventing data loss on network or API failures
 - **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
 - **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates
