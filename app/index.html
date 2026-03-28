@@ -2083,7 +2083,7 @@
         <!-- Templates Tab -->
         <div id="view-settings" style="display:none">
             <div class="page-title">Settings</div>
-            <div class="page-subtitle">Manage your email, output format, note templates, and smart phrases.</div>
+            <div class="page-subtitle">Manage your email, output format, documentation style, note templates, and smart phrases.</div>
 
             <div class="card">
                 <div class="card-header">
@@ -2122,6 +2122,25 @@
                             <span class="format-option-title">Clinical Summary</span>
                             <span class="format-option-desc">Concise 2-3 paragraph visit narrative</span>
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">✍️</div>
+                    <div class="card-header-text">
+                        <h2>Documentation Style Preferences <button class="help-btn" onclick="toggleHelp('help-docstyle', event)">?</button></h2>
+                        <p>Customize how AI writes your clinical notes</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <textarea id="doc-style-input" rows="4" maxlength="500"
+                              placeholder="e.g. Don't use bullet points. Write in brief, formal sentences. Use paragraph format only. Be very concise."
+                              style="width:100%;padding:10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;background:var(--gray-50);color:var(--gray-900);resize:vertical;font-family:inherit;line-height:1.5;"></textarea>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                        <button class="btn btn-primary" onclick="saveDocumentationStyle()" style="white-space:nowrap;">Save</button>
+                        <div id="doc-style-status" style="display:none;font-size:13px;color:var(--primary);"></div>
                     </div>
                 </div>
             </div>
@@ -3035,6 +3054,7 @@
     let hiddenBuiltinTypes = [];
     let defaultOutputFormat = 'full';
     let defaultEmail = '';
+    let documentationStyle = '';
     let templatesLoaded = false;
 
     // ── Online/Offline ────────────────────────────────────
@@ -3821,6 +3841,7 @@
             if (item.outputFormat === 'summary') body.outputFormat = 'summary';
             if (item.customPrompt) body.customPrompt = item.customPrompt;
             if (item.sections && item.sections.length > 0) body.sections = item.sections;
+            if (item.documentationStyle) body.documentationStyle = item.documentationStyle;
 
             const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
 
@@ -5025,6 +5046,7 @@
                 templateId: templateId || null,
                 customPrompt: customPrompt || null,
                 sections: sections || null,
+                documentationStyle: documentationStyle || null,
                 timestamp: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
                 status: 'queued'
             };
@@ -5051,6 +5073,7 @@
             if (outputFormat === 'summary') body.outputFormat = 'summary';
             if (customPrompt) body.customPrompt = customPrompt;
             if (sections && sections.length > 0) body.sections = sections;
+            if (documentationStyle) body.documentationStyle = documentationStyle;
 
             const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
 
@@ -5804,6 +5827,7 @@
             store.put({ key: 'hiddenBuiltinTypes', data: hiddenTypes });
             store.put({ key: 'defaultOutputFormat', data: defaultOutputFormat });
             store.put({ key: 'defaultEmail', data: defaultEmail });
+            store.put({ key: 'documentationStyle', data: documentationStyle });
             store.put({ key: 'builtinCustomizations', data: builtinCustomizations });
         } catch (e) { console.log('IDB template cache error:', e); }
     }
@@ -5819,19 +5843,21 @@
                 const formatReq = store.get('defaultOutputFormat');
                 const builtinCustReq = store.get('builtinCustomizations');
                 const emailReq = store.get('defaultEmail');
+                const docStyleReq = store.get('documentationStyle');
                 tx.oncomplete = () => {
                     resolve({
                         templates: templatesReq.result?.data || [],
                         hiddenTypes: hiddenReq.result?.data || [],
                         defaultOutputFormat: formatReq.result?.data || 'full',
                         builtinCustomizations: builtinCustReq.result?.data || {},
-                        defaultEmail: emailReq.result?.data || ''
+                        defaultEmail: emailReq.result?.data || '',
+                        documentationStyle: docStyleReq.result?.data || ''
                     });
                 };
-                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '' });
+                tx.onerror = () => resolve({ templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '', documentationStyle: '' });
             });
         } catch (e) {
-            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '' };
+            return { templates: [], hiddenTypes: [], defaultOutputFormat: 'full', builtinCustomizations: {}, defaultEmail: '', documentationStyle: '' };
         }
     }
 
@@ -5859,12 +5885,13 @@
             builtinCustomizations = split.builtinCust;
 
             const { data: prefs } = await sb.from('user_preferences')
-                .select('hidden_builtin_types, default_output_format, default_email')
+                .select('hidden_builtin_types, default_output_format, default_email, documentation_style')
                 .eq('user_id', currentUser.id)
                 .single();
             hiddenBuiltinTypes = prefs?.hidden_builtin_types || [];
             defaultOutputFormat = prefs?.default_output_format || 'full';
             defaultEmail = prefs?.default_email || '';
+            documentationStyle = prefs?.documentation_style || '';
 
             await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         } else {
@@ -5874,6 +5901,7 @@
             defaultOutputFormat = cached.defaultOutputFormat || 'full';
             builtinCustomizations = cached.builtinCustomizations || {};
             defaultEmail = cached.defaultEmail || '';
+            documentationStyle = cached.documentationStyle || '';
         }
 
         templatesLoaded = true;
@@ -5889,6 +5917,7 @@
         renderCustomTemplatesList();
         renderSmartPhrasesList();
         document.getElementById('default-email-input').value = defaultEmail;
+        document.getElementById('doc-style-input').value = documentationStyle;
     }
 
     const helpTexts = {
@@ -5896,6 +5925,7 @@
         'help-format': '<strong>Full Documentation</strong> generates a structured clinical note with headings and sections (e.g., Subjective, Objective, Assessment, Plan).<br><br><strong>Clinical Summary</strong> produces a concise 2-3 paragraph narrative of the visit — ideal when your EMR handles the structured formatting.<br><br>This sets the default; you can override it per note.',
         'help-builtin': 'These are standard home health note types. Use the toggle to <strong>show or hide</strong> them in your note type dropdown.<br><br>Click <strong>Configure</strong> to add section headings (e.g., Living Environment, Functional Mobility) and custom AI instructions.<br><br>The <strong>Assist</strong> feature will then check your notes against those sections and prompt you for anything missing.',
         'help-custom': 'Create your own note types for specialized visits (e.g., Wound Care, Fall Risk Assessment).<br><br>Each template can include <strong>section headings</strong> to organize the generated note and <strong>custom AI instructions</strong> to guide what the AI focuses on.<br><br>Your custom templates appear alongside the built-in types in the note type dropdown.',
+        'help-docstyle': 'Type any writing style preferences here. These instructions are sent to the AI every time you generate a note.<br><br>Examples: "Don\'t use bullet points", "Write in brief formal sentences", "Use paragraph format only", "Be very concise".<br><br>Leave blank to use the default AI formatting style.',
         'help-phrases': 'Smart Phrases let you save commonly used text and insert it quickly while typing.<br><br>Create a phrase with a short <strong>abbreviation</strong> (e.g., <code>bp</code>, <code>rom</code>, <code>wbc</code>) and the full <strong>expansion text</strong> you want inserted.<br><br>While typing a note, type a <strong>dot followed by the abbreviation</strong> (e.g., <code>.bp</code>) and select from the suggestion dropdown to insert the full text.'
     };
 
@@ -5965,6 +5995,7 @@
             await sb.from('user_preferences').upsert({
                 user_id: currentUser.id,
                 hidden_builtin_types: hiddenBuiltinTypes,
+                documentation_style: documentationStyle || null,
                 updated_at: new Date().toISOString()
             });
         }
@@ -5996,6 +6027,7 @@
                 user_id: currentUser.id,
                 hidden_builtin_types: hiddenBuiltinTypes,
                 default_output_format: format,
+                documentation_style: documentationStyle || null,
                 updated_at: new Date().toISOString()
             });
         }
@@ -6021,12 +6053,36 @@
                 hidden_builtin_types: hiddenBuiltinTypes,
                 default_output_format: defaultOutputFormat,
                 default_email: email || null,
+                documentation_style: documentationStyle || null,
                 updated_at: new Date().toISOString()
             });
         }
         await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
 
         statusEl.textContent = email ? '✓ Saved' : '✓ Cleared';
+        statusEl.style.display = 'block';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+    }
+
+    async function saveDocumentationStyle() {
+        const input = document.getElementById('doc-style-input');
+        const style = input.value.trim();
+        documentationStyle = style;
+        const statusEl = document.getElementById('doc-style-status');
+
+        if (isOnline && currentUser) {
+            await sb.from('user_preferences').upsert({
+                user_id: currentUser.id,
+                hidden_builtin_types: hiddenBuiltinTypes,
+                default_output_format: defaultOutputFormat,
+                default_email: defaultEmail || null,
+                documentation_style: style || null,
+                updated_at: new Date().toISOString()
+            });
+        }
+        await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+
+        statusEl.textContent = style ? '✓ Saved' : '✓ Cleared';
         statusEl.style.display = 'block';
         setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
     }

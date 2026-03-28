@@ -20,7 +20,7 @@ serve(async (req) => {
       });
     }
 
-    const { notes, noteType, customPrompt, sections, outputFormat } = await req.json();
+    const { notes, noteType, customPrompt, sections, outputFormat, documentationStyle } = await req.json();
 
     if (!notes || !notes.trim()) {
       return new Response(JSON.stringify({ error: "No notes provided" }), {
@@ -63,6 +63,10 @@ IMPORTANT: Never include any patient-identifying information in the generated no
       }
 
       userMessage += `\n\nVisit notes:\n${notes}`;
+    }
+
+    if (documentationStyle && documentationStyle.trim()) {
+      systemPrompt += `\n\nUSER STYLE PREFERENCES: ${documentationStyle.trim()}`;
     }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
