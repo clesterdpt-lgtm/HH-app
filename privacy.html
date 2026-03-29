@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CareNote</title>
+  <style>
+    :root {
+      --navy: #0f2744;
+      --navy-light: #1a3a5c;
+      --teal: #0d9488;
+      --teal-2: #5eead4;
+      --cream: #fdf8f0;
+      --gray-600: #475569;
+      --gray-400: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--navy);
+      background: var(--cream);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--navy);
+    }
+    .effective-date {
+      color: var(--gray-400);
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 36px;
+      margin-bottom: 12px;
+      color: var(--navy);
+    }
+    p, li {
+      color: var(--gray-600);
+      margin-bottom: 12px;
+    }
+    ul {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    li { margin-bottom: 6px; }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: var(--teal);
+    }
+    .disclaimer {
+      margin-top: 36px;
+      padding: 16px 20px;
+      background: #fff4e6;
+      border-left: 4px solid #f59e0b;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--navy);
+    }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--gray-400);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/HH-app/" class="back-link">&larr; Back to CareNote</a>
+    <h1>Privacy Policy</h1>
+    <p class="effective-date">Effective date: March 29, 2026</p>
+
+    <p>CareNote is a clinical documentation assistant for home health clinicians. This policy explains what data we collect, how we use it, and your rights.</p>
+
+    <h2>1. What We Collect and Why</h2>
+    <p>We collect data to provide the documentation assistance service. This includes:</p>
+    <ul>
+      <li><strong>Account data</strong> — your email address and password (password is hashed and stored by our authentication provider; we never see or store your plaintext password)</li>
+      <li><strong>Voice recordings</strong> — audio you record in the app for transcription. Recordings are processed and not stored on our servers after transcription is complete.</li>
+      <li><strong>Clinical visit notes</strong> — raw notes you type or dictate, and AI-generated clinical documentation</li>
+      <li><strong>Medication records</strong> — medication names, dosages, frequencies, routes, and clinical notes</li>
+      <li><strong>Home exercise programs</strong> — exercise selections, custom exercises, and exercise photos you upload</li>
+      <li><strong>Care plan goals</strong> — AI-generated goals linked to your clinical notes</li>
+      <li><strong>Patient education records</strong> — education modules and saved education lists</li>
+      <li><strong>App preferences</strong> — your custom templates, documentation style preferences, smart phrases, and display settings</li>
+    </ul>
+
+    <h2>2. How Data Is Stored</h2>
+    <ul>
+      <li><strong>Cloud</strong> — your data is stored in a PostgreSQL database hosted by Supabase on AWS infrastructure. Data is encrypted in transit (HTTPS) and at rest (Supabase-managed encryption).</li>
+      <li><strong>Your device</strong> — the app uses your browser's IndexedDB to store drafts, pending recordings, and cached data for offline functionality. This data stays on your device until synced.</li>
+      <li><strong>Exercise photos</strong> — uploaded photos are stored in Supabase cloud storage.</li>
+    </ul>
+
+    <h2>3. Third-Party Data Processors</h2>
+    <p>To provide our service, we share specific data with these third parties:</p>
+    <ul>
+      <li><strong>Supabase</strong> (database, authentication, hosting) — stores all persistent user data. <a href="https://supabase.com/privacy">Supabase Privacy Policy</a></li>
+      <li><strong>OpenAI</strong> (Whisper API) — receives your audio recordings for speech-to-text transcription. <a href="https://openai.com/privacy">OpenAI Privacy Policy</a></li>
+      <li><strong>Anthropic</strong> (Claude API) — receives structured note text for AI-assisted documentation generation. CareNote strips patient-identifying information before sending data to this service. <a href="https://www.anthropic.com/privacy">Anthropic Privacy Policy</a></li>
+    </ul>
+    <p>We do not sell your data to any third party. We do not use your data for advertising.</p>
+
+    <h2>4. Data Retention</h2>
+    <ul>
+      <li>Your data is retained for as long as your account is active.</li>
+      <li>You can delete individual records (notes, medications, exercises, etc.) at any time through the app.</li>
+      <li>Voice recordings are sent for transcription and are not stored on our servers after processing.</li>
+      <li>If you delete your account, all associated data is permanently removed.</li>
+    </ul>
+
+    <h2>5. Your Rights</h2>
+    <ul>
+      <li><strong>Access</strong> — you can view all your data within the app at any time.</li>
+      <li><strong>Deletion</strong> — you can delete individual records or request full account deletion.</li>
+      <li><strong>Export</strong> — you can export your notes and data using the app's export features (PDF, copy to clipboard).</li>
+      <li><strong>Questions</strong> — contact us at <a href="mailto:clesterdpt@gmail.com">clesterdpt@gmail.com</a> for any data-related requests.</li>
+    </ul>
+
+    <div class="disclaimer">
+      <h2 style="margin-top: 0; font-size: 16px;">6. HIPAA Disclaimer</h2>
+      <p>CareNote is <strong>not HIPAA compliant</strong>. We do not currently have Business Associate Agreements (BAAs) with our third-party data processors (Supabase, OpenAI, or Anthropic).</p>
+      <p>CareNote is designed as a documentation workflow assistant. Clinicians should not rely on CareNote as a HIPAA-covered system without implementing additional organizational and technical controls. Users are responsible for ensuring their use of CareNote complies with applicable privacy regulations.</p>
+      <p style="margin-bottom: 0;">All AI-generated content is a draft and must be reviewed by the clinician before use in any clinical context.</p>
+    </div>
+
+    <h2>7. Cookies and Tracking</h2>
+    <p>CareNote does not use analytics cookies, tracking scripts, or third-party advertising. We do not track your behavior across websites. The only data stored locally is your authentication token (to keep you signed in) and app preferences.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>CareNote is designed for licensed healthcare professionals. We do not knowingly collect data from anyone under the age of 13. If you believe a child has provided us with personal information, please contact us and we will delete it.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this policy as our service evolves. The effective date at the top of this page will be updated accordingly. Continued use of CareNote after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>10. Contact</h2>
+    <p>For questions about this privacy policy or your data, contact us at <a href="mailto:clesterdpt@gmail.com">clesterdpt@gmail.com</a>.</p>
+  </div>
+
+  <footer>CareNote &middot; Clinical Documentation Assistant for Home Health</footer>
+</body>
+</html>
