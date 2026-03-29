@@ -1163,6 +1163,160 @@
             .onboarding-slide-desc { max-width: 300px; }
             .onboarding-slide-icon { font-size: 52px; }
         }
+        /* ── Guided Tour ─────────────────────────────── */
+        .tour-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2500;
+            display: none;
+            pointer-events: none;
+        }
+        .tour-overlay.open { display: block; }
+        .tour-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 2500;
+            pointer-events: auto;
+            transition: opacity 0.3s ease;
+        }
+        .tour-spotlight {
+            position: absolute;
+            z-index: 2501;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(15, 39, 68, 0.85);
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+        .tour-spotlight::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 14px;
+            border: 2px solid var(--teal-light);
+            animation: tourPulse 2s ease-in-out infinite;
+        }
+        @keyframes tourPulse {
+            0%, 100% { opacity: 0.6; border-color: var(--teal-light); }
+            50% { opacity: 1; border-color: var(--teal); }
+        }
+        .tour-tooltip {
+            position: absolute;
+            z-index: 2502;
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            min-width: 260px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.05);
+            pointer-events: auto;
+            transition: all 0.35s ease;
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        .tour-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tour-tooltip-arrow {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: var(--white);
+            transform: rotate(45deg);
+            box-shadow: -2px -2px 4px rgba(0,0,0,0.04);
+        }
+        .tour-tooltip-arrow.top { top: -7px; left: 32px; }
+        .tour-tooltip-arrow.bottom { bottom: -7px; left: 32px; box-shadow: 2px 2px 4px rgba(0,0,0,0.04); }
+        .tour-tooltip-arrow.left { left: -7px; top: 24px; box-shadow: -2px 2px 4px rgba(0,0,0,0.04); }
+        .tour-tooltip-arrow.right { right: -7px; top: 24px; box-shadow: 2px -2px 4px rgba(0,0,0,0.04); }
+        .tour-tooltip-step {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .tour-tooltip-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px;
+            color: var(--navy);
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .tour-tooltip-desc {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .tour-tooltip-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .tour-tooltip-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .tour-tooltip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            transition: all 0.3s;
+        }
+        .tour-tooltip-dot.active {
+            background: var(--teal);
+            width: 18px;
+            border-radius: 3px;
+        }
+        .tour-tooltip-dot.done { background: var(--teal-light); }
+        .tour-tooltip-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tour-btn {
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .tour-btn-primary {
+            background: var(--teal);
+            color: var(--white);
+        }
+        .tour-btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); }
+        .tour-btn-ghost {
+            background: none;
+            color: var(--gray-500);
+            padding: 9px 12px;
+        }
+        .tour-btn-ghost:hover { color: var(--gray-700); background: var(--gray-100); }
+        .tour-btn-back {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        .tour-btn-back:hover { background: var(--gray-200); }
+        @media (max-width: 600px) {
+            .tour-tooltip {
+                max-width: 280px;
+                min-width: 240px;
+                padding: 20px;
+            }
+            .tour-tooltip-title { font-size: 18px; }
+            .tour-tooltip-desc { font-size: 13px; margin-bottom: 16px; }
+            .tour-btn { padding: 8px 14px; font-size: 12px; }
+        }
         /* ── Assist Panel ─────────────────────────────── */
         .assist-btn {
             display: none;
@@ -3269,9 +3423,12 @@
         document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
         document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
         document.querySelector('.auth-tabs').style.display = tab === 'forgot' ? 'none' : 'flex';
-        if (tab === 'signin' || tab === 'signup') {
+        if (tab === 'signin') {
             document.querySelector('.auth-title').textContent = 'Welcome back';
             document.querySelector('.auth-subtitle').textContent = 'Sign in to access your documentation assistant';
+        } else if (tab === 'signup') {
+            document.querySelector('.auth-title').textContent = 'Get started';
+            document.querySelector('.auth-subtitle').textContent = 'Create an account to begin documenting';
         }
     }
 
@@ -6778,6 +6935,284 @@
             overlay.style.transition = '';
         }, 300);
     }
+
+    // ── Guided Tour ──────────────────────────────
+    let tourStep = 0;
+    const tourSteps = [
+        {
+            selector: '.sidebar-nav',
+            title: 'Navigation',
+            desc: 'Switch between all your tools here — notes, medications, exercises, education, mileage, and more.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.sidebar-item[data-module="notes"]',
+            title: 'Clinical Notes',
+            desc: 'Record audio or type observations. AI generates formatted SOAP notes, evaluations, and visit summaries.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.sidebar-item[data-module="medication"]',
+            title: 'Medication Manager',
+            desc: 'Track patient medications with dosages and frequencies. Use voice recording to bulk-enter an entire med list.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.sidebar-item[data-module="hep"]',
+            title: 'Home Exercise Program',
+            desc: 'Build exercise programs from 34+ built-in exercises. Export as PDF to share with patients.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.sidebar-item[data-module="education"]',
+            title: 'Patient Education',
+            desc: 'Create education packets from built-in condition modules like CHF, COPD, and fall prevention.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.sidebar-item[data-module="vehicle"]',
+            title: 'Vehicle Tracking',
+            desc: 'Log mileage for each visit. Automatically calculates IRS tax deductions with monthly summaries.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        },
+        {
+            selector: '.dash-actions',
+            title: 'Quick Actions',
+            desc: 'Jump right in from the dashboard. Tap any button to create a new note, med list, exercise program, and more.',
+            position: 'bottom',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (sb.classList.contains('open')) toggleSidebar();
+                switchModule('dashboard');
+            }
+        },
+        {
+            selector: '.header-right',
+            title: 'Calendar & Search',
+            desc: 'Access your calendar to see all activity at a glance, or search across every module by clinical labels.',
+            position: 'bottom',
+            prepare: null
+        },
+        {
+            selector: '.sidebar-item[data-module="settings"]',
+            title: 'Settings',
+            desc: 'Customize note templates, smart phrases, output formats, and default email for exports.',
+            position: 'right',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (!sb.classList.contains('open')) toggleSidebar();
+            }
+        }
+    ];
+
+    function startGuidedTour() {
+        // Close the carousel overlay
+        const carousel = document.getElementById('onboarding-overlay');
+        carousel.classList.remove('open');
+        // Make sure we're on the dashboard
+        switchModule('dashboard');
+        // Start the tour
+        tourStep = 0;
+        document.getElementById('tour-overlay').classList.add('open');
+        buildTourDots();
+        // Small delay to let the carousel fade and sidebar animate
+        setTimeout(() => showTourStep(), 200);
+    }
+
+    function buildTourDots() {
+        const dotsEl = document.getElementById('tour-dots');
+        dotsEl.innerHTML = '';
+        for (let i = 0; i < tourSteps.length; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'tour-tooltip-dot';
+            dotsEl.appendChild(dot);
+        }
+    }
+
+    function showTourStep() {
+        const step = tourSteps[tourStep];
+        const tooltip = document.getElementById('tour-tooltip');
+        const spotlight = document.getElementById('tour-spotlight');
+
+        // Hide tooltip during transition
+        tooltip.classList.remove('visible');
+
+        // Run any preparation (open sidebar, switch module, etc.)
+        if (step.prepare) step.prepare();
+
+        // Delay to allow sidebar/module transitions
+        setTimeout(() => {
+            const target = document.querySelector(step.selector);
+            if (!target) { tourNext(); return; }
+
+            // Scroll target into view if needed
+            target.scrollIntoView({ behavior: 'instant', block: 'center' });
+
+            // Update content immediately (before position calc)
+            document.getElementById('tour-step-label').textContent = `Step ${tourStep + 1} of ${tourSteps.length}`;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+
+            // Update dots
+            document.querySelectorAll('.tour-tooltip-dot').forEach((d, i) => {
+                d.className = 'tour-tooltip-dot';
+                if (i < tourStep) d.classList.add('done');
+                if (i === tourStep) d.classList.add('active');
+            });
+
+            // Update action buttons
+            const actions = document.getElementById('tour-actions');
+            const isLast = tourStep === tourSteps.length - 1;
+            const isFirst = tourStep === 0;
+            actions.innerHTML = '';
+
+            if (!isFirst) {
+                const backBtn = document.createElement('button');
+                backBtn.className = 'tour-btn tour-btn-back';
+                backBtn.textContent = 'Back';
+                backBtn.onclick = tourPrev;
+                actions.appendChild(backBtn);
+            } else {
+                const skipBtn = document.createElement('button');
+                skipBtn.className = 'tour-btn tour-btn-ghost';
+                skipBtn.textContent = 'Skip';
+                skipBtn.onclick = finishTour;
+                actions.appendChild(skipBtn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'tour-btn tour-btn-primary';
+            nextBtn.textContent = isLast ? 'Finish' : 'Next →';
+            nextBtn.onclick = isLast ? finishTour : tourNext;
+            actions.appendChild(nextBtn);
+
+            // Small delay for scroll to finish, then position
+            setTimeout(() => {
+                const rect = target.getBoundingClientRect();
+                const pad = 8;
+
+                // Position spotlight
+                spotlight.style.left = (rect.left - pad) + 'px';
+                spotlight.style.top = (rect.top - pad) + 'px';
+                spotlight.style.width = (rect.width + pad * 2) + 'px';
+                spotlight.style.height = (rect.height + pad * 2) + 'px';
+
+                // Position tooltip
+                positionTooltip(rect, step.position);
+
+                // Show tooltip with animation
+                requestAnimationFrame(() => {
+                    tooltip.classList.add('visible');
+                });
+            }, 80);
+        }, 350);
+    }
+
+    function positionTooltip(targetRect, position) {
+        const tooltip = document.getElementById('tour-tooltip');
+        const arrow = document.getElementById('tour-arrow');
+        const gap = 16;
+
+        // Reset
+        tooltip.style.left = '';
+        tooltip.style.top = '';
+        tooltip.style.right = '';
+        tooltip.style.bottom = '';
+        arrow.className = 'tour-tooltip-arrow';
+
+        // Estimate tooltip size
+        const tW = 320;
+        const tH = 220;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        if (position === 'right' && targetRect.right + gap + tW < vw) {
+            tooltip.style.left = (targetRect.right + gap) + 'px';
+            tooltip.style.top = Math.max(8, Math.min(targetRect.top - 10, vh - tH - 8)) + 'px';
+            arrow.classList.add('left');
+        } else if (position === 'bottom' && targetRect.bottom + gap + tH < vh) {
+            tooltip.style.left = Math.max(8, Math.min(targetRect.left, vw - tW - 8)) + 'px';
+            tooltip.style.top = (targetRect.bottom + gap) + 'px';
+            arrow.classList.add('top');
+        } else if (position === 'left' && targetRect.left - gap - tW > 0) {
+            tooltip.style.left = (targetRect.left - gap - tW) + 'px';
+            tooltip.style.top = Math.max(8, Math.min(targetRect.top - 10, vh - tH - 8)) + 'px';
+            arrow.classList.add('right');
+        } else {
+            // Fallback: position below or above based on available space
+            if (targetRect.bottom + gap + tH < vh) {
+                tooltip.style.left = Math.max(8, Math.min(targetRect.left, vw - tW - 8)) + 'px';
+                tooltip.style.top = (targetRect.bottom + gap) + 'px';
+                arrow.classList.add('top');
+            } else {
+                tooltip.style.left = Math.max(8, Math.min(targetRect.left, vw - tW - 8)) + 'px';
+                tooltip.style.top = Math.max(8, targetRect.top - gap - tH) + 'px';
+                arrow.classList.add('bottom');
+            }
+        }
+    }
+
+    function tourNext() {
+        if (tourStep < tourSteps.length - 1) {
+            tourStep++;
+            showTourStep();
+        }
+    }
+
+    function tourPrev() {
+        if (tourStep > 0) {
+            tourStep--;
+            showTourStep();
+        }
+    }
+
+    function finishTour() {
+        localStorage.setItem('carenote-onboarding-done', '1');
+        const overlay = document.getElementById('tour-overlay');
+        const tooltip = document.getElementById('tour-tooltip');
+        const spotlight = document.getElementById('tour-spotlight');
+        tooltip.classList.remove('visible');
+        spotlight.style.boxShadow = '0 0 0 9999px rgba(15, 39, 68, 0)';
+        setTimeout(() => {
+            overlay.classList.remove('open');
+            spotlight.style.boxShadow = '';
+            // Close sidebar if open
+            const sb = document.getElementById('sidebar');
+            if (sb.classList.contains('open')) toggleSidebar();
+            switchModule('dashboard');
+        }, 350);
+    }
+
+    // Reposition tour on resize
+    window.addEventListener('resize', () => {
+        if (document.getElementById('tour-overlay').classList.contains('open')) {
+            showTourStep();
+        }
+    });
 
     // PWA install prompt
     let deferredPrompt = null;
@@ -12923,14 +13358,31 @@
             <div class="onboarding-slide">
                 <div class="onboarding-slide-icon">&#x2728;</div>
                 <h1 class="onboarding-slide-title">You're All Set</h1>
-                <p class="onboarding-slide-desc">Head to Settings anytime to customize templates, smart phrases, and output formats. Tap the help icons throughout the app for guidance.</p>
-                <button class="btn btn-primary onboarding-start-btn" onclick="finishOnboarding()">Get Started</button>
+                <p class="onboarding-slide-desc">Let's take a quick tour of the app so you know where everything is.</p>
+                <button class="btn btn-primary onboarding-start-btn" onclick="startGuidedTour()">Take the Tour</button>
+                <button class="tour-btn tour-btn-ghost" style="margin-top:8px; color:rgba(255,255,255,0.5);" onclick="finishOnboarding()">Skip, I'll explore on my own</button>
             </div>
         </div>
         <div class="onboarding-nav">
             <button class="onboarding-arrow" id="onboarding-prev" onclick="onboardingNav(-1)">&#8592;</button>
             <div class="onboarding-dots" id="onboarding-dots"></div>
             <button class="onboarding-arrow" id="onboarding-next" onclick="onboardingNav(1)">&#8594;</button>
+        </div>
+    </div>
+</div>
+
+<!-- Guided tour overlay -->
+<div id="tour-overlay" class="tour-overlay">
+    <div class="tour-backdrop" id="tour-backdrop" onclick="tourNext()"></div>
+    <div class="tour-spotlight" id="tour-spotlight"></div>
+    <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-arrow" id="tour-arrow"></div>
+        <div class="tour-tooltip-step" id="tour-step-label"></div>
+        <div class="tour-tooltip-title" id="tour-title"></div>
+        <div class="tour-tooltip-desc" id="tour-desc"></div>
+        <div class="tour-tooltip-footer">
+            <div class="tour-tooltip-dots" id="tour-dots"></div>
+            <div class="tour-tooltip-actions" id="tour-actions"></div>
         </div>
     </div>
 </div>
