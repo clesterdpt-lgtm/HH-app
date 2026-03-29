@@ -61,8 +61,14 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Dim screen mode**: After 8 seconds of inactivity during recording, the screen dims to near-black showing a recording timer — saves battery and adds privacy. "Go Dark" button allows instant dimming without waiting. Requires double-tap to dismiss (prevents pocket wakes)
 - Pending Recordings tab for retry after failures
 
+### Onboarding & Guided Tour
+- **Onboarding carousel**: First-time users see a full-screen walkthrough introducing CareNote's key modules (6 slides with swipe/arrow navigation, skip option)
+- **Guided tour**: After onboarding, interactive tooltips highlight the sidebar, record button, note type selector, and other key UI elements in sequence
+- **Restart anytime**: Header ❓ button relaunches the onboarding carousel and guided tour
+
 ### Settings
 - **Default Email**: Set a default recipient address for all email exports
+- **Documentation Style Preferences**: Free-text field to describe your preferred writing style for AI-generated notes (e.g., "use bullet points", "keep language simple") — applied as style instructions during note generation
 - **Built-in types**: Configure section headings and custom AI instructions on standard note types (Initial Evaluation, Routine Visit, etc.)
 - **Custom templates**: Create fully custom note types with their own sections and AI instructions
 - **Smart Phrases**: Save abbreviation/expansion pairs (e.g., `.bp` → "Blood pressure within normal limits"). Type `.abbreviation` in the note textarea to trigger inline suggestions
@@ -194,7 +200,7 @@ supabase/
 
 - **notes**: Generated notes (id, user_id, note_type, raw_notes, generated_note, labels, template_id, output_format)
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
-- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email)
+- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email, documentation_style)
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 - **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
@@ -206,7 +212,7 @@ supabase/
 
 | Function | Purpose |
 |----------|---------|
-| `generate-note` | Takes raw notes + note type + output format + optional sections/custom prompt, returns formatted clinical note via Claude API |
+| `generate-note` | Takes raw notes + note type + output format + optional sections/custom prompt + documentation style preferences, returns formatted clinical note via Claude API |
 | `assist-note` | Chat mode (category-aware review/clarify notes) and rewrite mode (update notes with new details). Tracks required sections and prioritizes missing ones. |
 | `transcribe` | Accepts audio blob, sends to OpenAI Whisper, returns transcript |
 | `generate-goals` | Takes a clinical note and generates 3-5 SMART care plan goals via Claude API |
