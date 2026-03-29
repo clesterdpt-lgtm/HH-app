@@ -1317,6 +1317,19 @@
             .tour-tooltip-desc { font-size: 13px; margin-bottom: 16px; }
             .tour-btn { padding: 8px 14px; font-size: 12px; }
         }
+        .tour-tooltip.tour-tooltip-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: auto;
+            max-width: 100%;
+            min-width: 0;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 24px 32px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.25);
+        }
         /* ── Assist Panel ─────────────────────────────── */
         .assist-btn {
             display: none;
@@ -3397,12 +3410,14 @@
         document.getElementById('auth-screen').style.display = 'flex';
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('profile-btn').style.display = 'none';
+        document.getElementById('header-tour-btn').style.display = 'none';
         document.getElementById('profile-email').innerText = '';
     }
 
     async function showApp(email) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'block';
+        document.getElementById('header-tour-btn').style.display = '';
         const profileBtn = document.getElementById('profile-btn');
         profileBtn.style.display = 'flex';
         profileBtn.textContent = email.charAt(0).toUpperCase();
@@ -7129,8 +7144,15 @@
 
             // Small delay for scroll to finish, then position
             setTimeout(() => {
-                const rect = target.getBoundingClientRect();
+                let rect = target.getBoundingClientRect();
                 const pad = 8;
+
+                // For sidebar items, the CSS transform may not be reflected in getBoundingClientRect yet.
+                // Use the known sidebar width (280px) to compute correct positions.
+                const sidebarOpen = document.getElementById('sidebar').classList.contains('open');
+                if (sidebarOpen && step.position === 'right' && rect.right <= 0) {
+                    rect = { left: rect.left + 280, right: rect.right + 280, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
+                }
 
                 // Position spotlight
                 spotlight.style.left = (rect.left - pad) + 'px';
@@ -7159,28 +7181,43 @@
         tooltip.style.top = '';
         tooltip.style.right = '';
         tooltip.style.bottom = '';
+        tooltip.classList.remove('tour-tooltip-bottom');
         arrow.className = 'tour-tooltip-arrow';
 
-        // Estimate tooltip size
-        const tW = 320;
-        const tH = 220;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const isMobile = vw <= 600;
+
+        // On mobile, sidebar steps always use a bottom card (no room to the right)
+        if (isMobile && position === 'right') {
+            tooltip.classList.add('tour-tooltip-bottom');
+            arrow.style.display = 'none';
+            return;
+        }
+
+        arrow.style.display = '';
+        const tW = isMobile ? 280 : 320;
+        const tH = 220;
 
         if (position === 'right' && targetRect.right + gap + tW < vw) {
             tooltip.style.left = (targetRect.right + gap) + 'px';
             tooltip.style.top = Math.max(8, Math.min(targetRect.top - 10, vh - tH - 8)) + 'px';
             arrow.classList.add('left');
-        } else if (position === 'bottom' && targetRect.bottom + gap + tH < vh) {
+        } else if (position === 'bottom') {
             tooltip.style.left = Math.max(8, Math.min(targetRect.left, vw - tW - 8)) + 'px';
-            tooltip.style.top = (targetRect.bottom + gap) + 'px';
-            arrow.classList.add('top');
+            if (targetRect.bottom + gap + tH < vh) {
+                tooltip.style.top = (targetRect.bottom + gap) + 'px';
+                arrow.classList.add('top');
+            } else {
+                tooltip.style.top = Math.max(8, targetRect.top - gap - tH) + 'px';
+                arrow.classList.add('bottom');
+            }
         } else if (position === 'left' && targetRect.left - gap - tW > 0) {
             tooltip.style.left = (targetRect.left - gap - tW) + 'px';
             tooltip.style.top = Math.max(8, Math.min(targetRect.top - 10, vh - tH - 8)) + 'px';
             arrow.classList.add('right');
         } else {
-            // Fallback: position below or above based on available space
+            // Fallback: below or above
             if (targetRect.bottom + gap + tH < vh) {
                 tooltip.style.left = Math.max(8, Math.min(targetRect.left, vw - tW - 8)) + 'px';
                 tooltip.style.top = (targetRect.bottom + gap) + 'px';
