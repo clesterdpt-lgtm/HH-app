@@ -1964,6 +1964,7 @@
         </div>
     </div>
     <div class="header-right">
+        <button class="header-icon-btn" id="header-tour-btn" onclick="restartOnboarding()" title="App tour" aria-label="Start app tour">&#x2753;</button>
         <button class="header-icon-btn" id="header-cal-btn" onclick="switchModule('calendar')" title="Calendar" aria-label="Open calendar">📅</button>
         <button class="header-icon-btn" id="header-search-btn" onclick="switchModule('search')" title="Search notes" aria-label="Search notes by label">🔍</button>
         <div class="offline-badge" id="offline-badge">⚡ Offline</div>
@@ -6877,18 +6878,22 @@
         showOnboarding();
     }
 
+    let onboardingTouchBound = false;
     function showOnboarding() {
         const overlay = document.getElementById('onboarding-overlay');
         overlay.classList.add('open');
         onboardingSlide = 0;
         buildOnboardingDots();
         updateOnboardingSlide();
-        let touchStartX = 0;
-        overlay.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
-        overlay.addEventListener('touchend', (e) => {
-            const diff = touchStartX - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) onboardingNav(diff > 0 ? 1 : -1);
-        }, { passive: true });
+        if (!onboardingTouchBound) {
+            onboardingTouchBound = true;
+            let touchStartX = 0;
+            overlay.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+            overlay.addEventListener('touchend', (e) => {
+                const diff = touchStartX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 50) onboardingNav(diff > 0 ? 1 : -1);
+            }, { passive: true });
+        }
     }
 
     function buildOnboardingDots() {
@@ -6934,6 +6939,14 @@
             overlay.style.opacity = '';
             overlay.style.transition = '';
         }, 300);
+    }
+
+    function restartOnboarding() {
+        localStorage.removeItem('carenote-onboarding-done');
+        onboardingSlide = 0;
+        buildOnboardingDots();
+        updateOnboardingSlide();
+        document.getElementById('onboarding-overlay').classList.add('open');
     }
 
     // ── Guided Tour ──────────────────────────────
@@ -7067,7 +7080,11 @@
         // Delay to allow sidebar/module transitions
         setTimeout(() => {
             const target = document.querySelector(step.selector);
-            if (!target) { tourNext(); return; }
+            if (!target) {
+                if (tourStep < tourSteps.length - 1) { tourStep++; showTourStep(); }
+                else { finishTour(); }
+                return;
+            }
 
             // Scroll target into view if needed
             target.scrollIntoView({ behavior: 'instant', block: 'center' });
