@@ -3485,7 +3485,7 @@
         errEl.style.display = 'none'; successEl.style.display = 'none';
         const { data, error } = await sb.auth.signUp({ email, password });
         if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
-        else { successEl.innerText = 'Account created! You can now sign in.'; successEl.style.display = 'block'; setTimeout(() => switchTab('signin'), 2000); }
+        else { successEl.innerText = 'Account created! Check your email to confirm your account before signing in.'; successEl.style.display = 'block'; setTimeout(() => switchTab('signin'), 3000); }
     }
 
     async function signOut() {
@@ -3493,6 +3493,14 @@
         currentUser = null;
         showAuth();
     }
+
+    // Handle session expiry from inactivity timeout or token refresh failure
+    sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+            currentUser = null;
+            showAuth();
+        }
+    });
 
     function showTab(tab, skipPushState) {
         ['new', 'pending', 'history'].forEach(t => {
