@@ -29,7 +29,7 @@
             --white: #ffffff;
             --gray-100: #f1f5f9;
             --gray-200: #e2e8f0;
-            --gray-400: #94a3b8;
+            --gray-400: #64748b;
             --gray-600: #475569;
             --gray-800: #1e293b;
             --red: #dc2626;
@@ -422,6 +422,10 @@
         .med-review-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
         /* ── Med Sub-Tabs ────────────────── */
+        .module-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
+        .module-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+        .module-sub-tab:hover { color: var(--gray-600); }
+        .module-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
         .med-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
         .med-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
         .med-sub-tab:hover { color: var(--gray-600); }
@@ -846,7 +850,8 @@
             .med-form-actions { flex-direction: column; align-items: stretch; }
             .med-form-actions .btn-primary { width: 100%; }
 
-            /* Med sub-tabs mobile */
+            /* Module sub-tabs mobile */
+            .module-sub-tab { padding: 10px 16px; font-size: 13px; }
             .med-sub-tab { padding: 10px 16px; font-size: 13px; }
             .med-history-item-header { padding: 14px 16px; gap: 10px; }
             .med-history-item-left { gap: 6px; }
@@ -1962,6 +1967,63 @@
         @media (max-width: 600px) {
             .search-result-left { flex-wrap: wrap; }
         }
+
+        /* Page Overflow Menu (for destructive actions) */
+        .page-overflow-wrap { position: relative; }
+        .page-overflow-btn { background: none; border: 1px solid var(--gray-200); color: var(--gray-400); font-size: 18px; padding: 4px 10px; border-radius: 8px; cursor: pointer; line-height: 1; letter-spacing: 2px; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+        .page-overflow-btn:hover { background: var(--gray-100); color: var(--gray-600); border-color: var(--gray-400); }
+        .page-overflow-menu { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 50; min-width: 180px; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 4px; }
+        .page-overflow-menu.open { display: block; }
+        .page-overflow-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--gray-600); text-align: left; white-space: nowrap; border-radius: 6px; font-family: 'DM Sans', sans-serif; transition: background 0.1s; }
+        .page-overflow-menu button:hover { background: var(--gray-100); }
+        .page-overflow-menu button.overflow-danger { color: var(--red); }
+        .page-overflow-menu button.overflow-danger:hover { background: #fef2f2; }
+
+        /* Unified Empty State */
+        .module-empty-state { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .module-empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+        .module-empty-state p { font-size: 15px; margin: 0; }
+        .module-empty-state .module-empty-hint { font-size: 13px; margin-top: 4px; }
+
+        /* Note Options Collapsible */
+        .note-options-section { margin-top: 12px; }
+        .note-options-toggle { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--gray-400); font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
+        .note-options-toggle:hover { color: var(--teal); }
+        .note-options-chevron { font-size: 12px; transition: transform 0.2s; }
+        .note-options-chevron.open { transform: rotate(180deg); }
+        .note-options-body { padding-top: 8px; }
+
+        /* Visit Context Bar */
+        .visit-context-bar { display: none; background: var(--white); border: 1px solid var(--gray-200); border-left: 4px solid var(--teal); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--shadow-sm); }
+        .visit-context-bar.active { display: flex; }
+        .visit-context-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; flex-wrap: wrap; }
+        .visit-context-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-400); white-space: nowrap; }
+        .visit-context-details { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .visit-context-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(13,148,136,0.08); color: var(--teal); font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+        .visit-context-chip.date-chip { background: rgba(15,39,68,0.06); color: var(--navy); }
+        .visit-context-actions { display: flex; align-items: center; gap: 6px; }
+        .visit-context-edit-btn { background: none; border: 1px solid var(--gray-200); color: var(--gray-600); font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+        .visit-context-edit-btn:hover { border-color: var(--teal); color: var(--teal); }
+        .visit-context-end-btn { background: none; border: none; color: var(--gray-400); font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: all 0.15s; line-height: 1; }
+        .visit-context-end-btn:hover { background: var(--red-light); color: var(--red); }
+        .visit-start-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(13,148,136,0.08); border: 1px dashed var(--teal); color: var(--teal); font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; margin-bottom: 16px; }
+        .visit-start-btn:hover { background: rgba(13,148,136,0.15); border-style: solid; }
+        .visit-start-btn.hidden { display: none; }
+
+        /* Visit Context Setup Modal */
+        .visit-setup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1200; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .visit-setup-overlay.open { display: flex; }
+        .visit-setup-modal { background: var(--white); border-radius: 16px; padding: 28px; max-width: 380px; width: 100%; box-shadow: var(--shadow-lg); }
+        .visit-setup-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--navy); margin-bottom: 4px; }
+        .visit-setup-subtitle { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
+        .visit-setup-modal .form-group { margin-bottom: 14px; }
+        .visit-setup-actions { display: flex; gap: 8px; margin-top: 20px; }
+        .visit-setup-actions .btn { flex: 1; }
+        @media (max-width: 600px) {
+            .visit-context-bar { padding: 10px 14px; gap: 8px; }
+            .visit-context-chip { font-size: 12px; padding: 3px 8px; }
+            .visit-start-btn { font-size: 12px; padding: 7px 12px; }
+        }
     </style>
 </head>
 <body>
@@ -2121,6 +2183,57 @@
     </div>
 
     <main>
+        <!-- Visit Context Bar -->
+        <button class="visit-start-btn hidden" id="visit-start-btn" onclick="openVisitSetup()">+ Start Visit Session</button>
+        <div class="visit-context-bar" id="visit-context-bar">
+            <div class="visit-context-info">
+                <span class="visit-context-label">Current Visit</span>
+                <div class="visit-context-details">
+                    <span class="visit-context-chip" id="visit-ctx-initials"></span>
+                    <span class="visit-context-chip date-chip" id="visit-ctx-type"></span>
+                    <span class="visit-context-chip date-chip" id="visit-ctx-date"></span>
+                </div>
+            </div>
+            <div class="visit-context-actions">
+                <button class="visit-context-edit-btn" onclick="openVisitSetup(true)">Edit</button>
+                <button class="visit-context-end-btn" onclick="endVisitSession()" title="End visit session">&times;</button>
+            </div>
+        </div>
+
+        <!-- Visit Setup Modal -->
+        <div class="visit-setup-overlay" id="visit-setup-overlay" onclick="if(event.target===this)closeVisitSetup()">
+            <div class="visit-setup-modal">
+                <div class="visit-setup-title">Visit Session</div>
+                <div class="visit-setup-subtitle">Optional context that persists across modules during this visit.</div>
+                <div class="form-group">
+                    <label class="form-label">Patient Initials</label>
+                    <input type="text" class="form-input" id="visit-initials" placeholder="e.g. JD" maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Visit Type</label>
+                    <div class="select-wrapper">
+                        <select id="visit-type">
+                            <option value="">Select type...</option>
+                            <option value="Routine Visit">Routine Visit</option>
+                            <option value="Initial Evaluation">Initial Evaluation</option>
+                            <option value="Start of Care">Start of Care</option>
+                            <option value="Discharge">Discharge</option>
+                            <option value="Reassessment">Reassessment</option>
+                            <option value="Recertification">Recertification</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="visit-date">
+                </div>
+                <div class="visit-setup-actions">
+                    <button class="btn btn-outline" onclick="closeVisitSetup()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveVisitSession()">Start Session</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Dashboard -->
         <div id="view-dashboard">
             <div class="page-title">Dashboard</div>
@@ -2209,7 +2322,12 @@
                     <div class="page-title">Clinical Documentation</div>
                     <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
                 </div>
-                <button class="btn btn-sm" style="border:1.5px solid var(--gray-200); background:transparent; color:var(--gray-400); font-weight:500;" onmouseover="this.style.borderColor='var(--red)'; this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--gray-200)'; this.style.color='var(--gray-400)';" onclick="confirmClearAll()" title="Clear all notes and start fresh">🗑️ Clear All</button>
+                <div class="page-overflow-wrap">
+                    <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
+                    <div class="page-overflow-menu">
+                        <button class="overflow-danger" onclick="confirmClearAll(); closePageOverflow()">🗑️ Clear All Notes</button>
+                    </div>
+                </div>
             </div>
 
             <div class="offline-banner" id="offline-banner">
@@ -2237,28 +2355,38 @@
                     </div>
                     <textarea style="margin-top:12px;" id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
                     <div class="phrase-suggestions" id="phrase-suggestions"></div>
-                    <div class="controls-row">
-                        <div class="label-input-wrapper">
-                            <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
-                                <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
-                                <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
-                            </div>
-                            <div class="label-suggestions" id="suggestions-note"></div>
-                        </div>
-                        <div class="select-wrapper">
+                    <div class="controls-row" style="justify-content:space-between;">
+                        <div class="select-wrapper" style="flex:0 1 220px;">
                             <select id="note-type" class="note-type-select"></select>
                         </div>
-                        <button class="assist-btn" id="assist-btn" onclick="openAssist()">🤖 Assist</button>
-                        <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
-                        <span class="draft-status" id="draft-status"></span>
-                    </div>
-                    <div class="format-row" id="format-row">
-                        <span class="format-row-label">Output:</span>
-                        <div class="format-toggle" id="format-toggle">
-                            <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('full')">Full Note</button>
-                            <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('summary')">Summary</button>
-                        </div>
                         <button class="btn btn-primary generate-btn" id="gen-btn" onclick="generateNote()">Generate Note →</button>
+                    </div>
+                    <div class="note-options-section">
+                        <button class="note-options-toggle" id="note-options-toggle" onclick="toggleNoteOptions()">
+                            <span class="note-options-toggle-text">More options</span>
+                            <span class="note-options-chevron" id="note-options-chevron">▾</span>
+                        </button>
+                        <div class="note-options-body" id="note-options-body" style="display:none;">
+                            <div class="controls-row" style="margin-top:0;">
+                                <div class="label-input-wrapper">
+                                    <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
+                                        <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                        <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
+                                    </div>
+                                    <div class="label-suggestions" id="suggestions-note"></div>
+                                </div>
+                                <button class="assist-btn" id="assist-btn" onclick="openAssist()">🤖 Assist</button>
+                                <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
+                                <span class="draft-status" id="draft-status"></span>
+                            </div>
+                            <div class="format-row" id="format-row">
+                                <span class="format-row-label">Output:</span>
+                                <div class="format-toggle" id="format-toggle">
+                                    <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('full')">Full Note</button>
+                                    <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('summary')">Summary</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2390,7 +2518,12 @@
                             <button class="export-option" onclick="downloadAllPdf(); closeExport()">📥 PDF All Notes</button>
                         </div>
                     </div>
-                    <button class="btn btn-danger" onclick="confirmDeleteAll()">🗑️ Delete All Notes</button>
+                    <div class="page-overflow-wrap">
+                        <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
+                        <div class="page-overflow-menu">
+                            <button class="overflow-danger" onclick="confirmDeleteAll(); closePageOverflow()">🗑️ Delete All Notes</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="history-filters" id="history-filters" style="display:none;">
@@ -2574,16 +2707,21 @@
                 </div>
             </div>
 
-            <div class="med-sub-tabs">
-                <button class="med-sub-tab active" onclick="switchMedSubTab('current')">💊 Current List</button>
-                <button class="med-sub-tab" onclick="switchMedSubTab('pending')">⏳ Pending <span class="med-pending-badge" id="med-pending-badge" style="display:none;"></span></button>
-                <button class="med-sub-tab" onclick="switchMedSubTab('history')">📋 History</button>
+            <div class="module-sub-tabs med-sub-tabs">
+                <button class="module-sub-tab med-sub-tab active" onclick="switchMedSubTab('current')">💊 Current List</button>
+                <button class="module-sub-tab med-sub-tab" onclick="switchMedSubTab('pending')">⏳ Pending <span class="med-pending-badge" id="med-pending-badge" style="display:none;"></span></button>
+                <button class="module-sub-tab med-sub-tab" onclick="switchMedSubTab('history')">📋 History</button>
             </div>
 
             <div id="med-current-view">
             <div class="med-top-actions">
                 <button class="btn btn-outline" id="bulk-med-btn" onclick="startBulkMedRecording()">🎤 Record Full Med List</button>
-                <button class="btn btn-sm btn-clear-meds" onclick="confirmClearMeds()" title="Clear all medications">🗑️ Clear All</button>
+                <div class="page-overflow-wrap">
+                    <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
+                    <div class="page-overflow-menu">
+                        <button class="overflow-danger" onclick="confirmClearMeds(); closePageOverflow()">🗑️ Clear All Medications</button>
+                    </div>
+                </div>
             </div>
 
             <div id="bulk-med-section" style="margin-bottom:20px; display:none;">
@@ -2658,9 +2796,9 @@
             </div>
 
             <div id="med-list-container">
-                <div id="med-list-empty" style="text-align:center; padding:48px 20px; color:var(--gray-400);">
-                    <div style="font-size:40px; margin-bottom:12px;">💊</div>
-                    <p style="font-size:15px;">No medications added yet</p>
+                <div id="med-list-empty" class="module-empty-state">
+                    <div class="module-empty-state-icon">💊</div>
+                    <p>No medications added yet</p>
                 </div>
                 <div id="med-list-items"></div>
             </div>
@@ -2711,13 +2849,18 @@
                         </select>
                     </div>
                     <button class="btn-sort-toggle" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
-                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllMedHistory()" style="margin-left:auto;">🗑️ Clear All</button>
+                    <div class="page-overflow-wrap" style="margin-left:auto;">
+                        <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
+                        <div class="page-overflow-menu">
+                            <button class="overflow-danger" onclick="confirmDeleteAllMedHistory(); closePageOverflow()">🗑️ Clear All History</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="med-history-list">
-                    <div class="med-history-empty">
-                        <div class="med-history-empty-icon">📋</div>
+                    <div class="module-empty-state med-history-empty">
+                        <div class="module-empty-state-icon">📋</div>
                         <p>No saved medication lists yet</p>
-                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save snapshots</p>
+                        <p class="module-empty-hint">Use "Save to History" on the Current List tab to save snapshots</p>
                     </div>
                 </div>
             </div>
@@ -2731,10 +2874,10 @@
                 </div>
             </div>
 
-            <div class="hep-sub-tabs">
-                <button class="hep-sub-tab active" onclick="switchHepSubTab('library')">📚 Library</button>
-                <button class="hep-sub-tab" onclick="switchHepSubTab('current')">🏋️ Current HEP</button>
-                <button class="hep-sub-tab" onclick="switchHepSubTab('history')">📋 History</button>
+            <div class="module-sub-tabs hep-sub-tabs">
+                <button class="module-sub-tab hep-sub-tab active" onclick="switchHepSubTab('library')">📚 Library</button>
+                <button class="module-sub-tab hep-sub-tab" onclick="switchHepSubTab('current')">🏋️ Current HEP</button>
+                <button class="module-sub-tab hep-sub-tab" onclick="switchHepSubTab('history')">📋 History</button>
             </div>
 
             <!-- LIBRARY TAB -->
@@ -2789,10 +2932,10 @@
 
             <!-- CURRENT HEP TAB -->
             <div id="hep-current-view" style="display:none;">
-                <div id="hep-current-empty" class="hep-current-empty">
-                    <div class="hep-current-empty-icon">🏋️</div>
+                <div id="hep-current-empty" class="module-empty-state hep-current-empty">
+                    <div class="module-empty-state-icon">🏋️</div>
                     <p>No exercises added yet</p>
-                    <p style="font-size:13px; margin-top:4px;">Go to the Library tab to add exercises to your program</p>
+                    <p class="module-empty-hint">Go to the Library tab to add exercises to your program</p>
                 </div>
                 <div id="hep-current-items"></div>
                 <div id="hep-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
@@ -2853,10 +2996,10 @@
                     <button class="btn btn-outline" id="sort-toggle-hep-history" onclick="toggleSortOrder('hepHistory', () => renderHepHistory(document.getElementById('hep-history-search').value, document.getElementById('hep-history-label-filter').value))">Newest ↓</button>
                 </div>
                 <div id="hep-history-list">
-                    <div class="hep-history-empty">
-                        <div class="hep-history-empty-icon">📋</div>
+                    <div class="module-empty-state hep-history-empty">
+                        <div class="module-empty-state-icon">📋</div>
                         <p>No saved exercise programs yet</p>
-                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current HEP tab to save programs</p>
+                        <p class="module-empty-hint">Use "Save to History" on the Current HEP tab to save programs</p>
                     </div>
                 </div>
             </div>
@@ -2872,10 +3015,10 @@
                 </div>
             </div>
 
-            <div class="edu-sub-tabs">
-                <button class="edu-sub-tab active" onclick="switchEduSubTab('modules')">📚 Modules</button>
-                <button class="edu-sub-tab" onclick="switchEduSubTab('current')">📋 Current List</button>
-                <button class="edu-sub-tab" onclick="switchEduSubTab('history')">📜 History</button>
+            <div class="module-sub-tabs edu-sub-tabs">
+                <button class="module-sub-tab edu-sub-tab active" onclick="switchEduSubTab('modules')">📚 Modules</button>
+                <button class="module-sub-tab edu-sub-tab" onclick="switchEduSubTab('current')">📋 Current List</button>
+                <button class="module-sub-tab edu-sub-tab" onclick="switchEduSubTab('history')">📜 History</button>
             </div>
 
             <!-- MODULES TAB -->
@@ -2940,10 +3083,10 @@
 
             <!-- CURRENT LIST TAB -->
             <div id="edu-list-current-view" style="display:none;">
-                <div id="edu-list-current-empty" class="edu-list-current-empty">
-                    <div class="edu-list-current-empty-icon">📋</div>
+                <div id="edu-list-current-empty" class="module-empty-state edu-list-current-empty">
+                    <div class="module-empty-state-icon">📋</div>
                     <p>No modules added yet</p>
-                    <p style="font-size:13px; margin-top:4px;">Go to the Modules tab and click "+ Add to List" to build a patient education packet</p>
+                    <p class="module-empty-hint">Go to the Modules tab and click "+ Add to List" to build a patient education packet</p>
                 </div>
                 <div id="edu-list-current-items"></div>
                 <div id="edu-list-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
@@ -2981,10 +3124,10 @@
                     <button class="btn btn-outline" id="sort-toggle-edu-list-history" onclick="toggleSortOrder('eduListHistory', () => applyEduListHistoryFilters())">Newest ↓</button>
                 </div>
                 <div id="edu-list-history-list">
-                    <div class="edu-list-history-empty">
-                        <div class="edu-list-history-empty-icon">📋</div>
+                    <div class="module-empty-state edu-list-history-empty">
+                        <div class="module-empty-state-icon">📋</div>
                         <p>No saved education lists yet</p>
-                        <p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save packets</p>
+                        <p class="module-empty-hint">Use "Save to History" on the Current List tab to save packets</p>
                     </div>
                 </div>
             </div>
@@ -3822,6 +3965,8 @@
         document.getElementById('sidebar-backdrop').classList.remove('open');
         // Widen main for dashboard
         document.querySelector('main').classList.toggle('dash-wide', module === 'dashboard');
+        // Show/hide visit context bar on clinical modules
+        updateVisitContextVisibility(module);
 
         if (module === 'notes') {
             // Show notes tab bar and current notes view
@@ -3885,6 +4030,127 @@
             }
         }
     }
+
+    // ── Page Overflow Menu ──────────────────────────────────
+    function togglePageOverflow(btn) {
+        const menu = btn.nextElementSibling;
+        const isOpen = menu.classList.contains('open');
+        closePageOverflow();
+        if (!isOpen) menu.classList.add('open');
+    }
+    function closePageOverflow() {
+        document.querySelectorAll('.page-overflow-menu.open').forEach(m => m.classList.remove('open'));
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.page-overflow-wrap')) closePageOverflow();
+    });
+
+    // ── Visit Context Bar ──────────────────────────────────
+    const visitClinicalModules = ['notes', 'medication', 'hep', 'education'];
+
+    function updateVisitContextVisibility(module) {
+        const session = getVisitSession();
+        const isClinical = visitClinicalModules.includes(module);
+        const bar = document.getElementById('visit-context-bar');
+        const startBtn = document.getElementById('visit-start-btn');
+        if (session) {
+            bar.classList.toggle('active', isClinical);
+            startBtn.classList.add('hidden');
+        } else {
+            bar.classList.remove('active');
+            startBtn.classList.toggle('hidden', !isClinical);
+        }
+    }
+
+    function getVisitSession() {
+        try {
+            const raw = sessionStorage.getItem('carenote-visit-session');
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }
+
+    function openVisitSetup(editing) {
+        const overlay = document.getElementById('visit-setup-overlay');
+        const dateInput = document.getElementById('visit-date');
+        if (!editing) {
+            document.getElementById('visit-initials').value = '';
+            document.getElementById('visit-type').value = '';
+            dateInput.value = new Date().toISOString().split('T')[0];
+        } else {
+            const s = getVisitSession();
+            if (s) {
+                document.getElementById('visit-initials').value = s.initials || '';
+                document.getElementById('visit-type').value = s.type || '';
+                dateInput.value = s.date || new Date().toISOString().split('T')[0];
+            }
+        }
+        overlay.classList.add('open');
+    }
+
+    function closeVisitSetup() {
+        document.getElementById('visit-setup-overlay').classList.remove('open');
+    }
+
+    function saveVisitSession() {
+        const initials = document.getElementById('visit-initials').value.trim().toUpperCase();
+        const type = document.getElementById('visit-type').value;
+        const date = document.getElementById('visit-date').value;
+        if (!initials && !type) return;
+        const session = { initials, type, date };
+        sessionStorage.setItem('carenote-visit-session', JSON.stringify(session));
+        renderVisitContext(session);
+        closeVisitSetup();
+        updateVisitContextVisibility(currentModule);
+        // Sync note type selector if on notes module
+        if (currentModule === 'notes' && type) {
+            const noteTypeSelect = document.getElementById('note-type');
+            if (noteTypeSelect) {
+                for (const opt of noteTypeSelect.options) {
+                    if (opt.value === type || opt.textContent === type) {
+                        noteTypeSelect.value = opt.value;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    function renderVisitContext(session) {
+        const initialsEl = document.getElementById('visit-ctx-initials');
+        const typeEl = document.getElementById('visit-ctx-type');
+        const dateEl = document.getElementById('visit-ctx-date');
+        if (session.initials) {
+            initialsEl.textContent = session.initials;
+            initialsEl.style.display = '';
+        } else {
+            initialsEl.style.display = 'none';
+        }
+        if (session.type) {
+            typeEl.textContent = session.type;
+            typeEl.style.display = '';
+        } else {
+            typeEl.style.display = 'none';
+        }
+        if (session.date) {
+            const d = new Date(session.date + 'T00:00:00');
+            dateEl.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            dateEl.style.display = '';
+        } else {
+            dateEl.style.display = 'none';
+        }
+    }
+
+    function endVisitSession() {
+        sessionStorage.removeItem('carenote-visit-session');
+        document.getElementById('visit-context-bar').classList.remove('active');
+        updateVisitContextVisibility(currentModule);
+    }
+
+    // Restore visit session on load
+    (function restoreVisitSession() {
+        const session = getVisitSession();
+        if (session) renderVisitContext(session);
+    })();
 
     // ── Dashboard ──────────────────────────────────────────
     async function loadDashboard() {
@@ -6712,6 +6978,14 @@
             });
         }
         await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
+    }
+
+    function toggleNoteOptions() {
+        const body = document.getElementById('note-options-body');
+        const chevron = document.getElementById('note-options-chevron');
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        chevron.classList.toggle('open', !isOpen);
     }
 
     function setNoteFormat(format) {
