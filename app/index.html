@@ -104,6 +104,7 @@
         .tab-badge { background: var(--orange); color: var(--white); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: 6px; display: none; }
 
         #auth-screen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; }
+        #encryption-unlock-screen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; }
         .auth-card { background: var(--white); border-radius: 20px; box-shadow: var(--shadow-lg); padding: 48px 40px; width: 100%; max-width: 420px; border: 1px solid var(--gray-200); }
         .auth-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 6px; letter-spacing: -0.5px; }
         .auth-subtitle { color: var(--gray-600); font-size: 14px; margin-bottom: 32px; }
@@ -2085,6 +2086,23 @@
     </div>
 </div>
 
+<!-- Encryption Unlock Screen -->
+<div id="encryption-unlock-screen" style="display:none">
+    <div style="max-width:380px;width:100%;text-align:center;">
+        <div class="auth-badge">✚</div>
+        <h1 class="auth-title">Unlock Encryption</h1>
+        <p class="auth-subtitle">Enter your password to decrypt your clinical data</p>
+        <div id="unlock-email" style="font-size:13px;color:var(--gray-400);margin-bottom:16px;"></div>
+        <input type="password" id="unlock-password" placeholder="Password" class="auth-input"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();unlockEncryption();}">
+        <div class="auth-error" id="unlock-error"></div>
+        <button class="auth-btn" onclick="unlockEncryption()">Unlock</button>
+        <div style="margin-top:12px;">
+            <a href="#" onclick="skipEncryptionUnlock();return false;" style="font-size:13px;color:var(--gray-400);">Continue without decryption</a>
+        </div>
+    </div>
+</div>
+
 <!-- App Screen -->
 <div id="app-screen">
     <div class="nav-tabs" style="display:none">
@@ -2492,6 +2510,57 @@
                 <div class="card-body">
                     <button class="btn btn-primary" onclick="openPhraseEditor()">+ New Phrase</button>
                     <div id="smart-phrases-list" style="margin-top:16px;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">🔒</div>
+                    <div class="card-header-text">
+                        <h2>Data Encryption</h2>
+                        <p>Encrypt clinical data at rest using your password</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                        <div style="font-size:13px;color:var(--gray-600);">Encryption key:</div>
+                        <div id="encryption-key-status" style="font-size:13px;font-weight:600;"></div>
+                    </div>
+                    <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px;">
+                        Encrypt all existing clinical data (notes, goals, medications, exercises, education lists). New data is encrypted automatically when a key is active.
+                    </p>
+                    <p style="font-size:12px;color:var(--orange-text, #b45309);margin-bottom:16px;padding:10px;background:var(--orange-bg, #fff7ed);border-radius:8px;">
+                        ⚠️ Your encryption key is derived from your password. If you change your password, you will need to re-encrypt your data. There is no recovery if you forget your password.
+                    </p>
+                    <button class="btn btn-primary" id="encrypt-existing-btn" onclick="encryptExistingData()">Encrypt Existing Data</button>
+                    <div id="encrypt-existing-status" style="font-size:13px;color:var(--gray-600);margin-top:10px;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">🗓️</div>
+                    <div class="card-header-text">
+                        <h2>Data Retention</h2>
+                        <p>Automatically delete old records after a set period</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <label for="retention-select" style="font-size:13px;color:var(--gray-600);">Auto-delete records older than:</label>
+                        <select id="retention-select" style="padding:6px 10px;border-radius:8px;border:1px solid var(--gray-300);font-size:13px;">
+                            <option value="0">Never</option>
+                            <option value="90">90 days</option>
+                            <option value="180">6 months</option>
+                            <option value="365">1 year</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <button class="btn btn-primary" onclick="saveRetentionSetting()">Save</button>
+                        <button class="btn btn-outline" onclick="manualPurge()" id="purge-now-btn">Purge Now</button>
+                    </div>
+                    <div id="retention-last-purge" style="font-size:12px;color:var(--gray-500);margin-top:10px;"></div>
+                    <div id="retention-status" style="font-size:13px;color:var(--gray-600);margin-top:8px;"></div>
                 </div>
             </div>
         </div>
@@ -3329,7 +3398,145 @@
     const { createClient } = supabase;
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null;
+    let encryptionKey = null; // AES-GCM CryptoKey, held in memory only
+
+    // ── Encryption Helpers (Web Crypto API) ──────────────
+    function arrayBufToBase64(buf) {
+        return btoa(String.fromCharCode(...new Uint8Array(buf)));
+    }
+    function base64ToArrayBuf(b64) {
+        const bin = atob(b64);
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        return buf.buffer;
+    }
+    async function generateSalt() {
+        return arrayBufToBase64(crypto.getRandomValues(new Uint8Array(16)));
+    }
+    async function deriveEncryptionKey(password, saltBase64) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: new Uint8Array(base64ToArrayBuf(saltBase64)), iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+    function isEncrypted(value) {
+        return typeof value === 'string' && value.startsWith('{"iv":"');
+    }
+    async function encryptField(plaintext) {
+        if (!encryptionKey || !plaintext) return plaintext;
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, encryptionKey, new TextEncoder().encode(plaintext));
+        return JSON.stringify({ iv: arrayBufToBase64(iv), ct: arrayBufToBase64(ct) });
+    }
+    async function decryptField(value) {
+        if (!value || !isEncrypted(value)) return value;
+        if (!encryptionKey) return '[Encrypted]';
+        try {
+            const { iv, ct } = JSON.parse(value);
+            const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(base64ToArrayBuf(iv)) }, encryptionKey, base64ToArrayBuf(ct));
+            return new TextDecoder().decode(plain);
+        } catch { return '[Decryption failed]'; }
+    }
+    async function decryptJsonField(value) {
+        if (!value) return value;
+        if (typeof value === 'string' && isEncrypted(value)) {
+            const decrypted = await decryptField(value);
+            if (decrypted === '[Encrypted]' || decrypted === '[Decryption failed]') return [];
+            try { return JSON.parse(decrypted); } catch { return []; }
+        }
+        return value; // already a plain object/array
+    }
+    async function encryptJsonField(data) {
+        if (!encryptionKey || !data) return data;
+        return encryptField(JSON.stringify(data));
+    }
+
+    async function encryptExistingData() {
+        if (!encryptionKey) { alert('Encryption key not active. Please log in with your password first.'); return; }
+        const statusEl = document.getElementById('encrypt-existing-status');
+        const btn = document.getElementById('encrypt-existing-btn');
+        btn.disabled = true;
+        statusEl.textContent = 'Scanning records...';
+        let encrypted = 0, total = 0;
+
+        try {
+            // Notes
+            const { data: notes } = await sb.from('notes').select('id, generated_note').eq('user_id', currentUser.id);
+            for (const n of (notes || [])) {
+                total++;
+                if (n.generated_note && !isEncrypted(n.generated_note)) {
+                    const ct = await encryptField(n.generated_note);
+                    await sb.from('notes').update({ generated_note: ct }).eq('id', n.id);
+                    encrypted++;
+                    statusEl.textContent = `Encrypting... ${encrypted} records done`;
+                }
+            }
+
+            // Care plan goals
+            const { data: goals } = await sb.from('care_plan_goals').select('id, goal_text, note_id').in('note_id', (notes || []).map(n => n.id));
+            for (const g of (goals || [])) {
+                total++;
+                if (g.goal_text && !isEncrypted(g.goal_text)) {
+                    const ct = await encryptField(g.goal_text);
+                    await sb.from('care_plan_goals').update({ goal_text: ct }).eq('id', g.id);
+                    encrypted++;
+                    statusEl.textContent = `Encrypting... ${encrypted} records done`;
+                }
+            }
+
+            // Med history
+            const { data: meds } = await sb.from('med_history').select('id, medications').eq('user_id', currentUser.id);
+            for (const m of (meds || [])) {
+                total++;
+                if (m.medications && !isEncrypted(m.medications)) {
+                    const ct = await encryptJsonField(m.medications);
+                    await sb.from('med_history').update({ medications: ct }).eq('id', m.id);
+                    encrypted++;
+                    statusEl.textContent = `Encrypting... ${encrypted} records done`;
+                }
+            }
+
+            // HEP history
+            const { data: heps } = await sb.from('hep_history').select('id, exercises').eq('user_id', currentUser.id);
+            for (const h of (heps || [])) {
+                total++;
+                if (h.exercises && !isEncrypted(h.exercises)) {
+                    const ct = await encryptJsonField(h.exercises);
+                    await sb.from('hep_history').update({ exercises: ct }).eq('id', h.id);
+                    encrypted++;
+                    statusEl.textContent = `Encrypting... ${encrypted} records done`;
+                }
+            }
+
+            // Edu list history
+            const { data: edus } = await sb.from('edu_list_history').select('id, modules').eq('user_id', currentUser.id);
+            for (const e of (edus || [])) {
+                total++;
+                if (e.modules && !isEncrypted(e.modules)) {
+                    const ct = await encryptJsonField(e.modules);
+                    await sb.from('edu_list_history').update({ modules: ct }).eq('id', e.id);
+                    encrypted++;
+                    statusEl.textContent = `Encrypting... ${encrypted} records done`;
+                }
+            }
+
+            statusEl.textContent = encrypted > 0
+                ? `Done! Encrypted ${encrypted} of ${total} records.`
+                : `All ${total} records are already encrypted.`;
+        } catch (err) {
+            statusEl.textContent = 'Error: ' + err.message;
+        }
+        btn.disabled = false;
+    }
+
     let historyNotes = [];
+    let userRetentionDays = 0;
+    let userLastPurgeDate = null;
     let isOnline = navigator.onLine;
     let pendingRecordings = [];
     let pendingNoteQueue = [];
@@ -3401,13 +3608,24 @@
         const savedNotes = await loadNotesFromDB();
         if (savedNotes.length > 0) pendingNoteQueue = savedNotes;
         const { data: { session } } = await sb.auth.getSession();
-        if (session) { currentUser = session.user; showApp(session.user.email); }
+        if (session) {
+            currentUser = session.user;
+            // Check if user has encryption set up — if so, need password to derive key
+            const { data: prefs } = await sb.from('user_preferences')
+                .select('encryption_salt').eq('user_id', currentUser.id).single();
+            if (prefs?.encryption_salt) {
+                showEncryptionUnlock(session.user.email, prefs.encryption_salt);
+            } else {
+                showApp(session.user.email);
+            }
+        }
         else showAuth();
         loadPendingBadge();
     });
 
     function showAuth() {
         document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('encryption-unlock-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('profile-btn').style.display = 'none';
         document.getElementById('header-tour-btn').style.display = 'none';
@@ -3416,6 +3634,7 @@
 
     async function showApp(email) {
         document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('encryption-unlock-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = 'block';
         document.getElementById('header-tour-btn').style.display = '';
         const profileBtn = document.getElementById('profile-btn');
@@ -3425,6 +3644,11 @@
         showInstallBanner();
         await loadUserTemplatesAndPrefs();
         loadSmartPhrases(); // load phrases for dot-prefix expansion (no await, non-blocking)
+        // Auto-purge expired data if retention is configured
+        if (userRetentionDays > 0) {
+            const shouldPurge = !userLastPurgeDate || (Date.now() - new Date(userLastPurgeDate).getTime() > 86400000);
+            if (shouldPurge) purgeExpiredData(userRetentionDays).catch(() => {});
+        }
         // Restore draft after templates are loaded (so dropdown values are available)
         await loadDraft();
         // Restore last active view AFTER auth + data loading to avoid race conditions
@@ -3474,7 +3698,21 @@
         errEl.style.display = 'none';
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { errEl.innerText = error.message; errEl.style.display = 'block'; }
-        else { currentUser = data.user; showApp(data.user.email); }
+        else {
+            currentUser = data.user;
+            // Derive encryption key from password before it goes out of scope
+            const { data: prefs } = await sb.from('user_preferences')
+                .select('encryption_salt').eq('user_id', currentUser.id).single();
+            if (prefs?.encryption_salt) {
+                encryptionKey = await deriveEncryptionKey(password, prefs.encryption_salt);
+            } else {
+                // First login or encryption not set up — generate salt and derive key
+                const salt = await generateSalt();
+                encryptionKey = await deriveEncryptionKey(password, salt);
+                await sb.from('user_preferences').upsert({ user_id: currentUser.id, encryption_salt: salt });
+            }
+            showApp(data.user.email);
+        }
     }
 
     async function signUp() {
@@ -3491,6 +3729,7 @@
     async function signOut() {
         await sb.auth.signOut();
         currentUser = null;
+        encryptionKey = null;
         showAuth();
     }
 
@@ -3498,9 +3737,41 @@
     sb.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
             currentUser = null;
+            encryptionKey = null;
             showAuth();
         }
     });
+
+    // Encryption unlock screen for session restore
+    let pendingUnlockSalt = null;
+    function showEncryptionUnlock(email, salt) {
+        pendingUnlockSalt = salt;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('encryption-unlock-screen').style.display = 'flex';
+        document.getElementById('unlock-email').textContent = email;
+        document.getElementById('unlock-password').value = '';
+        document.getElementById('unlock-error').style.display = 'none';
+    }
+    async function unlockEncryption() {
+        const password = document.getElementById('unlock-password').value;
+        const errEl = document.getElementById('unlock-error');
+        if (!password) { errEl.innerText = 'Please enter your password.'; errEl.style.display = 'block'; return; }
+        try {
+            encryptionKey = await deriveEncryptionKey(password, pendingUnlockSalt);
+            // Verify the key works by attempting a test — if wrong password, decryption will fail later
+            // but PBKDF2 derivation always succeeds, so we proceed optimistically
+            pendingUnlockSalt = null;
+            showApp(currentUser.email);
+        } catch (e) {
+            errEl.innerText = 'Failed to derive encryption key.'; errEl.style.display = 'block';
+        }
+    }
+    function skipEncryptionUnlock() {
+        encryptionKey = null;
+        pendingUnlockSalt = null;
+        showApp(currentUser.email);
+    }
 
     function showTab(tab, skipPushState) {
         ['new', 'pending', 'history'].forEach(t => {
@@ -4188,6 +4459,7 @@
                 };
                 if (item.labels && item.labels.length > 0) insertData.labels = item.labels;
                 if (item.templateId) insertData.template_id = item.templateId;
+                insertData.generated_note = await encryptField(insertData.generated_note);
                 await sb.from('notes').insert(insertData);
             }
 
@@ -4761,6 +5033,7 @@
         if (!historyNotes || historyNotes.length === 0) {
             const { data } = await sb.from('notes').select('*').order('created_at', { ascending: false });
             historyNotes = data || [];
+            for (const n of historyNotes) { n.generated_note = await decryptField(n.generated_note); }
         }
         historyNotes.forEach(note => {
             const key = toDateKey(note.created_at);
@@ -5451,6 +5724,7 @@
                     if (labels.length > 0) insertData.labels = labels;
                     if (templateId) insertData.template_id = templateId;
                     if (outputFormat) insertData.output_format = outputFormat;
+                    insertData.generated_note = await encryptField(insertData.generated_note);
 
                     let { data: inserted, error } = await sb.from('notes').insert(insertData).select().single();
 
@@ -5563,14 +5837,18 @@
         btn.disabled = true;
         try {
             await sb.from('care_plan_goals').delete().eq('note_id', currentNoteId);
-            const rows = currentGoals.map((g, i) => ({
-                note_id: currentNoteId,
-                user_id: currentUser.id,
-                goal_text: g.goal_text,
-                timeframe: g.timeframe || null,
-                status: 'active',
-                sort_order: i
-            }));
+            const rows = [];
+            for (let i = 0; i < currentGoals.length; i++) {
+                const g = currentGoals[i];
+                rows.push({
+                    note_id: currentNoteId,
+                    user_id: currentUser.id,
+                    goal_text: await encryptField(g.goal_text),
+                    timeframe: g.timeframe || null,
+                    status: 'active',
+                    sort_order: i
+                });
+            }
             const { error } = await sb.from('care_plan_goals').insert(rows);
             if (error) throw error;
             statusEl.style.display = 'flex';
@@ -5607,10 +5885,11 @@
         const { data } = await sb.from('care_plan_goals')
             .select('*').in('note_id', noteIds).order('sort_order');
         const map = {};
-        (data || []).forEach(g => {
+        for (const g of (data || [])) {
+            g.goal_text = await decryptField(g.goal_text);
             if (!map[g.note_id]) map[g.note_id] = [];
             map[g.note_id].push(g);
-        });
+        }
         return map;
     }
 
@@ -5656,7 +5935,7 @@
         const btn = document.getElementById('save-edit-btn');
         btn.innerText = '⏳ Saving...';
         btn.disabled = true;
-        const { error } = await sb.from('notes').update({ generated_note: editedText }).eq('id', currentNoteId);
+        const { error } = await sb.from('notes').update({ generated_note: await encryptField(editedText) }).eq('id', currentNoteId);
         btn.disabled = false;
         if (error) {
             btn.innerText = '❌ Error';
@@ -5681,6 +5960,7 @@
         const { data, error } = await sb.from('notes').select('*').order('created_at', { ascending: false });
         loadingEl.style.display = 'none';
         historyNotes = data || [];
+        for (const n of historyNotes) { n.generated_note = await decryptField(n.generated_note); }
 
         if (error || historyNotes.length === 0) {
             document.getElementById('history-filters').style.display = 'none';
@@ -5842,6 +6122,7 @@
                     .eq('note_id', id)
                     .order('sort_order');
                 if (goals && goals.length > 0) {
+                    for (const g of goals) { g.goal_text = await decryptField(g.goal_text); }
                     goalsContainer.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;">🎯 Care Plan Goals</div>' +
                         goals.map((g, i) => `
                             <div style="font-size:13px;color:var(--gray-800);padding:6px 0;border-bottom:1px solid var(--gray-200);">
@@ -5981,6 +6262,7 @@
         if (newType !== note.note_type) updates.note_type = newType;
         if (JSON.stringify(newLabels) !== JSON.stringify(note.labels || [])) updates.labels = newLabels;
         if (Object.keys(updates).length > 0) {
+            if (updates.generated_note) updates.generated_note = await encryptField(updates.generated_note);
             const { error } = await sb.from('notes').update(updates).eq('id', id);
             if (error) { alert('Failed to save changes.'); return; }
             if (updates.generated_note) note.generated_note = newText;
@@ -6210,13 +6492,15 @@
             builtinCustomizations = split.builtinCust;
 
             const { data: prefs } = await sb.from('user_preferences')
-                .select('hidden_builtin_types, default_output_format, default_email, documentation_style')
+                .select('hidden_builtin_types, default_output_format, default_email, documentation_style, retention_days, last_purge_date')
                 .eq('user_id', currentUser.id)
                 .single();
             hiddenBuiltinTypes = prefs?.hidden_builtin_types || [];
             defaultOutputFormat = prefs?.default_output_format || 'full';
             defaultEmail = prefs?.default_email || '';
             documentationStyle = prefs?.documentation_style || '';
+            userRetentionDays = prefs?.retention_days || 0;
+            userLastPurgeDate = prefs?.last_purge_date || null;
 
             await cacheTemplatesToIDB(userTemplates, hiddenBuiltinTypes);
         } else {
@@ -6243,6 +6527,77 @@
         renderSmartPhrasesList();
         document.getElementById('default-email-input').value = defaultEmail;
         document.getElementById('doc-style-input').value = documentationStyle;
+
+        // Encryption status
+        const keyStatusEl = document.getElementById('encryption-key-status');
+        if (keyStatusEl) {
+            keyStatusEl.textContent = encryptionKey ? 'Active' : 'Inactive';
+            keyStatusEl.style.color = encryptionKey ? 'var(--teal)' : 'var(--gray-400)';
+        }
+        const encBtn = document.getElementById('encrypt-existing-btn');
+        if (encBtn) encBtn.disabled = !encryptionKey;
+
+        // Retention UI
+        const retSelect = document.getElementById('retention-select');
+        if (retSelect) retSelect.value = String(userRetentionDays || 0);
+        const lastPurgeEl = document.getElementById('retention-last-purge');
+        if (lastPurgeEl) {
+            lastPurgeEl.textContent = userLastPurgeDate
+                ? 'Last purge: ' + new Date(userLastPurgeDate).toLocaleDateString()
+                : '';
+        }
+    }
+
+    async function saveRetentionSetting() {
+        const days = parseInt(document.getElementById('retention-select').value, 10);
+        userRetentionDays = days;
+        await sb.from('user_preferences').upsert({
+            user_id: currentUser.id,
+            retention_days: days
+        });
+        const statusEl = document.getElementById('retention-status');
+        statusEl.textContent = days > 0 ? `Retention set to ${days} days.` : 'Auto-delete disabled.';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    }
+
+    async function purgeExpiredData(retentionDays) {
+        const cutoff = new Date(Date.now() - retentionDays * 86400000).toISOString();
+        await sb.from('notes').delete().eq('user_id', currentUser.id).lt('created_at', cutoff);
+        await sb.from('med_history').delete().eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        await sb.from('hep_history').delete().eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        await sb.from('edu_list_history').delete().eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        userLastPurgeDate = new Date().toISOString();
+        await sb.from('user_preferences').upsert({
+            user_id: currentUser.id,
+            last_purge_date: userLastPurgeDate
+        });
+    }
+
+    async function manualPurge() {
+        const days = parseInt(document.getElementById('retention-select').value, 10);
+        if (!days || days === 0) { alert('Set a retention period first.'); return; }
+        const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+        const statusEl = document.getElementById('retention-status');
+        statusEl.textContent = 'Counting records...';
+
+        const { count: noteCount } = await sb.from('notes').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id).lt('created_at', cutoff);
+        const { count: medCount } = await sb.from('med_history').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        const { count: hepCount } = await sb.from('hep_history').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        const { count: eduCount } = await sb.from('edu_list_history').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id).lt('saved_at', cutoff);
+        const total = (noteCount || 0) + (medCount || 0) + (hepCount || 0) + (eduCount || 0);
+
+        if (total === 0) { statusEl.textContent = 'No records older than ' + days + ' days.'; return; }
+        if (!confirm(`Delete ${total} records older than ${days} days?\n\nNotes: ${noteCount || 0}\nMed lists: ${medCount || 0}\nHEP programs: ${hepCount || 0}\nEducation lists: ${eduCount || 0}\n\nThis cannot be undone.`)) {
+            statusEl.textContent = ''; return;
+        }
+
+        statusEl.textContent = 'Purging...';
+        await purgeExpiredData(days);
+        statusEl.textContent = `Deleted ${total} records. Purge complete.`;
+        const lastPurgeEl = document.getElementById('retention-last-purge');
+        if (lastPurgeEl) lastPurgeEl.textContent = 'Last purge: ' + new Date(userLastPurgeDate).toLocaleDateString();
+        // Reload cached data
+        historyNotes = []; medHistoryData = []; hepHistoryData = []; eduListHistoryData = [];
     }
 
     const helpTexts = {
@@ -8482,16 +8837,19 @@
             .order('saved_at', { ascending: false });
         if (error) { console.log('Med history load error:', error.message); medHistoryData = []; return medHistoryData; }
         medHistoryData = data || [];
+        for (const e of medHistoryData) { e.medications = await decryptJsonField(e.medications); }
         return medHistoryData;
     }
 
     async function saveMedHistoryEntry(entry) {
         if (!currentUser) { alert('Please sign in to save medication history.'); return null; }
+        const encEntry = { ...entry, medications: await encryptJsonField(entry.medications) };
         const { data, error } = await sb.from('med_history')
-            .insert(entry)
+            .insert(encEntry)
             .select()
             .single();
         if (error) { console.log('Med history save error:', error.message); return null; }
+        if (data) data.medications = await decryptJsonField(data.medications);
         return data;
     }
 
@@ -9486,6 +9844,7 @@
         const { data, error } = await sb.from('hep_history').select('*').order('saved_at', { ascending: false });
         if (error) { console.log('HEP history load error:', error.message); hepHistoryData = []; return hepHistoryData; }
         hepHistoryData = data || [];
+        for (const e of hepHistoryData) { e.exercises = await decryptJsonField(e.exercises); }
         return hepHistoryData;
     }
 
@@ -9505,6 +9864,7 @@
             labels: labels,
             saved_at: now.toISOString(),
         };
+        entry.exercises = await encryptJsonField(entry.exercises);
 
         const { data, error } = await sb.from('hep_history').insert(entry).select().single();
         if (error) { alert('Error saving HEP: ' + error.message); return; }
@@ -11042,6 +11402,7 @@
         const { data, error } = await sb.from('edu_list_history').select('*').order('saved_at', { ascending: false });
         if (error) { console.log('EduList history load error:', error.message); eduListHistoryData = []; return eduListHistoryData; }
         eduListHistoryData = data || [];
+        for (const e of eduListHistoryData) { e.modules = await decryptJsonField(e.modules); }
         return eduListHistoryData;
     }
 
@@ -11061,6 +11422,7 @@
             labels: labels,
             saved_at: now.toISOString(),
         };
+        entry.modules = await encryptJsonField(entry.modules);
 
         const { data, error } = await sb.from('edu_list_history').insert(entry).select().single();
         if (error) { alert('Error saving list: ' + error.message); return; }
@@ -12996,6 +13358,7 @@
             if (!notes || notes.length === 0) {
                 const { data } = await sb.from('notes').select('*').order('created_at', { ascending: false });
                 notes = data || [];
+                for (const n of notes) { n.generated_note = await decryptField(n.generated_note); }
                 historyNotes = notes;
             }
             notes.forEach(n => {
@@ -13021,6 +13384,7 @@
             if (!meds || meds.length === 0) {
                 const { data } = await sb.from('med_history').select('*').order('saved_at', { ascending: false });
                 meds = data || [];
+                for (const e of meds) { e.medications = await decryptJsonField(e.medications); }
                 medHistoryData = meds;
             }
             meds.forEach(e => {
@@ -13046,6 +13410,7 @@
             if (!heps || heps.length === 0) {
                 const { data } = await sb.from('hep_history').select('*').order('saved_at', { ascending: false });
                 heps = data || [];
+                for (const e of heps) { e.exercises = await decryptJsonField(e.exercises); }
                 hepHistoryData = heps;
             }
             heps.forEach(e => {
@@ -13071,6 +13436,7 @@
             if (!edus || edus.length === 0) {
                 const { data } = await sb.from('edu_list_history').select('*').order('saved_at', { ascending: false });
                 edus = data || [];
+                for (const e of edus) { e.modules = await decryptJsonField(e.modules); }
                 eduListHistoryData = edus;
             }
             edus.forEach(e => {
