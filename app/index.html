@@ -680,7 +680,7 @@
         .edu-list-kebab-wrap { position: relative; }
         .edu-list-kebab-btn { background: none; border: 1px solid var(--gray-200); color: var(--gray-500); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 16px; transition: background 0.15s; }
         .edu-list-kebab-btn:hover { background: var(--gray-100); }
-        .edu-list-kebab-menu { position: absolute; right: 0; top: calc(100% + 4px); background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 50; min-width: 170px; overflow: hidden; display: none; }
+        .edu-list-kebab-menu { position: fixed; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 9999; min-width: 170px; overflow: hidden; display: none; }
         .edu-list-kebab-menu.open { display: block; }
         .edu-list-kebab-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--gray-700); text-align: left; transition: background 0.1s; font-family: 'DM Sans', sans-serif; }
         .edu-list-kebab-menu button:hover { background: var(--gray-100); }
@@ -11862,7 +11862,11 @@
         e.stopPropagation();
         closeAllEduListKebabs();
         const menu = document.getElementById('edu-list-kebab-' + id);
-        if (menu) menu.classList.toggle('open');
+        if (!menu) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.classList.add('open');
     }
 
     function closeAllEduListKebabs() {
