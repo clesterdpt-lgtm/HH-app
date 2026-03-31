@@ -11873,6 +11873,10 @@
         document.querySelectorAll('.edu-list-kebab-menu.open').forEach(m => m.classList.remove('open'));
     }
 
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.edu-list-kebab-wrap')) closeAllEduListKebabs();
+    });
+
     function loadEduListHistoryEntry(id) {
         const entry = eduListHistoryData.find(e => e.id === id);
         if (!entry) return;
