@@ -3743,6 +3743,43 @@
         return data.session;
     }
 
+    // Wrapper that ensures a fresh JWT before invoking an edge function.
+    // Proactively refreshes if the token expires within 5 minutes,
+    // and retries once on 401/JWT errors.
+    async function invokeWithFreshSession(fnName, options) {
+        // Check current session and proactively refresh if near expiry
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            const expiresAt = session.expires_at; // Unix seconds
+            const now = Math.floor(Date.now() / 1000);
+            if (expiresAt - now < 300) { // less than 5 minutes remaining
+                await sb.auth.refreshSession();
+            }
+        } else {
+            // No session at all — try to refresh, else force re-login
+            try { await getFreshSession(); } catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
+        }
+
+        const result = await sb.functions.invoke(fnName, options);
+
+        // If we get a 401/JWT error, retry once after forcing a refresh
+        if (result.error) {
+            const status = result.error?.context?.status;
+            const msg = (result.error.message || '').toLowerCase();
+            if (status === 401 || msg.includes('jwt') || msg.includes('token')) {
+                try {
+                    await getFreshSession();
+                } catch {
+                    showAuth();
+                    throw new Error('Session expired. Please log in again.');
+                }
+                return sb.functions.invoke(fnName, options);
+            }
+        }
+
+        return result;
+    }
+
     window.addEventListener('load', async () => {
         updateOnlineStatus();
         // Restore pending recordings and queued notes from IndexedDB
@@ -3876,12 +3913,16 @@
         showAuth();
     }
 
-    // Handle session expiry from inactivity timeout or token refresh failure
+    // Handle auth state changes: sign-out, token refresh, and session recovery
     sb.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+        if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
             currentUser = null;
             encryptionKey = null;
             showAuth();
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+            currentUser = session.user;
+        } else if (event === 'SIGNED_IN' && session) {
+            currentUser = session.user;
         }
     });
 
@@ -4705,7 +4746,7 @@
             if (item.sections && item.sections.length > 0) body.sections = item.sections;
             if (item.documentationStyle) body.documentationStyle = item.documentationStyle;
 
-            const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
+            const { data, error: fnError } = await invokeWithFreshSession('generate-note', { body });
 
             if (fnError) {
                 let detail = fnError.message;
@@ -4837,7 +4878,7 @@
         if (blob.size <= WHISPER_MAX_SIZE) {
             const formData = new FormData();
             formData.append('audio', blob, 'recording.webm');
-            const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+            const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
             if (error) {
                 let detail = error.message;
                 try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
@@ -4860,7 +4901,7 @@
 
             const formData = new FormData();
             formData.append('audio', chunk, `recording-part${i + 1}.webm`);
-            const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+            const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
 
             if (error) {
                 let detail = error.message;
@@ -5939,7 +5980,7 @@
             if (sections && sections.length > 0) body.sections = sections;
             if (documentationStyle) body.documentationStyle = documentationStyle;
 
-            const { data, error: fnError } = await sb.functions.invoke('generate-note', { body });
+            const { data, error: fnError } = await invokeWithFreshSession('generate-note', { body });
 
             if (fnError) {
                 let detail = fnError.message;
@@ -6038,7 +6079,7 @@
         currentGoals = [];
 
         try {
-            const { data, error: fnError } = await sb.functions.invoke('generate-goals', {
+            const { data, error: fnError } = await invokeWithFreshSession('generate-goals', {
                 body: { generatedNote, noteType }
             });
 
@@ -8110,7 +8151,7 @@
         document.getElementById('assist-send-btn').disabled = true;
 
         try {
-            const { data, error } = await sb.functions.invoke('assist-note', {
+            const { data, error } = await invokeWithFreshSession('assist-note', {
                 body: {
                     rawNotes: assistRawNotes,
                     noteType: assistNoteType,
@@ -8172,7 +8213,7 @@
         document.getElementById('assist-send-btn').disabled = true;
 
         try {
-            const { data, error } = await sb.functions.invoke('assist-note', {
+            const { data, error } = await invokeWithFreshSession('assist-note', {
                 body: {
                     rawNotes: assistRawNotes,
                     noteType: assistNoteType,
@@ -8263,7 +8304,7 @@
                 try {
                     const formData = new FormData();
                     formData.append('audio', blob, 'recording.webm');
-                    const { data, error } = await sb.functions.invoke('transcribe', { body: formData });
+                    const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
 
                     if (error || !data?.text) {
                         lastMsg.textContent = '(Audio transcription failed)';
@@ -8278,7 +8319,7 @@
 
                     // Send transcribed text to assist
                     showAssistTyping();
-                    const { data: assistData, error: assistErr } = await sb.functions.invoke('assist-note', {
+                    const { data: assistData, error: assistErr } = await invokeWithFreshSession('assist-note', {
                         body: {
                             rawNotes: assistRawNotes,
                             noteType: assistNoteType,
@@ -8322,7 +8363,7 @@
         updateBtn.textContent = 'Updating note...';
 
         try {
-            const { data, error } = await sb.functions.invoke('assist-note', {
+            const { data, error } = await invokeWithFreshSession('assist-note', {
                 body: {
                     rawNotes: assistRawNotes,
                     noteType: assistNoteType,
@@ -8669,14 +8710,14 @@
                 // Step 1: Transcribe audio
                 const formData = new FormData();
                 formData.append('audio', blob, 'recording.webm');
-                const { data: transcribeData, error: transcribeError } = await sb.functions.invoke('transcribe', { body: formData });
+                const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
                 if (transcribeError) throw new Error(transcribeError.message || 'Transcription failed');
                 const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
                 if (!transcript || !transcript.trim()) throw new Error('No speech detected');
 
                 // Step 2: Parse medication from transcript
                 statusEl.innerText = 'Parsing medication...';
-                const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+                const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
                     body: { transcript }
                 });
                 if (parseError) throw new Error(parseError.message || 'Parse failed');
@@ -8782,13 +8823,13 @@
                 // Step 1: Transcribe
                 const formData = new FormData();
                 formData.append('audio', blob, 'recording.webm');
-                const { data: transcribeData, error: transcribeError } = await sb.functions.invoke('transcribe', { body: formData });
+                const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
                 if (transcribeError) throw new Error('Transcription failed. Please try again.');
                 const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
                 if (!transcript || !transcript.trim()) throw new Error('No speech detected. Please try again.');
 
                 // Step 2: Parse bulk medications
-                const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+                const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
                     body: { transcript, bulk: true }
                 });
                 if (parseError) throw new Error('Could not interpret recording. Please try again or add medications manually.');
@@ -8837,7 +8878,7 @@
             if (statusEl) {
                 statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Parsing medications...`;
             }
-            const { data: parseData, error: parseError } = await sb.functions.invoke('parse-medication', {
+            const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
                 body: { transcript, bulk: true }
             });
             if (parseError) throw new Error('Could not interpret recording. Please try again.');
