@@ -9817,7 +9817,7 @@
 
         grid.innerHTML = filtered.map(ex => `
             <div class="hep-lib-card" onclick="addToHep('${ex.id}')">
-                <button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditExercise('${ex.id}')" title="Edit exercise">✏️</button>
+                <button class="hep-lib-card-edit" onclick="event.stopPropagation(); showEditExercise('${ex.id}')" title="Edit exercise"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <div class="hep-lib-card-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" class="hep-lib-card-img">` : getExerciseSvg(ex.svg_key)}</div>
                 <div class="hep-lib-card-body">
                     <div class="hep-lib-card-name">${ex.name}</div>
@@ -11316,7 +11316,7 @@
             const eff = m.is_custom ? m : getEffectiveModule(m.id);
             const hasOverride = !m.is_custom && !!eduModuleOverrides[m.id];
             const overrideBadge = hasOverride ? ' <span title="Customized" style="font-size:10px;">✏️</span>' : '';
-            const editBtn = '<button class="hep-lib-card-edit" onclick="event.stopPropagation(); openEduEditModal(\'' + m.id + '\')" title="Edit module">✏️</button>';
+            const editBtn = '<button class="hep-lib-card-edit" onclick="event.stopPropagation(); openEduEditModal(\'' + m.id + '\')" title="Edit module"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
             return '<div class="edu-card" style="position:relative;" onclick="openEduModule(\'' + m.id + '\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){openEduModule(\'' + m.id + '\')}">'
                 + editBtn
                 + '<div class="edu-card-icon-area"><div class="edu-card-icon">' + eff.icon + '</div><div class="edu-card-category">' + eff.category + overrideBadge + '</div></div>'
