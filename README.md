@@ -12,6 +12,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Storage**: Supabase Storage (exercise photo uploads)
 - **PDF**: jsPDF (client-side PDF generation via CDN)
 - **Offline**: IndexedDB for local persistence, service worker for caching
+- **Encryption**: AES-GCM application-level encryption for clinical data
 
 ## Features
 
@@ -25,6 +26,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Vehicle Tracker**: Mileage logging, expense tracking, and IRS deduction reports
 - **Calendar**: Unified date-based view across all modules
 - **Label Search**: Cross-module search by label across notes, meds, HEPs, and education lists
+- **Patient/Visit Context Bar**: Persistent bar showing patient initials, visit type, and date across all clinical modules with edit and end-session controls
 - Active module and tab persist across page refreshes
 - **Browser history support**: Back/forward buttons navigate between modules and tabs
 - **Profile dropdown** in header with account email and sign-out
@@ -123,7 +125,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Current HEP builder**: Add exercises, set per-exercise sets/reps/hold time/frequency, reorder or remove
 - **Export**: PDF (single-column list or two-column grid layout), email via mailto, or print — buttons in a clean symmetrical grid layout (3-column desktop, 2-column mobile)
 - **EMR Documentation**: Generate structured clinical documentation from current or saved HEPs for pasting into EMR systems, with copy, email, and PDF options. Exercises grouped by category with dosage, frequency, and standard patient education footer
-- **History tab**: Saved HEPs with labels, search, sort, expandable detail view, load-to-current, and per-entry export via **3-dot kebab menu** (Load, EMR Doc, PDF List/Grid, Email, Delete)
+- **History tab**: Saved HEPs with labels, search, sort, expandable detail view, load-to-current, per-entry export via **3-dot kebab menu** (Load, EMR Doc, PDF List/Grid, Email, Delete), and **Delete All** with confirmation
 - Integrated into Calendar with purple dot indicators
 
 ### Calendar
@@ -139,7 +141,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Custom modules**: Create and edit your own education modules with title, category, icon, and overview content
 - **Edit built-in modules**: Customize any built-in module with revert-to-default option
 - **List builder**: Assemble patient-specific education packets from available modules
-- **History tab**: Saved education lists with labels, search, sort, and expandable detail
+- **History tab**: Saved education lists with labels, search, sort, expandable detail, and **Delete All** with confirmation
 - **Export**: PDF, email, and print — consistent with HEP export workflow
 - Integrated into Calendar (green dot indicators) and Label Search
 
@@ -162,18 +164,30 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Search and filter by label
 - **Sort order toggle**: Switch between newest-first and oldest-first in both pending and history sections (persists via localStorage)
 - Copy, email, or PDF export any note
-- **Unified Edit**: Edit note text, change note type, and manage labels all in one inline editor via the ⋮ overflow menu
-- **3-dot overflow menu**: Consolidates all note actions (Copy, Edit, Email, PDF, Delete) into a clean ⋮ button
+- **Unified Edit**: Edit note text, change note type, and manage labels all in one inline editor
+- **Icon-only controls**: Compact SVG icons for export and delete actions in history toolbar and day group headers
+- **Delete All**: Trash icon in history header with confirmation dialog
 - Mobile-optimized: text preview hidden on narrow screens for compact list view
 
-### Authentication
-- Email/password sign-up and sign-in
+### Security & Privacy
+- **Authentication**: Email/password sign-up and sign-in with email confirmation required
+- **Password policy**: 12-character minimum with lowercase, uppercase, and digit requirements
 - **Forgot password** flow with email reset link
+- **MFA support**: TOTP multi-factor authentication enrollment and verification
+- **Session security**: 15-minute inactivity timeout and 24-hour session limit with automatic sign-out
+- **JWT verification**: All Edge Functions verify JWT tokens server-side
+- **Application-level encryption**: AES-GCM encryption for clinical data (notes, goals, medications, exercises, education lists) with key derived from user password
+- **Encryption lock screen**: Password required at app startup to decrypt clinical data; key held in memory only
+- **Data retention policy**: User-configurable auto-delete with manual purge option for expired data
+- **Audit logging**: Automatic tracking of INSERT, UPDATE, DELETE operations on all clinical data tables (old/new values in JSONB) with RLS-enforced user isolation
+- **Privacy policy**: Dedicated privacy page covering data collection, storage, third-party processors, retention, and user rights
+- **Incident response plan**: Documented P1–P4 severity classification with response procedures, breach notification templates, and credential rotation reference
 
 ## Project Structure
 
 ```
 index.html                          # Landing page
+privacy.html                        # Privacy policy page
 app/
   index.html                        # Main application (HTML + CSS + JS)
 landing/
@@ -181,7 +195,8 @@ landing/
 manifest.json                       # PWA manifest
 service-worker.js                   # Offline caching
 icons/                              # App icons (SVG + PNGs)
-docs/                               # Product documentation
+docs/
+  incident-response-plan.md         # Security incident response procedures
 supabase/
   config.toml                       # Supabase project config
   functions/
@@ -200,13 +215,14 @@ supabase/
 
 - **notes**: Generated notes (id, user_id, note_type, raw_notes, generated_note, labels, template_id, output_format)
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
-- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email, documentation_style)
+- **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email, documentation_style, encryption_salt, retention_days, last_purge_date)
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
 - **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
 - **exercise_library**: User-created custom exercises and per-user built-in overrides (id, user_id, name, category, instructions, svg_key, photo_url, builtin_id)
 - **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
 - **edu_custom_modules**: User-created patient education modules (id, user_id, title, category, icon, overview)
+- **audit_log**: Tracks INSERT/UPDATE/DELETE operations on clinical data tables (table_name, operation, record_id, user_id, old_data, new_data, created_at)
 
 ## Edge Functions
 
@@ -238,6 +254,7 @@ supabase functions deploy parse-medication
 - **Single HTML file**: No build step, no framework — keeps deployment simple via GitHub Pages
 - **Supabase Edge Functions**: Keeps API keys server-side (Anthropic, OpenAI)
 - **IndexedDB v10**: Eleven stores — `pendingRecordings`, `templateCache`, `pendingNotes`, `drafts`, `medLists`, `medHistory`, `hepCurrent`, `eduListCurrent`, `mileageLogs`, `vehicleExpenses`, `eduModuleOverrides`
+- **AES-GCM encryption**: Clinical data encrypted client-side before storage; encryption key derived from user password via PBKDF2 and held in memory only — never persisted
 - **Audio-first safety**: Recordings always persist to IndexedDB before transcription attempts, preventing data loss on network or API failures
 - **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
 - **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates
@@ -245,3 +262,5 @@ supabase functions deploy parse-medication
 - **Position: fixed dropdowns**: Export dropdowns use fixed positioning to escape parent `overflow: hidden` on cards/history items
 - **Loose equality for ID lookups**: Supabase IDs compared with `==` not `===` to handle potential type differences
 - **Per-user exercise overrides**: Editing a built-in exercise creates a user-specific row in `exercise_library` with `builtin_id` referencing the original, preserving the built-in for other users
+- **Audit logging via triggers**: PostgreSQL triggers automatically capture data changes to clinical tables, enforced by RLS so users can only read their own audit trail
+- **Session hardening**: Inactivity timeout (15 min) and absolute session limit (24 hr) enforced client-side with auth state listeners for token refresh failures
