@@ -342,8 +342,16 @@
         .history-note-edit { width: 100%; min-height: 200px; background: var(--white); border: 2px solid var(--teal); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.8; color: var(--gray-800); font-family: 'DM Sans', sans-serif; resize: vertical; outline: none; }
         .history-edit-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
         .history-actions { display: flex; gap: 10px; margin-top: 12px; }
-        .note-delete-btn { background: transparent; border: none; color: var(--gray-400); cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; display: flex; align-items: center; flex-shrink: 0; }
-        .note-delete-btn:hover { background: var(--red-light, #fff0f0); color: var(--red, #e53e3e); }
+        .note-menu-wrapper { position: relative; display: inline-flex; }
+        .note-menu-btn { background: transparent; border: none; color: var(--gray-400); cursor: pointer; font-size: 18px; font-weight: 700; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; line-height: 1; letter-spacing: 1px; }
+        .note-menu-btn:hover { background: var(--gray-200); color: var(--gray-700); }
+        .note-menu-dropdown { display: none; position: fixed; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 9999; min-width: 160px; overflow: hidden; }
+        .note-menu-dropdown.open { display: block; }
+        .note-menu-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 11px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--gray-800); background: none; border: none; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+        .note-menu-option:hover { background: var(--gray-100); }
+        .note-menu-option + .note-menu-option { border-top: 1px solid var(--gray-100); }
+        .note-menu-option.danger { color: var(--red); }
+        .note-menu-option.danger:hover { background: var(--red-light); }
 
         #history-loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--gray-600); font-size: 14px; }
 
@@ -1971,6 +1979,9 @@
         .page-overflow-menu button.overflow-danger { color: var(--red); }
         .page-overflow-menu button.overflow-danger:hover { background: #fef2f2; }
 
+        .note-clear-btn { background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+        .note-clear-btn:hover { color: var(--red, #e53e3e); background: #fef2f2; }
+
         /* Unified Empty State */
         .module-empty-state { text-align: center; padding: 48px 20px; color: var(--gray-400); }
         .module-empty-state-icon { font-size: 40px; margin-bottom: 12px; }
@@ -2314,12 +2325,7 @@
                     <div class="page-title">Clinical Documentation</div>
                     <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
                 </div>
-                <div class="page-overflow-wrap">
-                    <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
-                    <div class="page-overflow-menu">
-                        <button class="overflow-danger" onclick="confirmClearAll(); closePageOverflow()">🗑️ Clear All Notes</button>
-                    </div>
-                </div>
+                <button class="note-clear-btn" onclick="confirmClearAll()" title="Clear All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
             </div>
 
             <div class="offline-banner" id="offline-banner">
@@ -6366,7 +6372,16 @@
                         <div class="history-item-right">
                             <span class="history-time">${time}</span>
                             <span class="history-chevron" id="chevron-${note.id}">▼</span>
-                            <button class="note-delete-btn" onclick="event.stopPropagation(); confirmDeleteOne('${note.id}')" title="Delete note"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                            <div class="note-menu-wrapper">
+                                <button class="note-menu-btn" onclick="event.stopPropagation(); toggleNoteMenu(this, '${note.id}')" title="Actions">⋮</button>
+                                <div class="note-menu-dropdown" id="note-menu-${note.id}" onclick="event.stopPropagation()">
+                                    <button class="note-menu-option" onclick="copyHistoryNote('${note.id}'); closeNoteMenu()">📋 Copy Note</button>
+                                    <button class="note-menu-option" onclick="closeNoteMenu(); editHistoryNote('${note.id}')">✏️ Edit</button>
+                                    <button class="note-menu-option" onclick="emailHistoryNote('${note.id}'); closeNoteMenu()">✉️ Email</button>
+                                    <button class="note-menu-option" onclick="downloadHistoryNotePdf('${note.id}'); closeNoteMenu()">📥 PDF</button>
+                                    <button class="note-menu-option danger" onclick="closeNoteMenu(); confirmDeleteOne('${note.id}')">🗑️ Delete</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="history-item-body" id="body-${note.id}">
