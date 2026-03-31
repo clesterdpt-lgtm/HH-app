@@ -2990,6 +2990,7 @@
                         </select>
                     </div>
                     <button class="btn btn-outline" id="sort-toggle-hep-history" onclick="toggleSortOrder('hepHistory', () => renderHepHistory(document.getElementById('hep-history-search').value, document.getElementById('hep-history-label-filter').value))">Newest ↓</button>
+                    <button class="icon-action-btn danger" onclick="confirmDeleteAllHepHistory()" title="Delete All HEP History"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="hep-history-list">
                     <div class="module-empty-state hep-history-empty">
@@ -11894,6 +11895,15 @@
             document.getElementById('edu-list-history-search')?.value || '',
             document.getElementById('edu-list-history-label-filter')?.value || ''
         );
+    }
+
+    function confirmDeleteAllHepHistory() {
+        showConfirm('Delete All HEP History', 'Delete all saved home exercise programs from history? This cannot be undone.', async () => {
+            const { error } = await sb.from('hep_history').delete().eq('user_id', currentUser.id);
+            if (error) { alert('Error deleting: ' + error.message); return; }
+            hepHistoryData = [];
+            renderHepHistory('', '');
+        });
     }
 
     function confirmDeleteAllEduHistory() {
