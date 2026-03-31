@@ -744,7 +744,7 @@
             textarea { min-height: 130px; font-size: 16px; padding: 14px; }
             .form-input { font-size: 16px; padding: 14px; }
             .controls-row { flex-direction: column; align-items: stretch; }
-            .select-wrapper { min-width: 0; }
+            .controls-row .select-wrapper { flex: 0 0 auto !important; max-width: 100% !important; min-width: 0; }
             select { font-size: 16px; padding: 14px 36px 14px 14px; }
             .btn { justify-content: center; min-height: 50px; font-size: 16px; padding: 14px 22px; }
             .btn-sm { min-height: 44px; font-size: 14px; padding: 10px 16px; }
@@ -2323,8 +2323,8 @@
 
         <!-- New Note Tab -->
         <div id="view-new" style="display:none">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:nowrap; gap:8px;">
+                <div style="flex:1; min-width:0;">
                     <div class="page-title">Clinical Documentation</div>
                     <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
                 </div>
@@ -2357,7 +2357,7 @@
                     <textarea style="margin-top:12px;" id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
                     <div class="phrase-suggestions" id="phrase-suggestions"></div>
                     <div class="controls-row" style="justify-content:space-between;">
-                        <div class="select-wrapper" style="flex:0 1 220px;">
+                        <div class="select-wrapper" style="flex:0 1 220px; max-width:220px;">
                             <select id="note-type" class="note-type-select"></select>
                         </div>
                         <button class="btn btn-primary generate-btn" id="gen-btn" onclick="generateNote()">Generate Note →</button>
