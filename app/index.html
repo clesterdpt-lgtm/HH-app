@@ -2195,10 +2195,9 @@
             <div class="visit-context-info">
                 <span class="visit-context-label">Current Visit</span>
                 <div class="visit-context-details">
-                    <span class="visit-context-chip" id="visit-ctx-initials"></span>
+                    <span class="visit-context-chip" id="visit-ctx-label" style="display:none"></span>
                     <span class="visit-context-chip date-chip" id="visit-ctx-type"></span>
                     <span class="visit-context-chip date-chip" id="visit-ctx-date"></span>
-                    <span class="visit-context-chip date-chip" id="visit-ctx-label" style="display:none"></span>
                 </div>
             </div>
             <div class="visit-context-actions">
@@ -2211,10 +2210,11 @@
         <div class="visit-setup-overlay" id="visit-setup-overlay" onclick="if(event.target===this)closeVisitSetup()">
             <div class="visit-setup-modal">
                 <div class="visit-setup-title">Visit Session</div>
-                <div class="visit-setup-subtitle">Optional context that persists across modules during this visit.</div>
+                <div class="visit-setup-subtitle">Label this visit to tag all sections automatically.</div>
                 <div class="form-group">
-                    <label class="form-label">Patient Initials</label>
-                    <input type="text" class="form-input" id="visit-initials" placeholder="e.g. JD" maxlength="4">
+                    <label class="form-label">Session Label</label>
+                    <input type="text" class="form-input" id="visit-label" placeholder="e.g. JD, Knee OA, CVA rehab">
+                    <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">Use patient initials, diagnosis, or any identifier. Auto-applied to Notes, HEP, Meds, and Education.</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Visit Type</label>
@@ -2234,11 +2234,7 @@
                     <label class="form-label">Date</label>
                     <input type="date" class="form-input" id="visit-date">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Session Label</label>
-                    <input type="text" class="form-input" id="visit-label" placeholder="e.g. JD, Knee pain">
-                    <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">Auto-applied to all sections (Notes, HEP, Meds, Education)</div>
-                </div>
+                <input type="hidden" id="visit-initials">
                 <div class="visit-setup-actions">
                     <button class="btn btn-outline" onclick="closeVisitSetup()">Cancel</button>
                     <button class="btn btn-primary" onclick="saveVisitSession()">Start Session</button>
@@ -4118,14 +4114,12 @@
         const overlay = document.getElementById('visit-setup-overlay');
         const dateInput = document.getElementById('visit-date');
         if (!editing) {
-            document.getElementById('visit-initials').value = '';
             document.getElementById('visit-type').value = '';
             dateInput.value = new Date().toISOString().split('T')[0];
             document.getElementById('visit-label').value = '';
         } else {
             const s = getVisitSession();
             if (s) {
-                document.getElementById('visit-initials').value = s.initials || '';
                 document.getElementById('visit-type').value = s.type || '';
                 dateInput.value = s.date || new Date().toISOString().split('T')[0];
                 document.getElementById('visit-label').value = s.label || '';
@@ -4139,12 +4133,11 @@
     }
 
     function saveVisitSession() {
-        const initials = document.getElementById('visit-initials').value.trim().toUpperCase();
+        const label = document.getElementById('visit-label').value.trim();
         const type = document.getElementById('visit-type').value;
         const date = document.getElementById('visit-date').value;
-        const label = document.getElementById('visit-label').value.trim();
-        if (!initials && !type) return;
-        const session = { initials, type, date, label };
+        if (!label) return;
+        const session = { label, type, date };
         sessionStorage.setItem('carenote-visit-session', JSON.stringify(session));
         renderVisitContext(session);
         closeVisitSetup();
@@ -4180,15 +4173,14 @@
     }
 
     function renderVisitContext(session) {
-        const initialsEl = document.getElementById('visit-ctx-initials');
+        const labelEl = document.getElementById('visit-ctx-label');
         const typeEl = document.getElementById('visit-ctx-type');
         const dateEl = document.getElementById('visit-ctx-date');
-        const labelEl = document.getElementById('visit-ctx-label');
-        if (session.initials) {
-            initialsEl.textContent = session.initials;
-            initialsEl.style.display = '';
+        if (session.label) {
+            labelEl.textContent = session.label;
+            labelEl.style.display = '';
         } else {
-            initialsEl.style.display = 'none';
+            labelEl.style.display = 'none';
         }
         if (session.type) {
             typeEl.textContent = session.type;
@@ -4202,12 +4194,6 @@
             dateEl.style.display = '';
         } else {
             dateEl.style.display = 'none';
-        }
-        if (session.label) {
-            labelEl.textContent = '🏷 ' + session.label;
-            labelEl.style.display = '';
-        } else {
-            labelEl.style.display = 'none';
         }
     }
 
