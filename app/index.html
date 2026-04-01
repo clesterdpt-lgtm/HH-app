@@ -2198,6 +2198,7 @@
                     <span class="visit-context-chip" id="visit-ctx-initials"></span>
                     <span class="visit-context-chip date-chip" id="visit-ctx-type"></span>
                     <span class="visit-context-chip date-chip" id="visit-ctx-date"></span>
+                    <span class="visit-context-chip date-chip" id="visit-ctx-label" style="display:none"></span>
                 </div>
             </div>
             <div class="visit-context-actions">
@@ -2232,6 +2233,11 @@
                 <div class="form-group">
                     <label class="form-label">Date</label>
                     <input type="date" class="form-input" id="visit-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Label</label>
+                    <input type="text" class="form-input" id="visit-label" placeholder="e.g. JD, Knee pain">
+                    <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">Auto-applied to all sections (Notes, HEP, Meds, Education)</div>
                 </div>
                 <div class="visit-setup-actions">
                     <button class="btn btn-outline" onclick="closeVisitSetup()">Cancel</button>
@@ -4115,12 +4121,14 @@
             document.getElementById('visit-initials').value = '';
             document.getElementById('visit-type').value = '';
             dateInput.value = new Date().toISOString().split('T')[0];
+            document.getElementById('visit-label').value = '';
         } else {
             const s = getVisitSession();
             if (s) {
                 document.getElementById('visit-initials').value = s.initials || '';
                 document.getElementById('visit-type').value = s.type || '';
                 dateInput.value = s.date || new Date().toISOString().split('T')[0];
+                document.getElementById('visit-label').value = s.label || '';
             }
         }
         overlay.classList.add('open');
@@ -4134,12 +4142,17 @@
         const initials = document.getElementById('visit-initials').value.trim().toUpperCase();
         const type = document.getElementById('visit-type').value;
         const date = document.getElementById('visit-date').value;
+        const label = document.getElementById('visit-label').value.trim();
         if (!initials && !type) return;
-        const session = { initials, type, date };
+        const session = { initials, type, date, label };
         sessionStorage.setItem('carenote-visit-session', JSON.stringify(session));
         renderVisitContext(session);
         closeVisitSetup();
         updateVisitContextVisibility(currentModule);
+        // Auto-apply session label to all section label containers
+        if (label) {
+            applySessionLabel(label);
+        }
         // Sync note type selector if on notes module
         if (currentModule === 'notes' && type) {
             const noteTypeSelect = document.getElementById('note-type');
@@ -4154,10 +4167,23 @@
         }
     }
 
+    function applySessionLabel(label) {
+        const containers = ['labels-note', 'labels-med', 'labels-hep', 'labels-edu-list'];
+        containers.forEach(containerId => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const currentLabels = getLabels(containerId);
+            if (!currentLabels.includes(label)) {
+                addLabel(containerId, label);
+            }
+        });
+    }
+
     function renderVisitContext(session) {
         const initialsEl = document.getElementById('visit-ctx-initials');
         const typeEl = document.getElementById('visit-ctx-type');
         const dateEl = document.getElementById('visit-ctx-date');
+        const labelEl = document.getElementById('visit-ctx-label');
         if (session.initials) {
             initialsEl.textContent = session.initials;
             initialsEl.style.display = '';
@@ -4177,18 +4203,46 @@
         } else {
             dateEl.style.display = 'none';
         }
+        if (session.label) {
+            labelEl.textContent = '🏷 ' + session.label;
+            labelEl.style.display = '';
+        } else {
+            labelEl.style.display = 'none';
+        }
     }
 
     function endVisitSession() {
+        const session = getVisitSession();
+        // Remove session label from all section label containers
+        if (session && session.label) {
+            removeSessionLabel(session.label);
+        }
         sessionStorage.removeItem('carenote-visit-session');
         document.getElementById('visit-context-bar').classList.remove('active');
         updateVisitContextVisibility(currentModule);
     }
 
+    function removeSessionLabel(label) {
+        const containers = ['labels-note', 'labels-med', 'labels-hep', 'labels-edu-list'];
+        containers.forEach(containerId => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.querySelectorAll('.label-tag').forEach(tag => {
+                if (tag.firstChild.textContent === label) tag.remove();
+            });
+        });
+    }
+
     // Restore visit session on load
     (function restoreVisitSession() {
         const session = getVisitSession();
-        if (session) renderVisitContext(session);
+        if (session) {
+            renderVisitContext(session);
+            if (session.label) {
+                // Defer label application to ensure DOM containers are ready
+                setTimeout(() => applySessionLabel(session.label), 0);
+            }
+        }
     })();
 
     // ── Dashboard ──────────────────────────────────────────
