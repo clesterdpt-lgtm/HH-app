@@ -5266,7 +5266,9 @@
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
             overlay.className = 'confirm-overlay';
-            const promptId = 'label-prompt-' + Date.now();
+            const ts = Date.now();
+            const promptId = 'labels-prompt-' + ts;
+            const suggestId = 'suggestions-prompt-' + ts;
             overlay.innerHTML = `
                 <div class="confirm-box" style="max-width:420px;">
                     <div class="confirm-title">Add a Label</div>
@@ -5275,7 +5277,7 @@
                         <div class="label-input-container" id="${promptId}" onclick="this.querySelector('.label-input').focus()">
                             <input type="text" class="label-input" placeholder="e.g. JD, Knee OA, CVA rehab" autocomplete="off">
                         </div>
-                        <div class="label-suggestions" id="suggestions-${promptId}"></div>
+                        <div class="label-suggestions" id="${suggestId}"></div>
                     </div>
                     <div class="confirm-actions">
                         <button class="btn btn-outline" id="${promptId}-skip">Skip</button>
