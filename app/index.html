@@ -2173,11 +2173,7 @@
 
 <!-- App Screen -->
 <div id="app-screen">
-    <div class="nav-tabs" style="display:none">
-        <button class="nav-tab active" id="tab-new" onclick="showTab('new')">New Note</button>
-        <button class="nav-tab" id="tab-pending" onclick="showTab('pending')">Pending <span class="tab-badge" id="pending-badge">0</span></button>
-        <button class="nav-tab" id="tab-history" onclick="showTab('history')">History</button>
-    </div>
+    <div class="nav-tabs" style="display:none"></div>
 
     <div class="install-banner" id="install-banner">
         <div class="install-banner-text">
@@ -2327,8 +2323,16 @@
             </div>
         </div>
 
+        <!-- Notes Module -->
+        <div id="view-notes" style="display:none;">
+            <div class="module-sub-tabs notes-sub-tabs">
+                <button class="module-sub-tab notes-sub-tab active" id="tab-new" onclick="showTab('new')">📝 New Note</button>
+                <button class="module-sub-tab notes-sub-tab" id="tab-pending" onclick="showTab('pending')">⏳ Pending <span class="tab-badge" id="pending-badge">0</span></button>
+                <button class="module-sub-tab notes-sub-tab" id="tab-history" onclick="showTab('history')">📋 History</button>
+            </div>
+
         <!-- New Note Tab -->
-        <div id="view-new" style="display:none">
+        <div id="view-new">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:nowrap; gap:8px;">
                 <div style="flex:1; min-width:0;">
                     <div class="page-title">Clinical Documentation</div>
@@ -2543,6 +2547,7 @@
             </div>
             <div id="history-list"></div>
         </div>
+        </div><!-- end view-notes -->
 
         <!-- Templates Tab -->
         <div id="view-settings" style="display:none">
@@ -3990,7 +3995,7 @@
 
     // ── Sidebar Navigation ──────────────────────────────────
     let currentModule = 'dashboard';
-    const moduleViews = ['dashboard', 'medication', 'hep', 'education', 'vehicle', 'calendar', 'search', 'settings'];
+    const moduleViews = ['notes', 'dashboard', 'medication', 'hep', 'education', 'vehicle', 'calendar', 'search', 'settings'];
     const notesViews = ['new', 'pending', 'history'];
 
     function toggleSidebar() {
@@ -4017,21 +4022,16 @@
         // Show/hide visit context bar on clinical modules
         updateVisitContextVisibility(module);
 
+        // Hide all module views, then show the selected one
+        moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
+        document.getElementById(`view-${module}`).style.display = 'block';
+
         if (module === 'notes') {
-            // Show notes tab bar and current notes view
-            document.querySelector('.nav-tabs').style.display = 'flex';
-            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
             // Re-trigger current notes tab (skip pushState since switchModule already pushed)
-            const activeTabEl = document.querySelector('.nav-tab.active');
+            const activeTabEl = document.querySelector('.notes-sub-tab.active');
             const activeTabName = activeTabEl ? activeTabEl.id.replace('tab-', '') : 'new';
             showTab(activeTabName, true);
-        } else {
-            // Hide notes tab bar and all notes views
-            document.querySelector('.nav-tabs').style.display = 'none';
-            notesViews.forEach(t => document.getElementById(`view-${t}`).style.display = 'none');
-            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
-            // Show selected module view
-            document.getElementById(`view-${module}`).style.display = 'block';
+        }
             if (module === 'medication') {
                 renderMedList();
                 // Initialize label input if not already initialized
@@ -4077,7 +4077,6 @@
             if (module === 'dashboard') {
                 loadDashboard();
             }
-        }
     }
 
     // ── Page Overflow Menu ──────────────────────────────────
@@ -5330,74 +5329,17 @@
     function restoreActiveView() {
         const savedModule = localStorage.getItem('carenote-active-module');
         const savedTab = localStorage.getItem('carenote-active-tab');
-        if (savedModule && savedModule !== 'notes') {
-            // Calendar is now a modal overlay — skip the module restore for it
-            if (savedModule === 'calendar') {
-                // Don't auto-open the calendar on page load; just fall through to notes default
-            } else {
-            // Switch to non-notes module without toggling sidebar
-            currentModule = savedModule;
-            document.querySelectorAll('.sidebar-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.module === savedModule);
-            });
-            document.querySelector('.nav-tabs').style.display = 'none';
-            notesViews.forEach(t => document.getElementById(`view-${t}`).style.display = 'none');
-            moduleViews.forEach(m => document.getElementById(`view-${m}`).style.display = 'none');
-            document.getElementById(`view-${savedModule}`).style.display = 'block';
-            if (savedModule === 'medication') {
-                renderMedList();
-                if (!document.getElementById('labels-med').dataset.initialized) {
-                    initLabelInput('labels-med');
-                    document.getElementById('labels-med').dataset.initialized = 'true';
-                }
-            }
-            if (savedModule === 'hep') {
-                loadCustomExercises().then(() => {
-                    populateHepCategoryDropdowns();
-                    renderHepLibrary();
-                });
-                loadHepCurrentFromDB().then(data => {
-                    hepCurrentExercises = data;
-                    renderHepCurrent();
-                });
-                if (!hepLabelInitialized) {
-                    initLabelInput('labels-hep');
-                    hepLabelInitialized = true;
-                }
-            }
-            if (savedModule === 'education') {
-                Promise.all([loadCustomEduModules(), loadEduModuleOverridesFromDB()]).then(() => renderEduGrid());
-                loadEduListCurrentFromDB().then(data => {
-                    eduCurrentList = data;
-                    renderEduList();
-                });
-                if (!eduListLabelInitialized) {
-                    initLabelInput('labels-edu-list');
-                    eduListLabelInitialized = true;
-                }
-            }
-            if (savedModule === 'vehicle') {
-                initVehicleTracker();
-            }
-            if (savedModule === 'settings') {
-                loadTemplates();
-            }
-            if (savedModule === 'dashboard') {
-                document.querySelector('main').classList.add('dash-wide');
-                loadDashboard();
-            }
-            updateVisitContextVisibility(savedModule);
-            } // end else (not calendar)
-        } else if (savedModule === 'notes' && savedTab && savedTab !== 'new') {
-            if (savedTab === 'templates') {
-                switchModule('settings');
-                return;
-            }
-            showTab(savedTab, true);
-            updateVisitContextVisibility('notes');
+        // Calendar is a modal overlay — don't restore it, fall through to dashboard
+        const restoreModule = (savedModule && savedModule !== 'calendar') ? savedModule : 'dashboard';
+        // Handle legacy 'templates' tab redirect
+        if (restoreModule === 'notes' && savedTab === 'templates') {
+            switchModule('settings', true);
         } else {
-            // Default to dashboard
-            switchModule('dashboard', true);
+            switchModule(restoreModule, true);
+            // If restoring notes with a specific tab, switch to it
+            if (restoreModule === 'notes' && savedTab && savedTab !== 'new') {
+                showTab(savedTab, true);
+            }
         }
         // Set initial history state so popstate has something to return to
         const initModule = currentModule || 'dashboard';
