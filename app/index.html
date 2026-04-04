@@ -3546,6 +3546,7 @@
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null;
     let encryptionKey = null; // AES-GCM CryptoKey, held in memory only
+    let encryptionSkipped = false; // true when user chose "Continue without decryption"
 
     // ── Encryption Helpers (Web Crypto API) ──────────────
     function arrayBufToBase64(buf) {
@@ -3914,6 +3915,7 @@
         await sb.auth.signOut();
         currentUser = null;
         encryptionKey = null;
+        encryptionSkipped = false;
         showAuth();
     }
 
@@ -3922,6 +3924,7 @@
         if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
             currentUser = null;
             encryptionKey = null;
+            encryptionSkipped = false;
             showAuth();
         } else if (event === 'TOKEN_REFRESHED' && session) {
             currentUser = session.user;
@@ -3957,6 +3960,7 @@
     }
     function skipEncryptionUnlock() {
         encryptionKey = null;
+        encryptionSkipped = true;
         pendingUnlockSalt = null;
         showApp(currentUser.email);
     }
@@ -6376,11 +6380,8 @@
         const { data, error } = await sb.from('notes').select('*').order('created_at', { ascending: false });
         loadingEl.style.display = 'none';
         historyNotes = data || [];
-        for (const n of historyNotes) { n.generated_note = await decryptField(n.generated_note); }
-        // Hide encrypted records when decryption is skipped
-        if (!encryptionKey) {
-            historyNotes = historyNotes.filter(n => n.generated_note !== '[Encrypted]');
-        }
+        if (encryptionSkipped) { historyNotes = []; }
+        else { for (const n of historyNotes) { n.generated_note = await decryptField(n.generated_note); } }
 
         if (error || historyNotes.length === 0) {
             document.getElementById('history-filters').style.display = 'none';
@@ -9265,11 +9266,8 @@
             .order('saved_at', { ascending: false });
         if (error) { console.log('Med history load error:', error.message); medHistoryData = []; return medHistoryData; }
         medHistoryData = data || [];
-        for (const e of medHistoryData) { e.medications = await decryptJsonField(e.medications); }
-        // Hide encrypted records when decryption is skipped
-        if (!encryptionKey) {
-            medHistoryData = medHistoryData.filter(e => Array.isArray(e.medications) && e.medications.length > 0);
-        }
+        if (encryptionSkipped) { medHistoryData = []; }
+        else { for (const e of medHistoryData) { e.medications = await decryptJsonField(e.medications); } }
         return medHistoryData;
     }
 
@@ -10279,11 +10277,8 @@
         const { data, error } = await sb.from('hep_history').select('*').order('saved_at', { ascending: false });
         if (error) { console.log('HEP history load error:', error.message); hepHistoryData = []; return hepHistoryData; }
         hepHistoryData = data || [];
-        for (const e of hepHistoryData) { e.exercises = await decryptJsonField(e.exercises); }
-        // Hide encrypted records when decryption is skipped
-        if (!encryptionKey) {
-            hepHistoryData = hepHistoryData.filter(e => Array.isArray(e.exercises) && e.exercises.length > 0);
-        }
+        if (encryptionSkipped) { hepHistoryData = []; }
+        else { for (const e of hepHistoryData) { e.exercises = await decryptJsonField(e.exercises); } }
         return hepHistoryData;
     }
 
@@ -11844,11 +11839,8 @@
         const { data, error } = await sb.from('edu_list_history').select('*').order('saved_at', { ascending: false });
         if (error) { console.log('EduList history load error:', error.message); eduListHistoryData = []; return eduListHistoryData; }
         eduListHistoryData = data || [];
-        for (const e of eduListHistoryData) { e.modules = await decryptJsonField(e.modules); }
-        // Hide encrypted records when decryption is skipped
-        if (!encryptionKey) {
-            eduListHistoryData = eduListHistoryData.filter(e => Array.isArray(e.modules) && e.modules.length > 0);
-        }
+        if (encryptionSkipped) { eduListHistoryData = []; }
+        else { for (const e of eduListHistoryData) { e.modules = await decryptJsonField(e.modules); } }
         return eduListHistoryData;
     }
 
