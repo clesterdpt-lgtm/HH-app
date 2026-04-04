@@ -5262,6 +5262,59 @@
         return labels.map(l => `<span class="${cssClass}">${l}</span>`).join('');
     }
 
+    function showLabelPrompt(targetContainerId) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            const promptId = 'label-prompt-' + Date.now();
+            overlay.innerHTML = `
+                <div class="confirm-box" style="max-width:420px;">
+                    <div class="confirm-title">Add a Label</div>
+                    <div class="confirm-message" style="margin-bottom:16px;">Use patient initials, diagnosis, or any identifier.</div>
+                    <div class="label-input-wrapper" style="max-width:100%; margin-bottom:20px;">
+                        <div class="label-input-container" id="${promptId}" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="e.g. JD, Knee OA, CVA rehab" autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-${promptId}"></div>
+                    </div>
+                    <div class="confirm-actions">
+                        <button class="btn btn-outline" id="${promptId}-skip">Skip</button>
+                        <button class="btn btn-primary" id="${promptId}-add">Add & Continue</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            initLabelInput(promptId);
+
+            // Focus the input
+            const input = document.getElementById(promptId).querySelector('.label-input');
+            setTimeout(() => input.focus(), 50);
+
+            function finish(cancelled) {
+                const labels = cancelled ? [] : getLabels(promptId);
+                // Apply labels to the target container
+                labels.forEach(l => {
+                    if (!getLabels(targetContainerId).includes(l)) {
+                        addLabel(targetContainerId, l);
+                    }
+                });
+                overlay.remove();
+                resolve(cancelled ? null : labels);
+            }
+
+            document.getElementById(`${promptId}-skip`).onclick = () => finish(false);
+            document.getElementById(`${promptId}-add`).onclick = () => finish(false);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(false); });
+
+            // Allow Enter on empty input to confirm
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && input.value.trim() === '' && getLabels(promptId).length > 0) {
+                    e.preventDefault();
+                    finish(false);
+                }
+            });
+        });
+    }
+
     // Initialize label input on page load
     initLabelInput('labels-note');
     initLabelInput('labels-visit');
@@ -5967,12 +6020,8 @@
 
         let labels = getLabels('labels-note');
         if (labels.length === 0) {
-            const input = prompt('Add a label for this note (e.g. patient initials, diagnosis):');
-            if (input === null) return;
-            if (input.trim()) {
-                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-note', l));
-                labels = getLabels('labels-note');
-            }
+            await showLabelPrompt('labels-note');
+            labels = getLabels('labels-note');
         }
 
         // Determine if custom template or built-in type
@@ -9246,12 +9295,8 @@
 
         let labels = getLabels('labels-med');
         if (labels.length === 0) {
-            const input = prompt('Add a label for this medication list (e.g. patient initials, diagnosis):');
-            if (input === null) return; // cancelled
-            if (input.trim()) {
-                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-med', l));
-                labels = getLabels('labels-med');
-            }
+            await showLabelPrompt('labels-med');
+            labels = getLabels('labels-med');
         }
         const now = new Date();
         const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -10232,12 +10277,8 @@
 
         let labels = getLabels('labels-hep');
         if (labels.length === 0) {
-            const input = prompt('Add a label for this exercise program (e.g. patient initials, diagnosis):');
-            if (input === null) return;
-            if (input.trim()) {
-                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-hep', l));
-                labels = getLabels('labels-hep');
-            }
+            await showLabelPrompt('labels-hep');
+            labels = getLabels('labels-hep');
         }
         const now = new Date();
         const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -11797,12 +11838,8 @@
 
         let labels = getLabels('labels-edu-list');
         if (labels.length === 0) {
-            const input = prompt('Add a label for this education list (e.g. patient initials, diagnosis):');
-            if (input === null) return;
-            if (input.trim()) {
-                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-edu-list', l));
-                labels = getLabels('labels-edu-list');
-            }
+            await showLabelPrompt('labels-edu-list');
+            labels = getLabels('labels-edu-list');
         }
         const now = new Date();
         const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
