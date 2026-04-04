@@ -2213,7 +2213,12 @@
                 <div class="visit-setup-subtitle">Label this visit to tag all sections automatically.</div>
                 <div class="form-group">
                     <label class="form-label">Session Label</label>
-                    <input type="text" class="form-input" id="visit-label" placeholder="e.g. JD, Knee OA, CVA rehab">
+                    <div class="label-input-wrapper" style="max-width:100%;">
+                        <div class="label-input-container" id="labels-visit" onclick="this.querySelector('.label-input').focus()">
+                            <input type="text" class="label-input" placeholder="e.g. JD, Knee OA, CVA rehab" autocomplete="off">
+                        </div>
+                        <div class="label-suggestions" id="suggestions-visit"></div>
+                    </div>
                     <div class="form-hint" style="font-size:12px;color:var(--text-muted);margin-top:4px;">Use patient initials, diagnosis, or any identifier. Auto-applied to Notes, HEP, Meds, and Education.</div>
                 </div>
                 <div class="form-group">
@@ -2234,7 +2239,6 @@
                     <label class="form-label">Date</label>
                     <input type="date" class="form-input" id="visit-date">
                 </div>
-                <input type="hidden" id="visit-initials">
                 <div class="visit-setup-actions">
                     <button class="btn btn-outline" onclick="closeVisitSetup()">Cancel</button>
                     <button class="btn btn-primary" onclick="saveVisitSession()">Start Session</button>
@@ -4113,16 +4117,17 @@
     function openVisitSetup(editing) {
         const overlay = document.getElementById('visit-setup-overlay');
         const dateInput = document.getElementById('visit-date');
+        clearLabels('labels-visit');
         if (!editing) {
             document.getElementById('visit-type').value = '';
             dateInput.value = new Date().toISOString().split('T')[0];
-            document.getElementById('visit-label').value = '';
         } else {
             const s = getVisitSession();
             if (s) {
                 document.getElementById('visit-type').value = s.type || '';
                 dateInput.value = s.date || new Date().toISOString().split('T')[0];
-                document.getElementById('visit-label').value = s.label || '';
+                const labels = s.labels || (s.label ? [s.label] : []);
+                labels.forEach(l => addLabel('labels-visit', l));
             }
         }
         overlay.classList.add('open');
@@ -4133,19 +4138,17 @@
     }
 
     function saveVisitSession() {
-        const label = document.getElementById('visit-label').value.trim();
+        const labels = getLabels('labels-visit');
         const type = document.getElementById('visit-type').value;
         const date = document.getElementById('visit-date').value;
-        if (!label) return;
-        const session = { label, type, date };
+        if (labels.length === 0) return;
+        const session = { labels, type, date };
         sessionStorage.setItem('carenote-visit-session', JSON.stringify(session));
         renderVisitContext(session);
         closeVisitSetup();
         updateVisitContextVisibility(currentModule);
-        // Auto-apply session label to all section label containers
-        if (label) {
-            applySessionLabel(label);
-        }
+        // Auto-apply session labels to all section label containers
+        applySessionLabels(labels);
         // Sync note type selector if on notes module
         if (currentModule === 'notes' && type) {
             const noteTypeSelect = document.getElementById('note-type');
@@ -4160,15 +4163,17 @@
         }
     }
 
-    function applySessionLabel(label) {
+    function applySessionLabels(labels) {
         const containers = ['labels-note', 'labels-med', 'labels-hep', 'labels-edu-list'];
         containers.forEach(containerId => {
             const container = document.getElementById(containerId);
             if (!container) return;
             const currentLabels = getLabels(containerId);
-            if (!currentLabels.includes(label)) {
-                addLabel(containerId, label);
-            }
+            labels.forEach(label => {
+                if (!currentLabels.includes(label)) {
+                    addLabel(containerId, label);
+                }
+            });
         });
     }
 
@@ -4176,8 +4181,9 @@
         const labelEl = document.getElementById('visit-ctx-label');
         const typeEl = document.getElementById('visit-ctx-type');
         const dateEl = document.getElementById('visit-ctx-date');
-        if (session.label) {
-            labelEl.textContent = session.label;
+        const labels = session.labels || (session.label ? [session.label] : []);
+        if (labels.length > 0) {
+            labelEl.textContent = labels.join(', ');
             labelEl.style.display = '';
         } else {
             labelEl.style.display = 'none';
@@ -4199,22 +4205,23 @@
 
     function endVisitSession() {
         const session = getVisitSession();
-        // Remove session label from all section label containers
-        if (session && session.label) {
-            removeSessionLabel(session.label);
+        // Remove session labels from all section label containers
+        const labels = session ? (session.labels || (session.label ? [session.label] : [])) : [];
+        if (labels.length > 0) {
+            removeSessionLabels(labels);
         }
         sessionStorage.removeItem('carenote-visit-session');
         document.getElementById('visit-context-bar').classList.remove('active');
         updateVisitContextVisibility(currentModule);
     }
 
-    function removeSessionLabel(label) {
+    function removeSessionLabels(labels) {
         const containers = ['labels-note', 'labels-med', 'labels-hep', 'labels-edu-list'];
         containers.forEach(containerId => {
             const container = document.getElementById(containerId);
             if (!container) return;
             container.querySelectorAll('.label-tag').forEach(tag => {
-                if (tag.firstChild.textContent === label) tag.remove();
+                if (labels.includes(tag.firstChild.textContent)) tag.remove();
             });
         });
     }
@@ -4224,9 +4231,10 @@
         const session = getVisitSession();
         if (session) {
             renderVisitContext(session);
-            if (session.label) {
+            const labels = session.labels || (session.label ? [session.label] : []);
+            if (labels.length > 0) {
                 // Defer label application to ensure DOM containers are ready
-                setTimeout(() => applySessionLabel(session.label), 0);
+                setTimeout(() => applySessionLabels(labels), 0);
             }
         }
     })();
@@ -5256,6 +5264,7 @@
 
     // Initialize label input on page load
     initLabelInput('labels-note');
+    initLabelInput('labels-visit');
 
     // ── Restore last active module/tab on page load ──────
     // Called from showApp() AFTER auth + templates are loaded to avoid race conditions
