@@ -5382,6 +5382,7 @@
                 document.querySelector('main').classList.add('dash-wide');
                 loadDashboard();
             }
+            updateVisitContextVisibility(savedModule);
             } // end else (not calendar)
         } else if (savedModule === 'notes' && savedTab && savedTab !== 'new') {
             if (savedTab === 'templates') {
@@ -5389,6 +5390,7 @@
                 return;
             }
             showTab(savedTab, true);
+            updateVisitContextVisibility('notes');
         } else {
             // Default to dashboard
             switchModule('dashboard', true);
