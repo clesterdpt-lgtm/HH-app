@@ -26,7 +26,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Vehicle Tracker**: Mileage logging, expense tracking, and IRS deduction reports
 - **Calendar**: Unified date-based view across all modules
 - **Label Search**: Cross-module search by label across notes, meds, HEPs, and education lists
-- **Patient/Visit Context Bar**: Persistent bar showing patient initials, visit type, and date across all clinical modules with edit and end-session controls
+- **Visit Session**: Start a visit session with labels and visit type; session labels auto-apply to all clinical sections (Notes, Meds, HEP, Education). Label input uses tag-style creation consistent with other label fields
 - Active module and tab persist across page refreshes
 - **Browser history support**: Back/forward buttons navigate between modules and tabs
 - **Profile dropdown** in header with account email and sign-out
@@ -167,6 +167,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Unified Edit**: Edit note text, change note type, and manage labels all in one inline editor
 - **Icon-only controls**: Compact SVG icons for export and delete actions in history toolbar and day group headers
 - **Delete All**: Trash icon in history header with confirmation dialog
+- **Styled label modal**: Label prompts use a custom modal instead of browser `prompt()` for consistent UX
 - Mobile-optimized: text preview hidden on narrow screens for compact list view
 
 ### Security & Privacy
@@ -177,7 +178,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Session security**: 15-minute inactivity timeout and 24-hour session limit with automatic sign-out
 - **JWT verification**: All Edge Functions verify JWT tokens server-side
 - **Application-level encryption**: AES-GCM encryption for clinical data (notes, goals, medications, exercises, education lists) with key derived from user password
-- **Encryption lock screen**: Password required at app startup to decrypt clinical data; key held in memory only
+- **Encryption lock screen**: Password required at app startup to decrypt clinical data; key held in memory only. "Continue without decryption" option hides all encrypted history records for read-only access to unencrypted features
 - **Data retention policy**: User-configurable auto-delete with manual purge option for expired data
 - **Audit logging**: Automatic tracking of INSERT, UPDATE, DELETE operations on all clinical data tables (old/new values in JSONB) with RLS-enforced user isolation
 - **Privacy policy**: Dedicated privacy page covering data collection, storage, third-party processors, retention, and user rights
@@ -259,6 +260,9 @@ supabase functions deploy parse-medication
 - **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
 - **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates
 - **Category-aware assist**: When templates define required sections, the assist system prompt instructs Claude to evaluate each section individually and prioritize missing ones in follow-up questions
+- **Unified sub-tab styling**: Notes tabs restyled to match the consistent sub-tab pattern used across Meds, HEP, and Education modules
+- **Greyed-out button hover style**: Edit, delete, and pencil icon buttons use a unified greyed-out hover state (no red highlights) across all modules
+- **SVG edit icons**: Pencil emoji buttons replaced with inline SVG icons for consistent rendering across platforms
 - **Position: fixed dropdowns**: Export dropdowns use fixed positioning to escape parent `overflow: hidden` on cards/history items
 - **Loose equality for ID lookups**: Supabase IDs compared with `==` not `===` to handle potential type differences
 - **Per-user exercise overrides**: Editing a built-in exercise creates a user-specific row in `exercise_library` with `builtin_id` referencing the original, preserving the built-in for other users
