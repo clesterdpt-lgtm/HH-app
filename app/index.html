@@ -5963,8 +5963,17 @@
     async function generateNote() {
         const notes = document.getElementById('note-input').value;
         const rawNoteType = document.getElementById('note-type').value;
-        const labels = getLabels('labels-note');
         if (!notes.trim()) { alert('Please enter or record some visit notes first.'); return; }
+
+        let labels = getLabels('labels-note');
+        if (labels.length === 0) {
+            const input = prompt('Add a label for this note (e.g. patient initials, diagnosis):');
+            if (input === null) return;
+            if (input.trim()) {
+                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-note', l));
+                labels = getLabels('labels-note');
+            }
+        }
 
         // Determine if custom template or built-in type
         let noteType, customPrompt, sections, templateId;
@@ -9235,14 +9244,21 @@
             return;
         }
 
-        const labels = getLabels('labels-med');
+        let labels = getLabels('labels-med');
+        if (labels.length === 0) {
+            const input = prompt('Add a label for this medication list (e.g. patient initials, diagnosis):');
+            if (input === null) return; // cancelled
+            if (input.trim()) {
+                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-med', l));
+                labels = getLabels('labels-med');
+            }
+        }
         const now = new Date();
-        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const title = prompt('Name this medication list (or leave blank for date):', '') || defaultTitle;
+        const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         const entry = {
             user_id: currentUser.id,
-            title: title.trim(),
+            title: title,
             medications: meds.map(m => ({ name: m.name, dose: m.dose, frequency: m.frequency, route: m.route, notes: m.notes })),
             labels: labels,
             saved_at: now.toISOString()
@@ -10214,14 +10230,21 @@
         if (!currentUser) { alert('Please sign in to save exercise programs.'); return; }
         if (hepCurrentExercises.length === 0) { alert('No exercises to save. Add exercises first.'); return; }
 
-        const labels = getLabels('labels-hep');
+        let labels = getLabels('labels-hep');
+        if (labels.length === 0) {
+            const input = prompt('Add a label for this exercise program (e.g. patient initials, diagnosis):');
+            if (input === null) return;
+            if (input.trim()) {
+                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-hep', l));
+                labels = getLabels('labels-hep');
+            }
+        }
         const now = new Date();
-        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const title = prompt('Name this exercise program (or leave blank for date):', '') || defaultTitle;
+        const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         const entry = {
             user_id: currentUser.id,
-            title: title.trim(),
+            title: title,
             exercises: hepCurrentExercises.map(e => ({ name: e.name, category: e.category, svg_key: e.svg_key, instructions: e.instructions, sets: e.sets, reps: e.reps, hold_seconds: e.hold_seconds, frequency: e.frequency })),
             labels: labels,
             saved_at: now.toISOString(),
@@ -11772,14 +11795,21 @@
         if (!currentUser) { alert('Please sign in to save education lists.'); return; }
         if (eduCurrentList.length === 0) { alert('No modules to save. Add modules first.'); return; }
 
-        const labels = getLabels('labels-edu-list');
+        let labels = getLabels('labels-edu-list');
+        if (labels.length === 0) {
+            const input = prompt('Add a label for this education list (e.g. patient initials, diagnosis):');
+            if (input === null) return;
+            if (input.trim()) {
+                input.split(/[,]+/).map(s => s.trim()).filter(Boolean).forEach(l => addLabel('labels-edu-list', l));
+                labels = getLabels('labels-edu-list');
+            }
+        }
         const now = new Date();
-        const defaultTitle = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const title = prompt('Name this education list (or leave blank for date):', '') || defaultTitle;
+        const title = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         const entry = {
             user_id: currentUser.id,
-            title: title.trim(),
+            title: title,
             modules: eduCurrentList.map(m => ({ id: m.id, title: m.title, icon: m.icon, category: m.category, overview: m.overview })),
             labels: labels,
             saved_at: now.toISOString(),
