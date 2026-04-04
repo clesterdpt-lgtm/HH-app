@@ -6377,6 +6377,10 @@
         loadingEl.style.display = 'none';
         historyNotes = data || [];
         for (const n of historyNotes) { n.generated_note = await decryptField(n.generated_note); }
+        // Hide encrypted records when decryption is skipped
+        if (!encryptionKey) {
+            historyNotes = historyNotes.filter(n => n.generated_note !== '[Encrypted]');
+        }
 
         if (error || historyNotes.length === 0) {
             document.getElementById('history-filters').style.display = 'none';
@@ -9262,6 +9266,10 @@
         if (error) { console.log('Med history load error:', error.message); medHistoryData = []; return medHistoryData; }
         medHistoryData = data || [];
         for (const e of medHistoryData) { e.medications = await decryptJsonField(e.medications); }
+        // Hide encrypted records when decryption is skipped
+        if (!encryptionKey) {
+            medHistoryData = medHistoryData.filter(e => Array.isArray(e.medications) && e.medications.length > 0);
+        }
         return medHistoryData;
     }
 
@@ -10272,6 +10280,10 @@
         if (error) { console.log('HEP history load error:', error.message); hepHistoryData = []; return hepHistoryData; }
         hepHistoryData = data || [];
         for (const e of hepHistoryData) { e.exercises = await decryptJsonField(e.exercises); }
+        // Hide encrypted records when decryption is skipped
+        if (!encryptionKey) {
+            hepHistoryData = hepHistoryData.filter(e => Array.isArray(e.exercises) && e.exercises.length > 0);
+        }
         return hepHistoryData;
     }
 
@@ -11833,6 +11845,10 @@
         if (error) { console.log('EduList history load error:', error.message); eduListHistoryData = []; return eduListHistoryData; }
         eduListHistoryData = data || [];
         for (const e of eduListHistoryData) { e.modules = await decryptJsonField(e.modules); }
+        // Hide encrypted records when decryption is skipped
+        if (!encryptionKey) {
+            eduListHistoryData = eduListHistoryData.filter(e => Array.isArray(e.modules) && e.modules.length > 0);
+        }
         return eduListHistoryData;
     }
 
