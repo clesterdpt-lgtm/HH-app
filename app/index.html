@@ -7762,6 +7762,17 @@
             }
         },
         {
+            selector: '#visit-start-btn',
+            title: 'Visit Sessions',
+            desc: 'Start a session with a label like patient initials or diagnosis. It auto-tags notes, HEP, meds, and education so everything is linked.',
+            position: 'bottom',
+            prepare: () => {
+                const sb = document.getElementById('sidebar');
+                if (sb.classList.contains('open')) toggleSidebar();
+                switchModule('notes');
+            }
+        },
+        {
             selector: '.dash-actions',
             title: 'Quick Actions',
             desc: 'Jump right in from the dashboard. Tap any button to create a new note, med list, exercise program, and more.',
