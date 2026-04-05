@@ -733,6 +733,9 @@
             .form-input { font-size: 16px; padding: 14px; }
             .controls-row { flex-direction: column; align-items: stretch; }
             .controls-row .select-wrapper { flex: 0 0 auto !important; max-width: 100% !important; min-width: 0; }
+            .note-options-row .format-toggle-btn { padding: 6px 10px !important; font-size: 12px !important; }
+            .note-options-row .format-row-label { font-size: 12px !important; }
+            .note-options-row .assist-btn { min-height: 36px !important; font-size: 13px !important; padding: 8px 14px !important; }
             select { font-size: 16px; padding: 14px 36px 14px 14px; }
             .btn { justify-content: center; min-height: 50px; font-size: 16px; padding: 14px 22px; }
             .btn-sm { min-height: 44px; font-size: 14px; padding: 10px 16px; }
@@ -1974,6 +1977,9 @@
 
         /* Note Options Collapsible */
         .note-options-section { margin-top: 12px; }
+        .note-options-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: nowrap; }
+        .note-options-row .format-row { margin: 0; }
+        .note-options-row .assist-btn { margin-left: auto; }
         .note-options-toggle { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--gray-400); font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
         .note-options-toggle:hover { color: var(--teal); }
         .note-options-chevron { font-size: 12px; transition: transform 0.2s; }
@@ -2337,49 +2343,45 @@
                     <button class="note-clear-btn" onclick="confirmClearAll()" title="Clear All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div class="card-body">
-                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                        <button class="btn btn-record" id="record-btn" onclick="startRecording()">● Start Recording</button>
-                        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()">■ Stop Recording</button>
-                        <button class="btn btn-dim" id="dim-btn" onclick="showDimOverlay()">🌙 Go Dark</button>
-                        <div class="recording-status" id="recording-status">
-                            <div class="recording-dot"></div>
-                            Recording in progress
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <button class="btn btn-record" id="record-btn" onclick="startRecording()">● Start Recording</button>
+                            <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()">■ Stop Recording</button>
+                            <button class="btn btn-dim" id="dim-btn" onclick="showDimOverlay()">🌙 Go Dark</button>
+                            <div class="recording-status" id="recording-status">
+                                <div class="recording-dot"></div>
+                                Recording in progress
+                            </div>
                         </div>
-                    </div>
-                    <textarea style="margin-top:12px;" id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
-                    <div class="phrase-suggestions" id="phrase-suggestions"></div>
-                    <div class="controls-row" style="justify-content:space-between;">
                         <div class="select-wrapper" style="flex:0 1 220px; max-width:220px;">
                             <select id="note-type" class="note-type-select"></select>
                         </div>
-                        <button class="btn btn-primary generate-btn" id="gen-btn" onclick="generateNote()">Generate Note →</button>
                     </div>
-                    <div class="note-options-section">
-                        <button class="note-options-toggle" id="note-options-toggle" onclick="toggleNoteOptions()">
-                            <span class="note-options-toggle-text">More options</span>
-                            <span class="note-options-chevron" id="note-options-chevron">▾</span>
-                        </button>
-                        <div class="note-options-body" id="note-options-body" style="display:none;">
-                            <div class="controls-row" style="margin-top:0;">
-                                <div class="label-input-wrapper">
-                                    <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
-                                        <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
-                                        <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
-                                    </div>
-                                    <div class="label-suggestions" id="suggestions-note"></div>
-                                </div>
-                                <button class="assist-btn" id="assist-btn" onclick="openAssist()">🤖 Assist</button>
-                                <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
-                                <span class="draft-status" id="draft-status"></span>
-                            </div>
-                            <div class="format-row" id="format-row">
-                                <span class="format-row-label">Output:</span>
-                                <div class="format-toggle" id="format-toggle">
-                                    <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('full')">Full Note</button>
-                                    <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('summary')">Summary</button>
-                                </div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:10px; min-height:0; flex-wrap:wrap;">
+                        <span class="draft-status" id="draft-status"></span>
+                        <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
+                    </div>
+                    <textarea style="margin-top:6px;" id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
+                    <div class="phrase-suggestions" id="phrase-suggestions"></div>
+                    <div class="note-options-row">
+                        <div class="format-row" id="format-row" style="margin:0;">
+                            <span class="format-row-label">Output:</span>
+                            <div class="format-toggle" id="format-toggle">
+                                <button class="format-toggle-btn active" data-value="full" onclick="setNoteFormat('full')">Full Note</button>
+                                <button class="format-toggle-btn" data-value="summary" onclick="setNoteFormat('summary')">Summary</button>
                             </div>
                         </div>
+                        <button class="assist-btn" id="assist-btn" onclick="openAssist()">🤖 Assist</button>
+                    </div>
+                    <div class="controls-row" style="justify-content:space-between; align-items:center;">
+                        <div class="label-input-wrapper" style="flex:1; min-width:0; margin-right:12px;">
+                            <div class="label-input-container" id="labels-note" onclick="this.querySelector('.label-input').focus()">
+                                <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
+                                <button type="button" class="btn-label-info" onclick="event.stopPropagation(); showLabelGuide()" title="Label tips">?</button>
+                            </div>
+                            <div class="label-suggestions" id="suggestions-note"></div>
+                        </div>
+                        <button class="btn btn-primary generate-btn" id="gen-btn" onclick="generateNote()">Generate Note →</button>
                     </div>
                 </div>
             </div>
