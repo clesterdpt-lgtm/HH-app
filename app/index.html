@@ -426,10 +426,6 @@
         .module-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
         .module-sub-tab:hover { color: var(--gray-600); }
         .module-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
-        .med-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
-        .med-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
-        .med-sub-tab:hover { color: var(--gray-600); }
-        .med-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
         .med-pending-badge { background: var(--orange); color: var(--white); font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
 
         /* ── Med History Cards ────────────────── */
@@ -494,10 +490,6 @@
         .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
         /* ── HEP Module ──────────────────────── */
-        .hep-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
-        .hep-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
-        .hep-sub-tab:hover { color: var(--gray-600); }
-        .hep-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
         .hep-lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
         .hep-lib-card { border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; background: var(--white); transition: box-shadow 0.2s, transform 0.15s; cursor: pointer; display: flex; flex-direction: column; position: relative; }
         .hep-lib-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
@@ -640,10 +632,6 @@
         }
 
         /* ── Patient Education List Builder ── */
-        .edu-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
-        .edu-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
-        .edu-sub-tab:hover { color: var(--gray-600); }
-        .edu-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
         .edu-card-add-btn { padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: var(--teal); background: rgba(13,148,136,0.06); border-top: 1px solid var(--gray-100); border-left: 1px solid var(--gray-100); transition: background 0.15s; cursor: pointer; flex: 0 0 90px; display: flex; align-items: center; justify-content: center; }
         .edu-card-add-btn:hover { background: rgba(13,148,136,0.14); }
         .edu-card-footer-row { display: flex; border-top: 1px solid var(--gray-100); }
@@ -852,7 +840,6 @@
 
             /* Module sub-tabs mobile */
             .module-sub-tab { padding: 10px 16px; font-size: 13px; }
-            .med-sub-tab { padding: 10px 16px; font-size: 13px; }
             .med-history-item-header { padding: 14px 16px; gap: 10px; }
             .med-history-item-left { gap: 6px; }
             .med-history-title { max-width: 140px; font-size: 13px; }
@@ -870,11 +857,8 @@
             .cal-nav-btns { width: 100%; justify-content: space-between; }
 
             /* HEP */
-            .hep-sub-tab { padding: 10px 16px; font-size: 13px; }
             .hep-lib-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
             .hep-current-item-top { flex-direction: column; gap: 10px; }
-            /* Edu List */
-            .edu-sub-tab { padding: 10px 14px; font-size: 13px; }
             .hep-current-item-svg { width: 60px; height: 60px; }
             .hep-current-item-fields { gap: 8px; }
             .hep-current-item-actions { flex-direction: row; }
@@ -1871,9 +1855,6 @@
         }
 
         /* ── Vehicle Tracker ── */
-        .vehicle-tabs { display:flex; gap:4px; background:var(--gray-100); padding:4px; border-radius:10px; margin-bottom:20px; }
-        .vehicle-tab-btn { flex:1; padding:8px 12px; text-align:center; font-size:14px; font-weight:500; font-family:'DM Sans',sans-serif; border:none; border-radius:8px; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--gray-600); }
-        .vehicle-tab-btn.active { background:var(--white); color:var(--navy); box-shadow:var(--shadow-sm); font-weight:600; }
         .vt-entry { border:1px solid var(--gray-200); border-radius:12px; margin-bottom:12px; overflow:hidden; background:var(--white); transition:box-shadow 0.2s; }
         .vt-entry:hover { box-shadow:var(--shadow-md); }
         .vt-entry-header { padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -1979,8 +1960,8 @@
         .page-overflow-menu button.overflow-danger { color: var(--red); }
         .page-overflow-menu button.overflow-danger:hover { background: #fef2f2; }
 
-        .note-clear-btn { background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-        .note-clear-btn:hover { color: var(--red, #e53e3e); background: #fef2f2; }
+        .note-clear-btn { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; margin-left: auto; }
+        .note-clear-btn:hover { color: #fca5a5; background: rgba(255,255,255,0.1); }
         .icon-action-btn { background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
         .icon-action-btn:hover { background: var(--gray-100); color: var(--gray-700); }
         .icon-action-btn.danger:hover { color: var(--red, #e53e3e); background: #fef2f2; }
@@ -2325,6 +2306,13 @@
 
         <!-- Notes Module -->
         <div id="view-notes" style="display:none;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div class="page-title">Clinical Documentation</div>
+                    <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
+                </div>
+            </div>
+
             <div class="module-sub-tabs notes-sub-tabs">
                 <button class="module-sub-tab notes-sub-tab active" id="tab-new" onclick="showTab('new')">📝 New Note</button>
                 <button class="module-sub-tab notes-sub-tab" id="tab-pending" onclick="showTab('pending')">⏳ Pending <span class="tab-badge" id="pending-badge">0</span></button>
@@ -2333,13 +2321,6 @@
 
         <!-- New Note Tab -->
         <div id="view-new">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:nowrap; gap:8px;">
-                <div style="flex:1; min-width:0;">
-                    <div class="page-title">Clinical Documentation</div>
-                    <div class="page-subtitle">Record or type your visit notes and generate a formatted clinical note instantly.</div>
-                </div>
-                <button class="note-clear-btn" onclick="confirmClearAll()" title="Clear All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
-            </div>
 
             <div class="offline-banner" id="offline-banner">
                 <span style="font-size:20px;">⚡</span>
@@ -2353,6 +2334,7 @@
                         <h2>New Note</h2>
                         <p>Record or type your visit notes</p>
                     </div>
+                    <button class="note-clear-btn" onclick="confirmClearAll()" title="Clear All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div class="card-body">
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -3016,7 +2998,7 @@
         </div>
 
         <div id="view-education" style="display:none;">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <div>
                     <div class="page-title">Patient Education</div>
                     <div class="page-subtitle">Evidence-based materials for common home health conditions.</div>
@@ -3031,26 +3013,22 @@
 
             <!-- MODULES TAB -->
             <div id="edu-modules-view">
-                <div class="card" style="margin-bottom:16px;">
-                    <div class="card-body" style="padding:14px;">
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                            <input type="text" class="form-input" id="edu-search" placeholder="Search conditions..." oninput="renderEduGrid()" style="flex:1; min-width:160px;">
-                            <div class="select-wrapper" style="min-width:160px;">
-                                <select id="edu-category-filter" onchange="renderEduGrid()">
-                                    <option value="">All Categories</option>
-                                    <option value="Cardiac">Cardiac</option>
-                                    <option value="Pulmonary">Pulmonary</option>
-                                    <option value="Endocrine">Endocrine</option>
-                                    <option value="Wound Care">Wound Care</option>
-                                    <option value="Safety">Safety</option>
-                                    <option value="Medications">Medications</option>
-                                    <option value="Neurological">Neurological</option>
-                                    <option value="Custom">Custom</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-outline" onclick="showAddCustomEduModule()">+ Custom Module</button>
-                        </div>
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="form-input" id="edu-search" placeholder="Search conditions..." oninput="renderEduGrid()" style="flex:1; min-width:180px;">
+                    <div class="select-wrapper" style="min-width:160px;">
+                        <select id="edu-category-filter" onchange="renderEduGrid()">
+                            <option value="">All Categories</option>
+                            <option value="Cardiac">Cardiac</option>
+                            <option value="Pulmonary">Pulmonary</option>
+                            <option value="Endocrine">Endocrine</option>
+                            <option value="Wound Care">Wound Care</option>
+                            <option value="Safety">Safety</option>
+                            <option value="Medications">Medications</option>
+                            <option value="Neurological">Neurological</option>
+                            <option value="Custom">Custom</option>
+                        </select>
                     </div>
+                    <button class="btn btn-outline" onclick="showAddCustomEduModule()">+ Custom Module</button>
                 </div>
                 <div id="edu-custom-module-form" class="hep-custom-form" style="display:none; margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -3210,7 +3188,7 @@
         </div>
 
         <div id="view-vehicle" style="display:none;">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                 <div>
                     <div class="page-title">Vehicle Tracker</div>
                     <div class="page-subtitle">Log mileage and expenses. Track IRS deductions and generate monthly reports.</div>
@@ -3218,11 +3196,11 @@
             </div>
 
             <!-- Vehicle sub-tabs -->
-            <div class="vehicle-tabs">
-                <button class="vehicle-tab-btn active" data-vtab="mileage" onclick="switchVehicleTab('mileage')">📏 Mileage Log</button>
-                <button class="vehicle-tab-btn" data-vtab="expenses" onclick="switchVehicleTab('expenses')">💳 Expenses</button>
-                <button class="vehicle-tab-btn" data-vtab="summary" onclick="switchVehicleTab('summary')">📊 Monthly Summary</button>
-                <button class="vehicle-tab-btn" data-vtab="yearsummary" onclick="switchVehicleTab('yearsummary')">📅 Year Summary</button>
+            <div class="module-sub-tabs vehicle-tabs">
+                <button class="module-sub-tab vehicle-tab-btn active" data-vtab="mileage" onclick="switchVehicleTab('mileage')">📏 Mileage Log</button>
+                <button class="module-sub-tab vehicle-tab-btn" data-vtab="expenses" onclick="switchVehicleTab('expenses')">💳 Expenses</button>
+                <button class="module-sub-tab vehicle-tab-btn" data-vtab="summary" onclick="switchVehicleTab('summary')">📊 Monthly Summary</button>
+                <button class="module-sub-tab vehicle-tab-btn" data-vtab="yearsummary" onclick="switchVehicleTab('yearsummary')">📅 Year Summary</button>
             </div>
 
             <!-- ── Tab: Mileage Log ── -->
