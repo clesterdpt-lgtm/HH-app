@@ -33,6 +33,12 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Settings** accessible from both sidebar and profile dropdown
 - Clickable CareNote logo navigates back to Dashboard
 
+### New Note Layout
+- **Flat layout**: Output format toggle, assist button, and labels are always visible — no collapsible "More Options" section
+- Visit type selector sits inline next to recording buttons
+- Draft status indicator displayed above the textarea
+- Generate Note button anchored bottom-right beside labels
+
 ### Note Generation
 - Record audio or type notes manually
 - Select from built-in note types: Initial Evaluation, Start of Care, Discharge, Reassessment, Recertification, Routine Visit
@@ -64,8 +70,8 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Pending Recordings tab for retry after failures
 
 ### Onboarding & Guided Tour
-- **Onboarding carousel**: First-time users see a full-screen walkthrough introducing CareNote's key modules (6 slides with swipe/arrow navigation, skip option)
-- **Guided tour**: After onboarding, interactive tooltips highlight the sidebar, record button, note type selector, and other key UI elements in sequence
+- **Onboarding carousel**: First-time users see a full-screen walkthrough introducing CareNote's key modules — including Visit Sessions (7 slides with swipe/arrow navigation, skip option)
+- **Guided tour**: After onboarding, interactive tooltips highlight the sidebar, record button, note type selector, Visit Sessions button, and other key UI elements in sequence
 - **Restart anytime**: Header ❓ button relaunches the onboarding carousel and guided tour
 
 ### Settings
@@ -110,8 +116,9 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Add/edit medications (name, dose, frequency, route, notes)
 - **Bulk voice recording**: Read full medication list aloud; Claude AI parses all medications from the transcript
 - Medication review modal before saving
+- **Action area**: Save to History, More Actions dropdown (PDF, email, print), and Clear — matching the HEP/Education card layout
 - **Pending sub-tab**: Offline queue for bulk recordings with auto-retry
-- **History tab**: Date-grouped medication snapshots with labels
+- **History tab**: Date-grouped medication snapshots with labels; direct trash icon for delete-all (no overflow menu)
 - Syncs to Supabase for cross-device access
 - Print medication list
 
@@ -168,6 +175,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Icon-only controls**: Compact SVG icons for export and delete actions in history toolbar and day group headers
 - **Delete All**: Trash icon in history header with confirmation dialog
 - **Styled label modal**: Label prompts use a custom modal instead of browser `prompt()` for consistent UX
+- **Unified history toolbar**: All modules (Notes, Meds, HEP, Education) share the same single-row search/filter/sort/export/delete bar layout
 - Mobile-optimized: text preview hidden on narrow screens for compact list view
 
 ### Security & Privacy
@@ -260,7 +268,8 @@ supabase functions deploy parse-medication
 - **Chunked transcription**: Large recordings auto-split client-side to stay under Whisper's 25MB file limit
 - **Built-in type customizations**: Stored in the same `note_templates` table with a `builtin_key` column to distinguish from custom templates
 - **Category-aware assist**: When templates define required sections, the assist system prompt instructs Claude to evaluate each section individually and prioritize missing ones in follow-up questions
-- **Unified sub-tab styling**: Notes tabs restyled to match the consistent sub-tab pattern used across Meds, HEP, and Education modules
+- **Unified sub-tab styling**: All modules (Notes, Meds, HEP, Education, Vehicle Tracker) share a single `module-sub-tab` CSS class with underline-style tabs — no duplicate per-module tab CSS
+- **Consistent page structure**: Every module follows the same layout: page title → underline tabs → tab content
 - **Greyed-out button hover style**: Edit, delete, and pencil icon buttons use a unified greyed-out hover state (no red highlights) across all modules
 - **SVG edit icons**: Pencil emoji buttons replaced with inline SVG icons for consistent rendering across platforms
 - **Position: fixed dropdowns**: Export dropdowns use fixed positioning to escape parent `overflow: hidden` on cards/history items
