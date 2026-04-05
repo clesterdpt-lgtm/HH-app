@@ -2500,30 +2500,22 @@
 
         <!-- History Tab -->
         <div id="view-history" style="display:none">
-            <div class="history-toolbar">
-                <div>
-                    <div class="page-title">Past Notes</div>
-                    <div class="page-subtitle" style="margin-bottom:0">All your previously generated clinical notes.</div>
-                </div>
-                <div class="history-toolbar-actions">
-                    <div class="export-wrapper">
-                        <button class="icon-action-btn" onclick="toggleExport(this)" title="Export All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
-                        <div class="export-dropdown">
-                            <button class="export-option" onclick="emailAllNotes(); closeExport()">✉️ Email All</button>
-                            <button class="export-option" onclick="downloadAllPdf(); closeExport()">📥 PDF All Notes</button>
-                        </div>
-                    </div>
-                    <button class="icon-action-btn danger" onclick="confirmDeleteAll()" title="Delete All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
-                </div>
-            </div>
-            <div class="history-filters" id="history-filters" style="display:none;">
-                <input type="text" class="form-input history-search" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()">
-                <div class="select-wrapper">
+            <div id="history-filters" style="display:none; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                <input type="text" class="form-input" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()" style="flex:1; min-width:180px;">
+                <div class="select-wrapper" style="min-width:140px;">
                     <select id="label-filter-select" onchange="applyHistoryFilters()">
                         <option value="">All Labels</option>
                     </select>
                 </div>
-                <button class="btn-sort-toggle" id="sort-toggle-clinical-history" onclick="toggleSortOrder('clinicalHistory', () => applyHistoryFilters())">Newest ↓</button>
+                <button class="btn btn-outline" id="sort-toggle-clinical-history" onclick="toggleSortOrder('clinicalHistory', () => applyHistoryFilters())">Newest ↓</button>
+                <div class="export-wrapper">
+                    <button class="icon-action-btn" onclick="toggleExport(this)" title="Export All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+                    <div class="export-dropdown">
+                        <button class="export-option" onclick="emailAllNotes(); closeExport()">✉️ Email All</button>
+                        <button class="export-option" onclick="downloadAllPdf(); closeExport()">📥 PDF All Notes</button>
+                    </div>
+                </div>
+                <button class="icon-action-btn danger" onclick="confirmDeleteAll()" title="Delete All Notes"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
             </div>
             <div id="history-loading">
                 <div class="spinner"></div>
@@ -2794,23 +2786,25 @@
                 <div id="med-list-items"></div>
             </div>
 
-            <div id="med-export-row" class="med-action-area" style="display:none;">
-                <div class="label-input-wrapper" style="min-width:0; max-width:100%;">
-                    <div class="label-input-container" id="labels-med" onclick="this.querySelector('.label-input').focus()">
+            <div id="med-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label">Labels</label>
+                    <div id="labels-med" class="label-input-container" onclick="this.querySelector('.label-input').focus()">
                         <input type="text" class="label-input" placeholder="Add labels..." autocomplete="off">
                     </div>
                     <div class="label-suggestions" id="suggestions-med"></div>
                 </div>
-                <div class="med-action-buttons">
-                    <div class="export-wrapper" style="flex:1;">
-                        <button class="btn btn-primary" onclick="toggleExport(this)" style="width:100%;">📤 Export Med List</button>
-                        <div class="export-dropdown">
-                            <button class="export-option" onclick="downloadMedPdf(); closeExport()">📥 Download PDF</button>
-                            <button class="export-option" onclick="emailMedList(); closeExport()">✉️ Email</button>
-                            <button class="export-option" onclick="printMedList(); closeExport()">🖨️ Print</button>
+                <div class="hep-action-grid">
+                    <button class="btn btn-primary hep-action-full" onclick="saveMedListToHistory()">💾 Save to History</button>
+                    <div class="hep-dropdown" id="medMoreActionsContainer">
+                        <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleMedExportDropdown(event)">⚡ More Actions ▾</button>
+                        <div class="hep-dropdown-menu" id="medExportDropdownMenu">
+                            <button class="hep-dropdown-item" onclick="downloadMedPdf(); closeMedExportDropdown()">📥 Download PDF</button>
+                            <button class="hep-dropdown-item" onclick="emailMedList(); closeMedExportDropdown()">✉️ Email</button>
+                            <button class="hep-dropdown-item" onclick="printMedList(); closeMedExportDropdown()">🖨️ Print</button>
                         </div>
                     </div>
-                    <button class="btn btn-outline" onclick="saveMedListToHistory()" style="flex:1;">📋 Save to History</button>
+                    <button class="btn btn-outline hep-action-danger" onclick="confirmClearMeds()">🗑️ Clear</button>
                 </div>
             </div>
             </div><!-- end med-current-view -->
@@ -2832,20 +2826,15 @@
             </div><!-- end med-pending-view -->
 
             <div id="med-history-view" style="display:none;">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                    <input type="text" class="form-input history-search" id="med-history-search" placeholder="Search by title or medication..." oninput="applyMedHistoryFilters()" style="flex:1; min-width:180px;">
-                    <div class="select-wrapper" style="min-width:140px; flex:1; max-width:200px;">
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="form-input" id="med-history-search" placeholder="Search medication history..." oninput="applyMedHistoryFilters()" style="flex:1; min-width:180px;">
+                    <div class="select-wrapper" style="min-width:140px;">
                         <select id="med-history-label-filter" onchange="applyMedHistoryFilters()">
                             <option value="">All Labels</option>
                         </select>
                     </div>
-                    <button class="btn-sort-toggle" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
-                    <div class="page-overflow-wrap" style="margin-left:auto;">
-                        <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
-                        <div class="page-overflow-menu">
-                            <button class="overflow-danger" onclick="confirmDeleteAllMedHistory(); closePageOverflow()">🗑️ Clear All History</button>
-                        </div>
-                    </div>
+                    <button class="btn btn-outline" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
+                    <button class="icon-action-btn danger" onclick="confirmDeleteAllMedHistory()" title="Delete All Med History"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="med-history-list">
                     <div class="module-empty-state med-history-empty">
@@ -9226,6 +9215,18 @@
         const { error } = await sb.from('med_history').delete().eq('user_id', currentUser.id);
         if (error) console.log('Med history clear error:', error.message);
     }
+
+    // ── Med Export Dropdown ──
+    function toggleMedExportDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('medExportDropdownMenu').classList.toggle('open');
+    }
+    function closeMedExportDropdown() {
+        document.getElementById('medExportDropdownMenu').classList.remove('open');
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#medMoreActionsContainer')) closeMedExportDropdown();
+    });
 
     // ── Save to History ──────────────────────────────
     async function saveMedListToHistory() {
