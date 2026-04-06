@@ -231,6 +231,7 @@ supabase/
 - **exercise_library**: User-created custom exercises and per-user built-in overrides (id, user_id, name, category, instructions, svg_key, photo_url, builtin_id)
 - **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
 - **edu_custom_modules**: User-created patient education modules (id, user_id, title, category, icon, overview)
+- **edu_list_history**: Saved patient education lists (id, user_id, title, modules, labels, saved_at)
 - **audit_log**: Tracks INSERT/UPDATE/DELETE operations on clinical data tables (table_name, operation, record_id, user_id, old_data, new_data, created_at)
 
 ## Edge Functions
