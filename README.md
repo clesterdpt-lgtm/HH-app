@@ -11,6 +11,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - **Transcription**: OpenAI Whisper API for audio-to-text
 - **Storage**: Supabase Storage (exercise photo uploads)
 - **PDF**: jsPDF (client-side PDF generation via CDN)
+- **Spreadsheets**: SheetJS XLSX (client-side spreadsheet generation via CDN)
 - **Offline**: IndexedDB for local persistence, service worker for caching
 - **Encryption**: AES-GCM application-level encryption for clinical data
 
@@ -94,6 +95,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Email notes via mailto link with optional **default email recipient** (set in Settings)
 - PDF download: single note, day's notes, or all notes
 - Professional PDF layout with navy header, page numbers, auto-pagination
+- XLSX spreadsheet export for Vehicle Tracker (monthly and yearly summaries with multi-sheet workbooks)
 
 ### Auto-Save Drafts
 - Debounced auto-save every 2 seconds to IndexedDB
@@ -153,10 +155,13 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Integrated into Calendar (green dot indicators) and Label Search
 
 ### Vehicle Tracker
+- **Sub-tabs**: Mileage Log, Expenses, Monthly Summary, Year Summary
 - **Mileage Log**: Record daily mileage with date, total miles, and purpose
-- **Expenses tab**: Track vehicle-related expenses
-- **IRS deduction calculator**: Automatic mileage deduction at the standard IRS rate ($0.67/mile)
-- **Year summary**: Annual mileage and expense totals with monthly breakdown
+- **Expenses tab**: Track vehicle-related expenses (date, category, amount, description)
+- **Monthly Summary**: Month-by-month mileage and expense totals with IRS deduction calculation
+- **Year Summary**: Annual mileage and expense totals with monthly breakdown and IRS deduction
+- **IRS deduction calculator**: Automatic mileage deduction at the standard IRS rate ($0.67/mile for 2024)
+- **Export**: PDF download, email summary, and XLSX spreadsheet download for both monthly and yearly summaries
 - Data stored locally in IndexedDB
 
 ### Label Search
