@@ -233,7 +233,7 @@ supabase/
 - **note_templates**: Custom and built-in type templates (name, custom_prompt, sections, sort_order, builtin_key)
 - **user_preferences**: Per-user settings (hidden_builtin_types, default_output_format, default_email, documentation_style, encryption_salt, retention_days, last_purge_date)
 - **smart_phrases**: User-defined text expansions (abbreviation, expansion, user_id)
-- **care_plan_goals**: AI-generated goals per note (id, note_id, goal_text, timeframe, user_id)
+- **care_plan_goals**: AI-generated goals per note (id, note_id, user_id, goal_text, timeframe, status, sort_order, created_at, updated_at) — status values: active, met, not_met, discontinued, revised
 - **med_history**: Medication recording snapshots (id, user_id, title, medications, labels, saved_at)
 - **exercise_library**: User-created custom exercises and per-user built-in overrides (id, user_id, name, category, instructions, svg_key, photo_url, builtin_id)
 - **hep_history**: Saved home exercise programs (id, user_id, title, exercises, labels, saved_at)
