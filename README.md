@@ -113,6 +113,7 @@ Clinical documentation assistant for home health care workers. Record, transcrib
 - Pending tab shows queued items
 - Auto-processes queue when back online
 - Templates cached locally for offline use
+- **PWA install prompts**: Android devices see an in-app install banner (via `beforeinstallprompt`); iOS users get a custom modal with step-by-step "Add to Home Screen" instructions (Share button → Add to Home Screen → Add). Banner auto-hides once the app is installed or launched in standalone mode
 
 ### Medication Manager
 - Add/edit medications (name, dose, frequency, route, notes)
