@@ -2467,7 +2467,7 @@
                     </div>
                     <span class="pending-section-count" id="recordings-count-badge"></span>
                     <button class="btn-sort-toggle" id="sort-toggle-clinical-pending" onclick="toggleSortOrder('clinicalPending', renderPendingList)">Newest ↓</button>
-                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllRecordings()" style="margin-left:8px;">🗑️ Delete All</button>
+                    <button class="note-clear-btn" id="recordings-delete-all-btn" onclick="confirmDeleteAllRecordings()" title="Delete All Recordings" style="margin-left:8px; display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
                     <label class="bulk-select-all">
@@ -2492,7 +2492,7 @@
                         <div class="pending-section-subtitle">Will generate automatically when online</div>
                     </div>
                     <span class="pending-section-count pending-section-count-notes" id="queued-notes-count-badge"></span>
-                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAllQueuedNotes()" style="margin-left:8px;">🗑️ Delete All</button>
+                    <button class="note-clear-btn" id="queued-notes-delete-all-btn" onclick="confirmDeleteAllQueuedNotes()" title="Delete All Queued Notes" style="margin-left:8px; display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="pending-notes-list"></div>
             </div>
@@ -2500,9 +2500,25 @@
 
         <!-- History Tab -->
         <div id="view-history" style="display:none">
-            <div id="history-filters" style="display:none; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
-                <input type="text" class="form-input" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()" style="flex:1; min-width:180px;">
-                <div class="select-wrapper" style="min-width:140px;">
+            <div class="history-toolbar">
+                <div>
+                    <div class="page-title">Past Notes</div>
+                    <div class="page-subtitle" style="margin-bottom:0">All your previously generated clinical notes.</div>
+                </div>
+                <div class="history-toolbar-actions">
+                    <div class="export-wrapper">
+                        <button class="icon-action-btn" onclick="toggleExport(this)" title="Export All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+                        <div class="export-dropdown">
+                            <button class="export-option" onclick="emailAllNotes(); closeExport()">✉️ Email All</button>
+                            <button class="export-option" onclick="downloadAllPdf(); closeExport()">📥 PDF All Notes</button>
+                        </div>
+                    </div>
+                    <button class="icon-action-btn danger" id="notes-delete-all-btn" onclick="confirmDeleteAll()" title="Delete All Notes" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                </div>
+            </div>
+            <div class="history-filters" id="history-filters" style="display:none;">
+                <input type="text" class="form-input history-search" id="history-search" placeholder="Search notes..." oninput="applyHistoryFilters()">
+                <div class="select-wrapper">
                     <select id="label-filter-select" onchange="applyHistoryFilters()">
                         <option value="">All Labels</option>
                     </select>
@@ -2699,12 +2715,7 @@
             <div id="med-current-view">
             <div class="med-top-actions">
                 <button class="btn btn-outline" id="bulk-med-btn" onclick="startBulkMedRecording()">🎤 Record Full Med List</button>
-                <div class="page-overflow-wrap">
-                    <button class="page-overflow-btn" onclick="togglePageOverflow(this)" title="More actions">&#8943;</button>
-                    <div class="page-overflow-menu">
-                        <button class="overflow-danger" onclick="confirmClearMeds(); closePageOverflow()">🗑️ Clear All Medications</button>
-                    </div>
-                </div>
+                <button class="note-clear-btn" id="med-clear-all-btn" onclick="confirmClearMeds()" title="Clear All Medications" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
             </div>
 
             <div id="bulk-med-section" style="margin-bottom:20px; display:none;">
@@ -2819,7 +2830,7 @@
                         </div>
                         <span class="pending-section-count" id="med-pending-count-badge" style="display:none;"></span>
                         <button class="btn-sort-toggle" id="sort-toggle-med-pending" onclick="toggleSortOrder('medPending', renderMedPendingList)">Newest ↓</button>
-                        <button class="btn btn-danger btn-sm" id="med-pending-delete-all" onclick="confirmDeleteAllMedPending()" style="margin-left:8px; display:none;">🗑️ Delete All</button>
+                        <button class="note-clear-btn" id="med-pending-delete-all" onclick="confirmDeleteAllMedPending()" title="Delete All Recordings" style="margin-left:8px; display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                     </div>
                     <div id="med-pending-list"></div>
                 </div>
@@ -2833,8 +2844,8 @@
                             <option value="">All Labels</option>
                         </select>
                     </div>
-                    <button class="btn btn-outline" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
-                    <button class="icon-action-btn danger" onclick="confirmDeleteAllMedHistory()" title="Delete All Med History"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                    <button class="btn-sort-toggle" id="sort-toggle-med-history" onclick="toggleSortOrder('medHistory', () => applyMedHistoryFilters())">Newest ↓</button>
+                    <button class="note-clear-btn" id="med-history-delete-all-btn" onclick="confirmDeleteAllMedHistory()" title="Clear All History" style="margin-left:auto; display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="med-history-list">
                     <div class="module-empty-state med-history-empty">
@@ -2974,7 +2985,7 @@
                         </select>
                     </div>
                     <button class="btn btn-outline" id="sort-toggle-hep-history" onclick="toggleSortOrder('hepHistory', () => renderHepHistory(document.getElementById('hep-history-search').value, document.getElementById('hep-history-label-filter').value))">Newest ↓</button>
-                    <button class="icon-action-btn danger" onclick="confirmDeleteAllHepHistory()" title="Delete All HEP History"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                    <button class="icon-action-btn danger" id="hep-history-delete-all-btn" onclick="confirmDeleteAllHepHistory()" title="Delete All HEP History" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="hep-history-list">
                     <div class="module-empty-state hep-history-empty">
@@ -3099,7 +3110,7 @@
                         </select>
                     </div>
                     <button class="btn btn-outline" id="sort-toggle-edu-list-history" onclick="toggleSortOrder('eduListHistory', () => applyEduListHistoryFilters())">Newest ↓</button>
-                    <button class="icon-action-btn danger" onclick="confirmDeleteAllEduHistory()" title="Delete All Education History"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                    <button class="icon-action-btn danger" id="edu-history-delete-all-btn" onclick="confirmDeleteAllEduHistory()" title="Delete All Education History" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
                 <div id="edu-list-history-list">
                     <div class="module-empty-state edu-list-history-empty">
@@ -4424,12 +4435,14 @@
         if (clinicalRecordings.length === 0) {
             bulkToolbar.style.display = 'none';
             countBadge.style.display = 'none';
+            document.getElementById('recordings-delete-all-btn').style.display = 'none';
             listEl.innerHTML = `<div class="pending-empty"><div class="pending-empty-icon">🎙️</div><p style="font-size:15px; color:var(--gray-400);">No pending recordings. Record audio offline and it will appear here.</p></div>`;
             return;
         }
 
         countBadge.innerText = clinicalRecordings.length;
         countBadge.style.display = 'inline';
+        document.getElementById('recordings-delete-all-btn').style.display = 'flex';
 
         bulkToolbar.style.display = clinicalRecordings.length >= 2 ? 'flex' : 'none';
         document.getElementById('select-all-checkbox').checked = false;
@@ -4681,6 +4694,7 @@
         }
 
         section.style.display = 'block';
+        document.getElementById('queued-notes-delete-all-btn').style.display = 'flex';
         const noteCountBadge = document.getElementById('queued-notes-count-badge');
         noteCountBadge.innerText = pendingNoteQueue.length;
         noteCountBadge.style.display = 'inline';
@@ -6347,8 +6361,11 @@
         if (filtered.length === 0) {
             const msg = 'No notes match your search.';
             listEl.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📄</div><p>${msg}</p></div>`;
+            document.getElementById('notes-delete-all-btn').style.display = 'none';
             return;
         }
+
+        document.getElementById('notes-delete-all-btn').style.display = 'flex';
 
         const groups = {};
         filtered.forEach(note => {
@@ -8654,11 +8671,13 @@
             emptyEl.style.display = 'block';
             listEl.innerHTML = '';
             exportRow.style.display = 'none';
+            document.getElementById('med-clear-all-btn').style.display = 'none';
             return;
         }
 
         emptyEl.style.display = 'none';
         exportRow.style.display = 'flex';
+        document.getElementById('med-clear-all-btn').style.display = 'flex';
 
         listEl.innerHTML = meds.map(med => {
             const details = [med.dose, med.frequency, med.route].filter(Boolean).join('<span class="med-detail-sep">·</span>');
@@ -9298,8 +9317,11 @@
         if (filtered.length === 0) {
             const msg = (searchQuery || filterLabel) ? 'No matching medication lists found' : 'No saved medication lists yet';
             listEl.innerHTML = `<div class="med-history-empty"><div class="med-history-empty-icon">📋</div><p>${msg}</p>${!(searchQuery || filterLabel) ? '<p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save snapshots</p>' : ''}</div>`;
+            document.getElementById('med-history-delete-all-btn').style.display = 'none';
             return;
         }
+
+        document.getElementById('med-history-delete-all-btn').style.display = 'flex';
 
         // Group by day
         const groups = {};
@@ -10283,8 +10305,11 @@
 
         if (filtered.length === 0) {
             listEl.innerHTML = `<div class="hep-history-empty"><div class="hep-history-empty-icon">📋</div><p>No saved exercise programs yet</p><p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current HEP tab to save programs</p></div>`;
+            document.getElementById('hep-history-delete-all-btn').style.display = 'none';
             return;
         }
+
+        document.getElementById('hep-history-delete-all-btn').style.display = 'flex';
 
         // Refresh label filter dropdown
         refreshHepHistoryLabelFilter();
@@ -11837,8 +11862,11 @@
 
         if (filtered.length === 0) {
             listEl.innerHTML = `<div class="edu-list-history-empty"><div class="edu-list-history-empty-icon">📋</div><p>No saved education lists yet</p><p style="font-size:13px; margin-top:4px;">Use "Save to History" on the Current List tab to save packets</p></div>`;
+            document.getElementById('edu-history-delete-all-btn').style.display = 'none';
             return;
         }
+
+        document.getElementById('edu-history-delete-all-btn').style.display = 'flex';
 
         refreshEduListHistoryLabelFilter();
 
