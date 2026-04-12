@@ -2656,6 +2656,20 @@
                     </p>
                     <button class="btn btn-primary" id="encrypt-existing-btn" onclick="encryptExistingData()">Encrypt Existing Data</button>
                     <div id="encrypt-existing-status" style="font-size:13px;color:var(--gray-600);margin-top:10px;"></div>
+                    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-200);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <label for="auto-lock-select" style="font-size:13px;color:var(--gray-600);white-space:nowrap;">Auto-lock after inactivity:</label>
+                            <select id="auto-lock-select" onchange="setAutoLockMinutes(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--gray-300);font-size:13px;">
+                                <option value="15">15 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="120">2 hours</option>
+                                <option value="240">4 hours</option>
+                                <option value="0">Never</option>
+                            </select>
+                        </div>
+                        <p style="font-size:12px;color:var(--gray-500);margin-top:6px;">Clears your encryption key after a period of no activity. You'll need to re-enter your password to decrypt data.</p>
+                    </div>
                 </div>
             </div>
 
@@ -3522,6 +3536,39 @@
     let encryptionKey = null; // AES-GCM CryptoKey, held in memory only
     let encryptionSkipped = false; // true when user chose "Continue without decryption"
 
+    // ── Encryption Auto-Lock ────────────────────────────
+    let autoLockMinutes = parseInt(localStorage.getItem('autoLockMinutes') || '60', 10); // default 1 hour
+    let autoLockTimer = null;
+
+    function resetAutoLockTimer() {
+        if (autoLockTimer) clearTimeout(autoLockTimer);
+        if (!encryptionKey || autoLockMinutes <= 0) return;
+        autoLockTimer = setTimeout(autoLockEncryption, autoLockMinutes * 60 * 1000);
+    }
+
+    async function autoLockEncryption() {
+        if (!encryptionKey || !currentUser) return;
+        encryptionKey = null;
+        autoLockTimer = null;
+        // Fetch salt to show unlock screen
+        const { data: prefs } = await sb.from('user_preferences')
+            .select('encryption_salt').eq('user_id', currentUser.id).single();
+        if (prefs?.encryption_salt) {
+            showEncryptionUnlock(currentUser.email, prefs.encryption_salt);
+        }
+    }
+
+    function setAutoLockMinutes(val) {
+        autoLockMinutes = parseInt(val, 10);
+        localStorage.setItem('autoLockMinutes', autoLockMinutes);
+        resetAutoLockTimer();
+    }
+
+    // Reset timer on user activity
+    ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetAutoLockTimer, { passive: true });
+    });
+
     // ── Encryption Helpers (Web Crypto API) ──────────────
     function arrayBufToBase64(buf) {
         return btoa(String.fromCharCode(...new Uint8Array(buf)));
@@ -3870,6 +3917,7 @@
                 encryptionKey = await deriveEncryptionKey(password, salt);
                 await sb.from('user_preferences').upsert({ user_id: currentUser.id, encryption_salt: salt });
             }
+            resetAutoLockTimer();
             showApp(data.user.email);
         }
     }
@@ -3890,6 +3938,7 @@
         currentUser = null;
         encryptionKey = null;
         encryptionSkipped = false;
+        if (autoLockTimer) { clearTimeout(autoLockTimer); autoLockTimer = null; }
         showAuth();
     }
 
@@ -3927,6 +3976,7 @@
             // Verify the key works by attempting a test — if wrong password, decryption will fail later
             // but PBKDF2 derivation always succeeds, so we proceed optimistically
             pendingUnlockSalt = null;
+            resetAutoLockTimer();
             showApp(currentUser.email);
         } catch (e) {
             errEl.innerText = 'Failed to derive encryption key.'; errEl.style.display = 'block';
@@ -6871,6 +6921,8 @@
         }
         const encBtn = document.getElementById('encrypt-existing-btn');
         if (encBtn) encBtn.disabled = !encryptionKey;
+        const autoLockSelect = document.getElementById('auto-lock-select');
+        if (autoLockSelect) autoLockSelect.value = autoLockMinutes;
 
         // Retention UI
         const retSelect = document.getElementById('retention-select');
