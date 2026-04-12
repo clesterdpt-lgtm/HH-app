@@ -2808,17 +2808,17 @@
                     </div>
                     <div class="label-suggestions" id="suggestions-med"></div>
                 </div>
-                <div class="hep-action-grid">
-                    <button class="btn btn-primary hep-action-full" onclick="saveMedListToHistory()">💾 Save to History</button>
-                    <div class="hep-dropdown" id="medMoreActionsContainer">
-                        <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleMedExportDropdown(event)">⚡ More Actions ▾</button>
-                        <div class="hep-dropdown-menu" id="medExportDropdownMenu">
-                            <button class="hep-dropdown-item" onclick="downloadMedPdf(); closeMedExportDropdown()">📥 Download PDF</button>
-                            <button class="hep-dropdown-item" onclick="emailMedList(); closeMedExportDropdown()">✉️ Email</button>
-                            <button class="hep-dropdown-item" onclick="printMedList(); closeMedExportDropdown()">🖨️ Print</button>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="saveMedListToHistory()" style="flex:1; justify-content:center;">💾 Save to History</button>
+                    <div class="export-wrapper" style="position:relative;">
+                        <button class="icon-action-btn" onclick="toggleExport(this)" title="Share"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+                        <div class="export-dropdown">
+                            <button class="export-option" onclick="downloadMedPdf(); closeExport()">📥 Download PDF</button>
+                            <button class="export-option" onclick="emailMedList(); closeExport()">✉️ Email</button>
+                            <button class="export-option" onclick="printMedList(); closeExport()">🖨️ Print</button>
                         </div>
                     </div>
-                    <button class="btn btn-outline hep-action-danger" onclick="confirmClearMeds()">🗑️ Clear</button>
+                    <button class="icon-action-btn danger" onclick="confirmClearMeds()" title="Clear All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                 </div>
             </div>
             </div><!-- end med-current-view -->
@@ -2932,7 +2932,7 @@
                     <p class="module-empty-hint">Go to the Library tab to add exercises to your program</p>
                 </div>
                 <div id="hep-current-items"></div>
-                <div id="hep-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
+                <div id="hep-export-row" style="display:none; flex-direction:column; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
                     <div class="form-group" style="margin-bottom:14px;">
                         <label class="form-label">Labels</label>
                         <div id="labels-hep" class="label-input-container" onclick="this.querySelector('.label-input').focus()">
@@ -2940,19 +2940,19 @@
                         </div>
                         <div class="label-suggestions" id="suggestions-hep"></div>
                     </div>
-                    <div class="hep-action-grid">
-                        <button class="btn btn-primary hep-action-full" onclick="saveHepToHistory()">💾 Save to History</button>
-                        <div class="hep-dropdown" id="hepMoreActionsContainer">
-                            <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleHepDropdown(event)">⚡ More Actions ▾</button>
-                            <div class="hep-dropdown-menu" id="hepDropdownMenu">
-                                <button class="hep-dropdown-item" onclick="generateHepDoc(); closeHepDropdown()">📋 EMR Doc</button>
-                                <button class="hep-dropdown-item" onclick="emailHep(); closeHepDropdown()">✉️ Email</button>
-                                <button class="hep-dropdown-item" onclick="downloadHepPdf('single'); closeHepDropdown()">📄 PDF List</button>
-                                <button class="hep-dropdown-item" onclick="downloadHepPdf('grid'); closeHepDropdown()">📄 PDF Grid</button>
-                                <button class="hep-dropdown-item" onclick="printHep(); closeHepDropdown()">🖨️ Print</button>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="saveHepToHistory()" style="flex:1; justify-content:center;">💾 Save to History</button>
+                        <button class="btn btn-outline" onclick="generateHepDoc()" style="flex:1; justify-content:center;">📋 EMR Doc</button>
+                        <div class="export-wrapper" style="position:relative;">
+                            <button class="icon-action-btn" onclick="toggleExport(this)" title="Share"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+                            <div class="export-dropdown">
+                                <button class="export-option" onclick="emailHep(); closeExport()">✉️ Email</button>
+                                <button class="export-option" onclick="downloadHepPdf('single'); closeExport()">📄 PDF (List)</button>
+                                <button class="export-option" onclick="downloadHepPdf('grid'); closeExport()">📄 PDF (Grid)</button>
+                                <button class="export-option" onclick="printHep(); closeExport()">🖨️ Print</button>
                             </div>
                         </div>
-                        <button class="btn btn-outline hep-action-danger" onclick="clearCurrentHep()">🗑️ Clear</button>
+                        <button class="icon-action-btn danger" onclick="clearCurrentHep()" title="Clear All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                     </div>
                 </div>
                 <!-- HEP Documentation Output -->
@@ -3080,7 +3080,7 @@
                     <p class="module-empty-hint">Go to the Modules tab and click "+ Add to List" to build a patient education packet</p>
                 </div>
                 <div id="edu-list-current-items"></div>
-                <div id="edu-list-export-row" style="display:none; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
+                <div id="edu-list-export-row" style="display:none; flex-direction:column; margin-top:20px; padding:20px; background:var(--white); border:1px solid var(--gray-200); border-radius:12px;">
                     <div class="form-group" style="margin-bottom:14px;">
                         <label class="form-label">Labels</label>
                         <div id="labels-edu-list" class="label-input-container" onclick="this.querySelector('.label-input').focus()">
@@ -3088,17 +3088,17 @@
                         </div>
                         <div class="label-suggestions" id="suggestions-edu-list"></div>
                     </div>
-                    <div class="hep-action-grid">
-                        <button class="btn btn-primary hep-action-full" onclick="saveEduListToHistory()">💾 Save to History</button>
-                        <div class="hep-dropdown" id="eduListMoreActionsContainer">
-                            <button class="btn btn-outline hep-dropdown-toggle" onclick="toggleEduListDropdown(event)">⚡ More Actions ▾</button>
-                            <div class="hep-dropdown-menu" id="eduListDropdownMenu">
-                                <button class="hep-dropdown-item" onclick="emailEduList(); closeEduListDropdown()">✉️ Email</button>
-                                <button class="hep-dropdown-item" onclick="downloadEduListCurrentPdf(); closeEduListDropdown()">📄 Download PDF</button>
-                                <button class="hep-dropdown-item" onclick="printEduListCurrent(); closeEduListDropdown()">🖨️ Print</button>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="saveEduListToHistory()" style="flex:1; justify-content:center;">💾 Save to History</button>
+                        <div class="export-wrapper" style="position:relative;">
+                            <button class="icon-action-btn" onclick="toggleExport(this)" title="Share"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+                            <div class="export-dropdown">
+                                <button class="export-option" onclick="emailEduList(); closeExport()">✉️ Email</button>
+                                <button class="export-option" onclick="downloadEduListCurrentPdf(); closeExport()">📄 Download PDF</button>
+                                <button class="export-option" onclick="printEduListCurrent(); closeExport()">🖨️ Print</button>
                             </div>
                         </div>
-                        <button class="btn btn-outline hep-action-danger" onclick="clearCurrentEduList()">🗑️ Clear</button>
+                        <button class="icon-action-btn danger" onclick="clearCurrentEduList()" title="Clear All"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
                     </div>
                 </div>
             </div>
