@@ -53,6 +53,7 @@
         .header-right { display: flex; align-items: center; gap: 12px; }
         .header-badge { background: rgba(13,148,136,0.18); color: var(--teal-light); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(13,148,136,0.3); }
         .offline-badge { background: rgba(217,119,6,0.18); color: var(--orange); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(217,119,6,0.3); display: none; }
+        .ollama-badge { background: rgba(139,92,246,0.18); color: #a78bfa; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(139,92,246,0.3); display: none; }
         /* Profile dropdown */
         .profile-wrapper { position: relative; }
         .profile-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--teal); border: 2px solid rgba(255,255,255,0.15); color: var(--white); font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.2s; text-transform: uppercase; line-height: 1; }
@@ -2037,6 +2038,7 @@
         <button class="header-icon-btn" id="header-cal-btn" onclick="switchModule('calendar')" title="Calendar" aria-label="Open calendar">📅</button>
         <button class="header-icon-btn" id="header-search-btn" onclick="switchModule('search')" title="Search notes" aria-label="Search notes by label">🔍</button>
         <div class="offline-badge" id="offline-badge">⚡ Offline</div>
+        <div class="ollama-badge" id="ollama-badge">🦙 Local AI</div>
         <div class="header-badge">Personal Testing</div>
         <div class="profile-wrapper">
             <button class="profile-btn" id="profile-btn" onclick="toggleProfileDropdown()" title="Profile" aria-label="Open profile menu"></button>
@@ -2592,6 +2594,46 @@
                     <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
                         <button class="btn btn-primary" onclick="saveDocumentationStyle()" style="white-space:nowrap;">Save</button>
                         <div id="doc-style-status" style="display:none;font-size:13px;color:var(--primary);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-icon">🤖</div>
+                    <div class="card-header-text">
+                        <h2>AI Provider</h2>
+                        <p>Choose between Claude (cloud) or a local Ollama model for AI features</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="format-options" id="ai-provider-options">
+                        <button class="format-option active" data-value="claude" onclick="setAiProvider('claude')">
+                            <span class="format-option-title">Claude (cloud)</span>
+                            <span class="format-option-desc">Anthropic's Claude via Supabase — requires internet</span>
+                        </button>
+                        <button class="format-option" data-value="ollama" onclick="setAiProvider('ollama')">
+                            <span class="format-option-title">Ollama (local)</span>
+                            <span class="format-option-desc">Run Gemma 4 or other models locally — fully private, no cloud</span>
+                        </button>
+                    </div>
+                    <div id="ollama-config" style="display:none;margin-top:16px;flex-direction:column;gap:10px;">
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <label style="font-size:13px;color:var(--gray-600);white-space:nowrap;min-width:90px;">Ollama URL</label>
+                            <input type="text" id="ollama-url-input" placeholder="http://localhost:11434"
+                                   style="flex:1;padding:10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;background:var(--gray-50);color:var(--gray-900);"
+                                   oninput="saveOllamaConfig()">
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <label style="font-size:13px;color:var(--gray-600);white-space:nowrap;min-width:90px;">Model name</label>
+                            <input type="text" id="ollama-model-input" placeholder="gemma4"
+                                   style="flex:1;padding:10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;background:var(--gray-50);color:var(--gray-900);"
+                                   oninput="saveOllamaConfig()">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                            <button class="btn btn-primary" onclick="testOllamaConnection()" style="white-space:nowrap;">Test Connection</button>
+                            <div id="ollama-test-status" style="font-size:13px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3806,8 +3848,247 @@
         return result;
     }
 
+    // ── AI Provider routing ────────────────────────────────────────────────────
+    // Drop-in replacement for invokeWithFreshSession for the four AI functions.
+    // Returns { data, error } matching the Supabase invoke shape.
+    async function aiInvoke(fnName, body) {
+        const provider = localStorage.getItem('aiProvider') || 'claude';
+        if (provider === 'ollama') {
+            try {
+                const data = await ollamaInvoke(fnName, body);
+                return { data, error: null };
+            } catch (err) {
+                return { data: null, error: { message: err.message } };
+            }
+        }
+        return invokeWithFreshSession(fnName, { body });
+    }
+
+    // Base Ollama API call using OpenAI-compatible endpoint
+    async function ollamaChat(messages, { maxTokens = 1500, json = false } = {}) {
+        const baseUrl = (localStorage.getItem('ollamaUrl') || 'http://localhost:11434').replace(/\/$/, '');
+        const model = localStorage.getItem('ollamaModel') || 'gemma4';
+        const payload = { model, messages, max_tokens: maxTokens };
+        if (json) payload.response_format = { type: 'json_object' };
+        const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Ollama error ${res.status}: ${errText}`);
+        }
+        const result = await res.json();
+        return result.choices[0].message.content;
+    }
+
+    // Parse JSON from model output, stripping any markdown fences
+    function parseJsonContent(text) {
+        try { return JSON.parse(text); } catch {}
+        const cleaned = text.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+    }
+
+    // Dispatch to per-function Ollama handlers
+    async function ollamaInvoke(fnName, body) {
+        switch (fnName) {
+            case 'generate-note':    return ollamaGenerateNote(body);
+            case 'generate-goals':   return ollamaGenerateGoals(body);
+            case 'assist-note':      return ollamaAssistNote(body);
+            case 'parse-medication': return olllamaParseMedication(body);
+            default: throw new Error(`No Ollama handler for function: ${fnName}`);
+        }
+    }
+
+    async function ollamaGenerateNote({ notes, noteType, outputFormat, customPrompt, sections, documentationStyle }) {
+        let systemPrompt, userMessage;
+        if (outputFormat === 'summary') {
+            systemPrompt = `You are a clinical documentation assistant specializing in home health care. Your task is to write a concise clinical summary in plain paragraph form.
+
+OUTPUT FORMAT: Write ONLY 2-3 flowing prose paragraphs. Do not use any headings, section titles, bullet points, numbered lists, tables, or any structured formatting whatsoever. The entire response must be continuous paragraphs of text, nothing else.
+
+CONTENT: Summarize what happened during the visit — the patient's presentation, what the clinician observed and did, any interventions performed, and the patient's response. Do not include vital signs tables, pain scale ratings, formal goals, or plan of care sections — those are documented separately in the EMR.
+
+PRIVACY: Never include patient-identifying information. Use "the patient" or "pt" instead of names. Omit dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information.${documentationStyle ? `\n\nStyle preferences: ${documentationStyle}` : ''}`;
+            userMessage = `Write a clinical summary in paragraph form for this ${noteType} visit.`;
+            if (customPrompt) userMessage += ` Additional instructions: ${customPrompt}`;
+            userMessage += `\n\nVisit notes:\n${notes}`;
+        } else {
+            systemPrompt = `You are a clinical documentation assistant specializing in home health care. Convert visit notes into properly formatted clinical notes. Follow standard home health documentation requirements and be concise and professional.
+
+IMPORTANT: Never include any patient-identifying information in the generated note. This includes patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of any names. If the visit notes contain patient identifiers, omit them from the output.${documentationStyle ? `\n\nStyle preferences: ${documentationStyle}` : ''}`;
+            userMessage = `Convert the following visit notes into a properly formatted ${noteType} note.`;
+            if (sections && sections.length > 0) {
+                userMessage += `\n\nOrganize the note using exactly these sections:\n${sections.map(s => `- ${s}`).join('\n')}`;
+            }
+            if (customPrompt) userMessage += `\n\nAdditional instructions: ${customPrompt}`;
+            userMessage += `\n\nVisit notes:\n${notes}`;
+        }
+        const text = await ollamaChat(
+            [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }],
+            { maxTokens: 2000 }
+        );
+        return { text };
+    }
+
+    async function ollamaGenerateGoals({ generatedNote, noteType }) {
+        const systemPrompt = `You are a home health clinical documentation specialist. Based on the clinical note provided, generate 3-5 measurable, patient-centered care plan goals.
+
+Return ONLY a valid JSON array — no markdown, no code blocks, no explanatory text. Each object must have exactly two fields:
+- "goal_text": A specific, measurable goal statement in standard care plan format (e.g., "Patient will ambulate 50 feet with rolling walker independently within 4 weeks")
+- "timeframe": The target timeframe (e.g., "4 weeks", "2 weeks", "by discharge", "ongoing")
+
+Guidelines:
+- Goals must be SMART: Specific, Measurable, Achievable, Relevant, Time-bound
+- Use standard home health clinical terminology
+- Base goals ONLY on deficits, needs, or interventions documented in the note
+- Include functional, safety, and/or educational goals as appropriate for the visit type
+- Never include patient-identifying information`;
+        const userMessage = `Note type: ${noteType || 'home health visit'}\n\nClinical note:\n${generatedNote}`;
+        const text = await ollamaChat(
+            [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }],
+            { maxTokens: 1000 }
+        );
+        const goals = parseJsonContent(text);
+        return { goals };
+    }
+
+    async function ollamaAssistNote({ rawNotes, noteType, messages, mode, customPrompt, sections }) {
+        const hasSections = sections && sections.length > 0;
+        let systemPrompt;
+        if (mode === 'rewrite') {
+            systemPrompt = `You are a clinical documentation assistant specializing in home health care. The clinician recorded raw visit notes and then had a conversation with you to clarify and add missing details. Now produce an updated version of the raw notes.
+
+CRITICAL RULES:
+- START with the ENTIRE original note text. Do NOT remove, summarize, or rephrase any existing content.
+- APPEND or INSERT the new details from the conversation into the appropriate places within the original text.
+- This is NOT a formatted clinical note — do NOT add section headings, bullet points, or reorganize into a clinical note structure.
+- Keep the EXACT same voice, tone, and style as the original notes.
+- The result should read as if the clinician had dictated everything in one pass — the original content plus the new details woven in seamlessly.
+- If in doubt, keep the original wording and add new information alongside it rather than rewriting.
+- Never include any patient-identifying information. Remove any patient names, initials, dates of birth, addresses, phone numbers, medical record numbers, or any other personally identifiable information. Use "the patient" or "pt" instead of names.
+${hasSections ? `\nThe clinician's template requires these sections: ${sections.join(', ')}. When inserting new details from the conversation, place them near related content in the original notes so they naturally fall under the appropriate section when the note is later formatted.` : ''}
+${customPrompt ? `\nAdditional template instructions: ${customPrompt}` : ''}
+
+The note type is: ${noteType}
+
+Original raw notes (preserve ALL of this content):
+${rawNotes}`;
+        } else {
+            systemPrompt = `You are a clinical documentation assistant specializing in home health care. You are helping a clinician review and improve their raw visit notes BEFORE generating a formal clinical note.
+
+The note type selected is: ${noteType}
+${hasSections ? `\nREQUIRED SECTIONS for this note type: ${sections.join(', ')}` : ''}
+${customPrompt ? `\nAdditional template instructions: ${customPrompt}` : ''}
+
+Your job:
+1. On your FIRST message, give a brief opening review of the raw notes:
+   - Use ✓ for things that are well-documented
+   - Use ⚠ for gaps or missing information typical for a "${noteType}" note
+${hasSections ? `   - IMPORTANT: Evaluate the raw notes against EACH of these required sections: ${sections.join(', ')}. For each section, note whether information is present (✓) or missing/insufficient (⚠).
+   - After your review, list which required sections still need information.` : '   - Keep it concise (3-6 bullet points max)'}
+   - Then ask ONE specific clarifying question about the most important gap${hasSections ? ' (prioritize missing required sections)' : ''}
+
+2. On subsequent messages, ask ONE clarifying question at a time. Focus on:
+${hasSections ? `   - PRIORITY: Required sections that have not yet been addressed. Track which sections have been covered by the conversation so far, and ask about uncovered ones first.
+   - Once all required sections have been addressed, move on to other clinical details.` : ''}
+   - Missing clinical details expected for a "${noteType}" note (vitals, assessments, interventions, patient response, plan of care, functional status)
+   - Vague or ambiguous descriptions that need specifics
+   - Missing timeframes, measurements, or functional assessments
+   - Do NOT repeat information already provided
+   - Do NOT ask about information that is irrelevant to the note type
+
+3. HIPAA awareness: If you notice any patient names, addresses, phone numbers, dates of birth, or other identifiers in the notes, flag them immediately with a ⚠ warning and advise the clinician to remove them.
+
+4. When the user indicates they are done (e.g. "done", "finish", "that's all", "no more", "I'm good", "nothing else", "that covers it"), respond with EXACTLY this message and nothing else:
+   "Got it! I have everything I need. Click **Update My Note** below to incorporate all the details we discussed."
+   Do NOT ask any more questions after this.
+
+5. Keep your responses SHORT and conversational — no more than 2-3 short paragraphs. You are chatting, not writing an essay. One question at a time.
+
+Original raw notes:
+${rawNotes}`;
+        }
+
+        const apiMessages = (!messages || messages.length === 0)
+            ? [{ role: 'user', content: 'Please review my notes and let me know what looks good and what\'s missing.' }]
+            : messages.map(m => ({ role: m.role, content: m.content }));
+
+        const text = await ollamaChat(
+            [{ role: 'system', content: systemPrompt }, ...apiMessages],
+            { maxTokens: 1500 }
+        );
+        const isDone = text.includes('Update My Note');
+        return { text, isDone };
+    }
+
+    async function olllamaParseMedication({ transcript, bulk }) {
+        const systemPrompt = bulk
+            ? `You are a clinical documentation assistant. The user has recorded audio of a full medication list being read aloud. Extract every medication mentioned and return ONLY a JSON array of objects. Each object must have exactly these keys: name, dose, frequency, route, notes. For route, use one of: Oral, Topical, Inhaled, Injection, Sublingual, Transdermal, Other. If a field cannot be determined for a given medication, use an empty string for that field. Return nothing except the raw JSON array — no markdown, no explanation, no wrapper object.`
+            : `You are a clinical documentation assistant. The user has spoken a medication description aloud. Extract the medication details and return ONLY a JSON object with these exact keys: name, dose, frequency, route, notes. For route, use one of: Oral, Topical, Inhaled, Injection, Sublingual, Transdermal, Other. If a field cannot be determined, use an empty string. Return nothing except the JSON object — no markdown, no explanation.`;
+        const text = await ollamaChat(
+            [{ role: 'system', content: systemPrompt }, { role: 'user', content: transcript }],
+            { maxTokens: bulk ? 2000 : 500 }
+        );
+        const parsed = parseJsonContent(text);
+        return bulk ? { medications: parsed } : { medication: parsed };
+    }
+
+    // ── Ollama settings UI helpers ─────────────────────────────────────────────
+    function setAiProvider(provider) {
+        localStorage.setItem('aiProvider', provider);
+        document.querySelectorAll('#ai-provider-options .format-option').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === provider);
+        });
+        const cfg = document.getElementById('ollama-config');
+        if (cfg) cfg.style.display = provider === 'ollama' ? 'flex' : 'none';
+        const badge = document.getElementById('ollama-badge');
+        if (badge) badge.style.display = provider === 'ollama' ? 'flex' : 'none';
+    }
+
+    function saveOllamaConfig() {
+        const url = document.getElementById('ollama-url-input')?.value.trim();
+        const model = document.getElementById('ollama-model-input')?.value.trim();
+        if (url) localStorage.setItem('ollamaUrl', url);
+        if (model) localStorage.setItem('ollamaModel', model);
+    }
+
+    function loadOllamaSettings() {
+        const provider = localStorage.getItem('aiProvider') || 'claude';
+        document.querySelectorAll('#ai-provider-options .format-option').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === provider);
+        });
+        const cfg = document.getElementById('ollama-config');
+        if (cfg) cfg.style.display = provider === 'ollama' ? 'flex' : 'none';
+        const urlInput = document.getElementById('ollama-url-input');
+        if (urlInput) urlInput.value = localStorage.getItem('ollamaUrl') || '';
+        const modelInput = document.getElementById('ollama-model-input');
+        if (modelInput) modelInput.value = localStorage.getItem('ollamaModel') || '';
+        const badge = document.getElementById('ollama-badge');
+        if (badge) badge.style.display = provider === 'ollama' ? 'flex' : 'none';
+    }
+
+    async function testOllamaConnection() {
+        const statusEl = document.getElementById('ollama-test-status');
+        statusEl.style.color = 'var(--gray-600)';
+        statusEl.textContent = 'Testing...';
+        try {
+            await ollamaChat([{ role: 'user', content: 'Say "ok"' }], { maxTokens: 5 });
+            statusEl.style.color = 'var(--green)';
+            statusEl.textContent = 'Connected ✓';
+        } catch (err) {
+            statusEl.style.color = 'var(--red)';
+            statusEl.textContent = 'Failed: ' + err.message;
+        }
+    }
+
     window.addEventListener('load', async () => {
         updateOnlineStatus();
+        // Sync the Ollama badge with the stored provider preference on startup
+        const _initProvider = localStorage.getItem('aiProvider') || 'claude';
+        const _initBadge = document.getElementById('ollama-badge');
+        if (_initBadge) _initBadge.style.display = _initProvider === 'ollama' ? 'flex' : 'none';
         // Restore pending recordings and queued notes from IndexedDB
         const saved = await loadRecordingsFromDB();
         if (saved.length > 0) pendingRecordings = saved;
@@ -4817,7 +5098,7 @@
             if (item.sections && item.sections.length > 0) body.sections = item.sections;
             if (item.documentationStyle) body.documentationStyle = item.documentationStyle;
 
-            const { data, error: fnError } = await invokeWithFreshSession('generate-note', { body });
+            const { data, error: fnError } = await aiInvoke('generate-note', body);
 
             if (fnError) {
                 let detail = fnError.message;
@@ -6057,7 +6338,7 @@
             if (sections && sections.length > 0) body.sections = sections;
             if (documentationStyle) body.documentationStyle = documentationStyle;
 
-            const { data, error: fnError } = await invokeWithFreshSession('generate-note', { body });
+            const { data, error: fnError } = await aiInvoke('generate-note', body);
 
             if (fnError) {
                 let detail = fnError.message;
@@ -6156,9 +6437,7 @@
         currentGoals = [];
 
         try {
-            const { data, error: fnError } = await invokeWithFreshSession('generate-goals', {
-                body: { generatedNote, noteType }
-            });
+            const { data, error: fnError } = await aiInvoke('generate-goals', { generatedNote, noteType });
 
             if (fnError) {
                 let detail = fnError.message;
@@ -6912,6 +7191,7 @@
         renderSmartPhrasesList();
         document.getElementById('default-email-input').value = defaultEmail;
         document.getElementById('doc-style-input').value = documentationStyle;
+        loadOllamaSettings();
 
         // Encryption status
         const keyStatusEl = document.getElementById('encryption-key-status');
@@ -8242,15 +8522,13 @@
         document.getElementById('assist-send-btn').disabled = true;
 
         try {
-            const { data, error } = await invokeWithFreshSession('assist-note', {
-                body: {
-                    rawNotes: assistRawNotes,
-                    noteType: assistNoteType,
-                    messages: [],
-                    mode: 'chat',
-                    customPrompt: assistCustomPrompt,
-                    sections: assistSections
-                }
+            const { data, error } = await aiInvoke('assist-note', {
+                rawNotes: assistRawNotes,
+                noteType: assistNoteType,
+                messages: [],
+                mode: 'chat',
+                customPrompt: assistCustomPrompt,
+                sections: assistSections
             });
 
             removeAssistTyping();
@@ -8304,15 +8582,13 @@
         document.getElementById('assist-send-btn').disabled = true;
 
         try {
-            const { data, error } = await invokeWithFreshSession('assist-note', {
-                body: {
-                    rawNotes: assistRawNotes,
-                    noteType: assistNoteType,
-                    messages: assistConversation,
-                    mode: 'chat',
-                    customPrompt: assistCustomPrompt,
-                    sections: assistSections
-                }
+            const { data, error } = await aiInvoke('assist-note', {
+                rawNotes: assistRawNotes,
+                noteType: assistNoteType,
+                messages: assistConversation,
+                mode: 'chat',
+                customPrompt: assistCustomPrompt,
+                sections: assistSections
             });
 
             removeAssistTyping();
@@ -8410,15 +8686,13 @@
 
                     // Send transcribed text to assist
                     showAssistTyping();
-                    const { data: assistData, error: assistErr } = await invokeWithFreshSession('assist-note', {
-                        body: {
-                            rawNotes: assistRawNotes,
-                            noteType: assistNoteType,
-                            messages: assistConversation,
-                            mode: 'chat',
-                            customPrompt: assistCustomPrompt,
-                            sections: assistSections
-                        }
+                    const { data: assistData, error: assistErr } = await aiInvoke('assist-note', {
+                        rawNotes: assistRawNotes,
+                        noteType: assistNoteType,
+                        messages: assistConversation,
+                        mode: 'chat',
+                        customPrompt: assistCustomPrompt,
+                        sections: assistSections
                     });
 
                     removeAssistTyping();
@@ -8454,15 +8728,13 @@
         updateBtn.textContent = 'Updating note...';
 
         try {
-            const { data, error } = await invokeWithFreshSession('assist-note', {
-                body: {
-                    rawNotes: assistRawNotes,
-                    noteType: assistNoteType,
-                    messages: assistConversation,
-                    mode: 'rewrite',
-                    customPrompt: assistCustomPrompt,
-                    sections: assistSections
-                }
+            const { data, error } = await aiInvoke('assist-note', {
+                rawNotes: assistRawNotes,
+                noteType: assistNoteType,
+                messages: assistConversation,
+                mode: 'rewrite',
+                customPrompt: assistCustomPrompt,
+                sections: assistSections
             });
 
             if (error || !data?.text) {
@@ -8808,9 +9080,7 @@
 
                 // Step 2: Parse medication from transcript
                 statusEl.innerText = 'Parsing medication...';
-                const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
-                    body: { transcript }
-                });
+                const { data: parseData, error: parseError } = await aiInvoke('parse-medication', { transcript });
                 if (parseError) throw new Error(parseError.message || 'Parse failed');
 
                 const med = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
@@ -8920,9 +9190,7 @@
                 if (!transcript || !transcript.trim()) throw new Error('No speech detected. Please try again.');
 
                 // Step 2: Parse bulk medications
-                const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
-                    body: { transcript, bulk: true }
-                });
+                const { data: parseData, error: parseError } = await aiInvoke('parse-medication', { transcript, bulk: true });
                 if (parseError) throw new Error('Could not interpret recording. Please try again or add medications manually.');
 
                 const parsed = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
@@ -8969,9 +9237,7 @@
             if (statusEl) {
                 statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Parsing medications...`;
             }
-            const { data: parseData, error: parseError } = await invokeWithFreshSession('parse-medication', {
-                body: { transcript, bulk: true }
-            });
+            const { data: parseData, error: parseError } = await aiInvoke('parse-medication', { transcript, bulk: true });
             if (parseError) throw new Error('Could not interpret recording. Please try again.');
 
             const parsed = typeof parseData === 'string' ? JSON.parse(parseData) : parseData;
