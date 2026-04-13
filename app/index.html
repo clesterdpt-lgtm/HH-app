@@ -3824,6 +3824,43 @@
         if (session?.access_token) sb.functions.setAuth(session.access_token);
     }
 
+    async function invokeEdgeFunction(fnName, options = {}, session) {
+        const headers = {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${session.access_token}`
+        };
+
+        const body = options.body;
+        if (!(body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+            method: 'POST',
+            headers,
+            body: body instanceof FormData ? body : JSON.stringify(body || {})
+        });
+
+        const raw = await response.text();
+        let parsed = null;
+        try { parsed = raw ? JSON.parse(raw) : null; } catch { parsed = raw; }
+
+        if (!response.ok) {
+            return {
+                data: null,
+                error: {
+                    message: parsed?.error || parsed?.message || (typeof parsed === 'string' ? parsed : `HTTP ${response.status}`),
+                    context: {
+                        status: response.status,
+                        json: async () => parsed
+                    }
+                }
+            };
+        }
+
+        return { data: parsed, error: null };
+    }
+
     // Wrapper that ensures a fresh JWT before invoking an edge function.
     async function invokeWithFreshSession(fnName, options) {
         const { data: { session } } = await sb.auth.getSession();
@@ -3848,7 +3885,7 @@
         // Keep the functions client aligned with the latest good access token.
         setFunctionsAuth(activeSession);
 
-        const result = await sb.functions.invoke(fnName, options);
+        const result = await invokeEdgeFunction(fnName, options, activeSession);
 
         // On 401/JWT error, force one more refresh and retry
         if (result.error) {
@@ -3861,7 +3898,7 @@
                     throw new Error('Session expired. Please log in again.');
                 }
                 setFunctionsAuth(retryData.session);
-                return sb.functions.invoke(fnName, options);
+                return invokeEdgeFunction(fnName, options, retryData.session);
             }
         }
 
