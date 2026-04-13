@@ -2618,11 +2618,14 @@
                         </button>
                     </div>
                     <div id="ollama-config" style="display:none;margin-top:16px;flex-direction:column;gap:10px;">
-                        <div id="ollama-mixed-content-warning" style="display:none;padding:10px 12px;background:var(--orange-light,#fef3c7);border-radius:8px;font-size:13px;color:#92400e;line-height:1.5;">
-                            <strong>Browser security notice:</strong> This page is served over HTTPS, so your browser will block requests to a plain HTTP Ollama URL. To fix this:<br>
-                            <strong>Chrome:</strong> Click the lock icon in the address bar → Site settings → Insecure content → Allow.<br>
-                            <strong>Safari:</strong> Use Chrome instead — Safari doesn't allow this override.<br>
-                            Or set your Ollama URL to an HTTPS endpoint if you have one.
+                        <div id="ollama-mixed-content-warning" style="display:none;padding:12px 14px;background:var(--orange-light,#fef3c7);border-radius:8px;font-size:13px;color:#92400e;line-height:1.6;">
+                            <strong>Ollama requires CORS to be enabled.</strong> Start Ollama with this command instead of the default:
+                            <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <code id="ollama-cors-cmd" style="flex:1;background:#fff;border:1px solid #f59e0b;border-radius:6px;padding:6px 10px;font-size:12px;font-family:monospace;color:#92400e;word-break:break-all;">OLLAMA_ORIGINS="*" ollama serve</code>
+                                <button onclick="copyOllamaCommand()" style="white-space:nowrap;padding:6px 10px;background:#d97706;color:#fff;border:none;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;" id="ollama-copy-btn">Copy</button>
+                            </div>
+                            If Ollama is already running, stop it first, then run the command above in your terminal.<br>
+                            <strong>macOS menu bar app:</strong> run <code style="background:#fff;border-radius:4px;padding:1px 5px;font-size:11px;">launchctl setenv OLLAMA_ORIGINS "*"</code> then restart the Ollama app.
                         </div>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <label style="font-size:13px;color:var(--gray-600);white-space:nowrap;min-width:90px;">Ollama URL</label>
@@ -3870,16 +3873,27 @@
         return invokeWithFreshSession(fnName, { body });
     }
 
-    // Returns true when the page is on HTTPS but the Ollama URL is plain HTTP —
-    // browsers will block the fetch as mixed content before it ever reaches Ollama.
-    function ollamaIsMixedContent() {
-        const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
-        return window.location.protocol === 'https:' && ollamaUrl.startsWith('http:');
+    // When the app is served over HTTPS, Ollama must be started with
+    // OLLAMA_ORIGINS="*" so it sends the CORS + Private-Network-Access headers
+    // the browser requires. Show the warning any time we're on HTTPS.
+    function ollamaNeedsCorsWarning() {
+        return window.location.protocol === 'https:';
     }
 
     function updateOllamaMixedContentWarning() {
         const warning = document.getElementById('ollama-mixed-content-warning');
-        if (warning) warning.style.display = ollamaIsMixedContent() ? 'block' : 'none';
+        if (warning) warning.style.display = ollamaNeedsCorsWarning() ? 'block' : 'none';
+    }
+
+    function copyOllamaCommand() {
+        const cmd = 'OLLAMA_ORIGINS="*" ollama serve';
+        navigator.clipboard.writeText(cmd).then(() => {
+            const btn = document.getElementById('ollama-copy-btn');
+            if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
+        }).catch(() => {
+            const el = document.getElementById('ollama-cors-cmd');
+            if (el) { const r = document.createRange(); r.selectNode(el); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); }
+        });
     }
 
     // Base Ollama API call using OpenAI-compatible endpoint
@@ -3896,12 +3910,10 @@
                 body: JSON.stringify(payload)
             });
         } catch (fetchErr) {
-            // "Failed to fetch" on an HTTPS page with an HTTP Ollama URL means the
-            // browser blocked it as mixed content before a connection was even attempted.
-            if (ollamaIsMixedContent()) {
-                throw new Error('Browser blocked the request (mixed content). In Chrome: click the lock icon → Site settings → Insecure content → Allow, then reload.');
+            if (ollamaNeedsCorsWarning()) {
+                throw new Error('Browser blocked the request. Make sure Ollama is running with OLLAMA_ORIGINS="*" — see the setup note in Settings → AI Provider.');
             }
-            throw new Error('Could not reach Ollama. Make sure it is running and OLLAMA_ORIGINS is set. ' + fetchErr.message);
+            throw new Error('Could not reach Ollama — make sure it is running. ' + fetchErr.message);
         }
         if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
