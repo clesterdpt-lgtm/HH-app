@@ -3820,22 +3820,33 @@
         return data.session;
     }
 
+    function setFunctionsAuth(session) {
+        if (session?.access_token) sb.functions.setAuth(session.access_token);
+    }
+
     // Wrapper that ensures a fresh JWT before invoking an edge function.
-    // refreshSession() returns {data, error} and never throws, so we must
-    // check the return value — not rely on try/catch.
     async function invokeWithFreshSession(fnName, options) {
-        // Always refresh before calling — check the return value, not exceptions
-        const { data: refreshData, error: refreshErr } = await sb.auth.refreshSession();
-        if (!refreshErr && refreshData.session) {
-            // Explicitly update the functions client token to avoid race conditions
-            // with the async onAuthStateChange listener
-            sb.functions.setAuth(refreshData.session.access_token);
-        } else {
-            // Refresh failed — fall back to whatever session we have
-            const { data: { session: fallback } } = await sb.auth.getSession();
-            if (!fallback) { showAuth(); throw new Error('Session expired. Please log in again.'); }
-            sb.functions.setAuth(fallback.access_token);
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            showAuth();
+            throw new Error('Session expired. Please log in again.');
         }
+
+        const now = Math.floor(Date.now() / 1000);
+        const expiresAt = session.expires_at || 0;
+        let activeSession = session;
+
+        if (expiresAt - now < 300) {
+            const { data: refreshData, error: refreshErr } = await sb.auth.refreshSession();
+            if (refreshErr || !refreshData.session) {
+                showAuth();
+                throw new Error('Session expired. Please log in again.');
+            }
+            activeSession = refreshData.session;
+        }
+
+        // Keep the functions client aligned with the latest good access token.
+        setFunctionsAuth(activeSession);
 
         const result = await sb.functions.invoke(fnName, options);
 
@@ -3849,7 +3860,7 @@
                     showAuth();
                     throw new Error('Session expired. Please log in again.');
                 }
-                sb.functions.setAuth(retryData.session.access_token);
+                setFunctionsAuth(retryData.session);
                 return sb.functions.invoke(fnName, options);
             }
         }
@@ -4306,8 +4317,10 @@ ${rawNotes}`;
             showAuth();
         } else if (event === 'TOKEN_REFRESHED' && session) {
             currentUser = session.user;
+            setFunctionsAuth(session);
         } else if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
+            setFunctionsAuth(session);
         }
     });
 
