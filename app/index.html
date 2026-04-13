@@ -5075,7 +5075,7 @@ ${rawNotes}`;
             if (statusEl) statusEl.style.display = 'flex';
 
             try {
-                const text = await transcribeBlob(rec.blob);
+                const text = await transcribeBlob(rec.blob, rec.chunks, rec.mimeType);
 
                 rec.transcribed = true;
                 rec.transcript = text;
@@ -5313,7 +5313,7 @@ ${rawNotes}`;
                 statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Transcribing large file (${(rec.blob.size / 1024 / 1024).toFixed(1)} MB)...`;
             }
 
-            const text = await transcribeBlob(rec.blob);
+            const text = await transcribeBlob(rec.blob, rec.chunks, rec.mimeType);
 
             // Mark as transcribed and store transcript text
             rec.transcribed = true;
@@ -5348,6 +5348,7 @@ ${rawNotes}`;
 
     // ── Chunked Transcription Helper ─────────────────────
     const WHISPER_MAX_SIZE = 24 * 1024 * 1024; // 24MB safety margin (Whisper limit is 25MB)
+    const RECORDER_TIMESLICE_MS = 10000;
 
     function getAudioExtension(mimeType = '') {
         const normalized = String(mimeType || '').toLowerCase();
@@ -5372,45 +5373,51 @@ ${rawNotes}`;
         formData.append('audio', blob, `${baseName}.${ext}`);
     }
 
-    async function transcribeBlob(blob) {
+    function getRecordedSegments(chunks = [], mimeType = 'audio/webm') {
+        const segments = (chunks || []).filter(chunk => chunk && chunk.size > 0);
+        return segments.map((chunk, idx) => ({
+            blob: new Blob([chunk], { type: chunk.type || mimeType }),
+            index: idx
+        }));
+    }
+
+    async function transcribeSingleBlob(blob, baseName = 'recording') {
+        const formData = new FormData();
+        appendAudioToFormData(formData, blob, baseName);
+        const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
+        if (error) {
+            let detail = error.message;
+            try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
+            throw new Error(detail);
+        }
+        if (!data?.text) throw new Error('No transcription returned');
+        return data.text;
+    }
+
+    async function transcribeBlob(blob, chunks = null, mimeType = null) {
         // If blob is under the limit, send directly
         if (blob.size <= WHISPER_MAX_SIZE) {
-            const formData = new FormData();
-            appendAudioToFormData(formData, blob);
-            const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
-            if (error) {
-                let detail = error.message;
-                try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
-                throw new Error(detail);
-            }
-            if (!data?.text) throw new Error('No transcription returned');
-            return data.text;
+            return transcribeSingleBlob(blob);
         }
 
-        // Large file — split into chunks and transcribe sequentially
-        const totalChunks = Math.ceil(blob.size / WHISPER_MAX_SIZE);
+        const segmentBlobs = getRecordedSegments(chunks, mimeType || blob.type);
+        if (segmentBlobs.length === 0) {
+            throw new Error('This recording was saved in an older format that cannot be safely split. Please re-record it in shorter segments.');
+        }
+
+        const oversizedSegment = segmentBlobs.find(segment => segment.blob.size > WHISPER_MAX_SIZE);
+        if (oversizedSegment) {
+            throw new Error('One recording segment is still too large to transcribe. Please record a shorter note.');
+        }
+
         const transcripts = [];
-
-        for (let i = 0; i < totalChunks; i++) {
-            const start = i * WHISPER_MAX_SIZE;
-            const end = Math.min(start + WHISPER_MAX_SIZE, blob.size);
-            const chunk = blob.slice(start, end, blob.type);
-
-            document.getElementById('loading-text').innerText = `Transcribing chunk ${i + 1} of ${totalChunks}...`;
-
-            const formData = new FormData();
-            appendAudioToFormData(formData, chunk, `recording-part${i + 1}`);
-            const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
-
-            if (error) {
-                let detail = error.message;
-                try { const body = await error.context?.json(); detail = body?.error || body?.msg || body?.message || JSON.stringify(body); } catch {}
-                throw new Error(`Chunk ${i + 1}/${totalChunks} failed: ${detail}`);
-            }
-            if (!data?.text) throw new Error(`Chunk ${i + 1}/${totalChunks}: No transcription returned`);
-            transcripts.push(data.text);
+        for (let i = 0; i < segmentBlobs.length; i++) {
+            const { blob: segmentBlob } = segmentBlobs[i];
+            const loadingText = document.getElementById('loading-text');
+            if (loadingText) loadingText.innerText = `Transcribing chunk ${i + 1} of ${segmentBlobs.length}...`;
+            const text = await transcribeSingleBlob(segmentBlob, `recording-part${i + 1}`);
+            transcripts.push(text);
         }
-
         return transcripts.join(' ');
     }
 
@@ -5553,7 +5560,7 @@ ${rawNotes}`;
                 recordingStartTime = Date.now();
 
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                mediaRecorder.start();
+                mediaRecorder.start(RECORDER_TIMESLICE_MS);
                 requestWakeLock();
                 startDimTimer();
 
@@ -5572,13 +5579,14 @@ ${rawNotes}`;
 
         mediaRecorder.onstop = async () => {
             const durationSec = (Date.now() - recordingStartTime) / 1000;
-            const blob = createRecordedBlob(audioChunks, mediaRecorder);
+            const recordedChunks = audioChunks.slice();
+            const blob = createRecordedBlob(recordedChunks, mediaRecorder);
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
             // Always save to IndexedDB first so audio is never lost
             const id = Date.now();
             const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            const rec = { id, blob, timestamp, durationSec, type: 'clinical' };
+            const rec = { id, blob, chunks: recordedChunks, mimeType: blob.type, timestamp, durationSec, type: 'clinical' };
             pendingRecordings.push(rec);
             await saveRecordingToDB(rec);
             loadPendingBadge();
@@ -5596,7 +5604,7 @@ ${rawNotes}`;
                 : 'Transcribing with Whisper...';
 
             try {
-                const text = await transcribeBlob(blob);
+                const text = await transcribeBlob(blob, recordedChunks, blob.type);
 
                 document.getElementById('loading').style.display = 'none';
 
@@ -8859,7 +8867,7 @@ ${rawNotes}`;
                 }
             };
 
-            assistMediaRecorder.start();
+            assistMediaRecorder.start(RECORDER_TIMESLICE_MS);
             requestWakeLock();
             micBtn.classList.add('recording');
             micBtn.textContent = '⏹️';
@@ -9193,7 +9201,7 @@ ${rawNotes}`;
                 medRecorder = new MediaRecorder(stream);
                 medAudioChunks = [];
                 medRecorder.ondataavailable = e => { if (e.data.size > 0) medAudioChunks.push(e.data); };
-                medRecorder.start();
+                medRecorder.start(RECORDER_TIMESLICE_MS);
                 document.getElementById('med-mic-btn').style.display = 'none';
                 document.getElementById('med-mic-stop-btn').style.display = 'inline-flex';
                 document.getElementById('med-recording-status').style.display = 'flex';
@@ -9205,7 +9213,8 @@ ${rawNotes}`;
     async function stopMedRecording() {
         if (!medRecorder || medRecorder.state === 'inactive') return;
         medRecorder.onstop = async () => {
-            const blob = createRecordedBlob(medAudioChunks, medRecorder);
+            const recordedChunks = medAudioChunks.slice();
+            const blob = createRecordedBlob(recordedChunks, medRecorder);
             medRecorder.stream.getTracks().forEach(t => t.stop());
             document.getElementById('med-mic-btn').style.display = 'inline-flex';
             document.getElementById('med-mic-stop-btn').style.display = 'none';
@@ -9218,11 +9227,7 @@ ${rawNotes}`;
 
             try {
                 // Step 1: Transcribe audio
-                const formData = new FormData();
-                appendAudioToFormData(formData, blob);
-                const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
-                if (transcribeError) throw new Error(transcribeError.message || 'Transcription failed');
-                const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
+                const transcript = await transcribeBlob(blob, recordedChunks, blob.type);
                 if (!transcript || !transcript.trim()) throw new Error('No speech detected');
 
                 // Step 2: Parse medication from transcript
@@ -9269,7 +9274,7 @@ ${rawNotes}`;
                 bulkMedRecorder = new MediaRecorder(stream);
                 bulkMedAudioChunks = [];
                 bulkMedRecorder.ondataavailable = e => { if (e.data.size > 0) bulkMedAudioChunks.push(e.data); };
-                bulkMedRecorder.start();
+                bulkMedRecorder.start(RECORDER_TIMESLICE_MS);
 
                 document.getElementById('bulk-med-btn').style.display = 'none';
                 document.getElementById('bulk-med-section').style.display = 'block';
@@ -9304,13 +9309,14 @@ ${rawNotes}`;
 
         bulkMedRecorder.onstop = async () => {
             const durationSec = (Date.now() - bulkMedStartTime) / 1000;
-            const blob = createRecordedBlob(bulkMedAudioChunks, bulkMedRecorder);
+            const recordedChunks = bulkMedAudioChunks.slice();
+            const blob = createRecordedBlob(recordedChunks, bulkMedRecorder);
             bulkMedRecorder.stream.getTracks().forEach(t => t.stop());
 
             // Always save to pending first (safety net — audio is never lost)
             const id = Date.now();
             const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            const rec = { id, blob, timestamp, durationSec, type: 'medList' };
+            const rec = { id, blob, chunks: recordedChunks, mimeType: blob.type, timestamp, durationSec, type: 'medList' };
             pendingRecordings.push(rec);
             await saveRecordingToDB(rec);
             loadPendingBadge();
@@ -9329,11 +9335,7 @@ ${rawNotes}`;
 
             try {
                 // Step 1: Transcribe
-                const formData = new FormData();
-                appendAudioToFormData(formData, blob);
-                const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
-                if (transcribeError) throw new Error('Transcription failed. Please try again.');
-                const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
+                const transcript = await transcribeBlob(blob, recordedChunks, blob.type);
                 if (!transcript || !transcript.trim()) throw new Error('No speech detected. Please try again.');
 
                 // Step 2: Parse bulk medications
@@ -9378,7 +9380,7 @@ ${rawNotes}`;
             if (statusEl) {
                 statusEl.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Transcribing with Whisper...`;
             }
-            const transcript = await transcribeBlob(rec.blob);
+            const transcript = await transcribeBlob(rec.blob, rec.chunks, rec.mimeType);
 
             // Step 2: Parse bulk medications
             if (statusEl) {
