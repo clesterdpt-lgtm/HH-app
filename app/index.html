@@ -3821,36 +3821,42 @@
     }
 
     // Wrapper that ensures a fresh JWT before invoking an edge function.
-    // Proactively refreshes if the token expires within 5 minutes,
-    // and retries once on 401/JWT errors.
+    // Passes the token explicitly in headers to avoid race conditions where
+    // the Supabase client's async auth state hasn't updated before the retry.
     async function invokeWithFreshSession(fnName, options) {
-        // Check current session and proactively refresh if near expiry
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) {
-            const expiresAt = session.expires_at; // Unix seconds
+        // Get the current session and refresh if near expiry or missing
+        let session;
+        const { data: { session: current } } = await sb.auth.getSession();
+        if (current) {
             const now = Math.floor(Date.now() / 1000);
-            if (expiresAt - now < 300) { // less than 5 minutes remaining
-                await sb.auth.refreshSession();
+            if (current.expires_at - now < 300) {
+                const { data } = await sb.auth.refreshSession();
+                session = data.session;
+            } else {
+                session = current;
             }
         } else {
-            // No session at all — try to refresh, else force re-login
-            try { await getFreshSession(); } catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
+            try { session = await getFreshSession(); }
+            catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
         }
 
-        const result = await sb.functions.invoke(fnName, options);
+        // Pass the token explicitly so the retry always uses the right token
+        const withAuth = (sess, opts) => ({
+            ...opts,
+            headers: { ...(opts?.headers ?? {}), ...(sess ? { Authorization: `Bearer ${sess.access_token}` } : {}) }
+        });
 
-        // If we get a 401/JWT error, retry once after forcing a refresh
+        const result = await sb.functions.invoke(fnName, withAuth(session, options));
+
+        // On 401/JWT error, force a full refresh and retry once with the new token
         if (result.error) {
             const status = result.error?.context?.status;
             const msg = (result.error.message || '').toLowerCase();
             if (status === 401 || msg.includes('jwt') || msg.includes('token')) {
-                try {
-                    await getFreshSession();
-                } catch {
-                    showAuth();
-                    throw new Error('Session expired. Please log in again.');
-                }
-                return sb.functions.invoke(fnName, options);
+                let fresh;
+                try { fresh = await getFreshSession(); }
+                catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
+                return sb.functions.invoke(fnName, withAuth(fresh, options));
             }
         }
 
