@@ -5299,11 +5299,34 @@ ${rawNotes}`;
     // ── Chunked Transcription Helper ─────────────────────
     const WHISPER_MAX_SIZE = 24 * 1024 * 1024; // 24MB safety margin (Whisper limit is 25MB)
 
+    function getAudioExtension(mimeType = '') {
+        const normalized = String(mimeType || '').toLowerCase();
+        if (normalized.includes('webm')) return 'webm';
+        if (normalized.includes('mp4')) return 'mp4';
+        if (normalized.includes('mpeg')) return 'mp3';
+        if (normalized.includes('mp3')) return 'mp3';
+        if (normalized.includes('wav')) return 'wav';
+        if (normalized.includes('ogg')) return 'ogg';
+        if (normalized.includes('aac')) return 'aac';
+        if (normalized.includes('m4a')) return 'm4a';
+        return 'webm';
+    }
+
+    function createRecordedBlob(chunks, recorder) {
+        const mimeType = recorder?.mimeType || chunks.find(chunk => chunk?.type)?.type || 'audio/webm';
+        return new Blob(chunks, { type: mimeType });
+    }
+
+    function appendAudioToFormData(formData, blob, baseName = 'recording') {
+        const ext = getAudioExtension(blob?.type);
+        formData.append('audio', blob, `${baseName}.${ext}`);
+    }
+
     async function transcribeBlob(blob) {
         // If blob is under the limit, send directly
         if (blob.size <= WHISPER_MAX_SIZE) {
             const formData = new FormData();
-            formData.append('audio', blob, 'recording.webm');
+            appendAudioToFormData(formData, blob);
             const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
             if (error) {
                 let detail = error.message;
@@ -5326,7 +5349,7 @@ ${rawNotes}`;
             document.getElementById('loading-text').innerText = `Transcribing chunk ${i + 1} of ${totalChunks}...`;
 
             const formData = new FormData();
-            formData.append('audio', chunk, `recording-part${i + 1}.webm`);
+            appendAudioToFormData(formData, chunk, `recording-part${i + 1}`);
             const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
 
             if (error) {
@@ -5499,7 +5522,7 @@ ${rawNotes}`;
 
         mediaRecorder.onstop = async () => {
             const durationSec = (Date.now() - recordingStartTime) / 1000;
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const blob = createRecordedBlob(audioChunks, mediaRecorder);
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
             // Always save to IndexedDB first so audio is never lost
@@ -8733,7 +8756,7 @@ ${rawNotes}`;
             };
 
             assistMediaRecorder.onstop = async () => {
-                const blob = new Blob(assistAudioChunks, { type: 'audio/webm' });
+                const blob = createRecordedBlob(assistAudioChunks, assistMediaRecorder);
                 assistMediaRecorder.stream.getTracks().forEach(t => t.stop());
                 micBtn.classList.remove('recording');
                 micBtn.textContent = '🎙️';
@@ -8744,7 +8767,7 @@ ${rawNotes}`;
 
                 try {
                     const formData = new FormData();
-                    formData.append('audio', blob, 'recording.webm');
+                    appendAudioToFormData(formData, blob);
                     const { data, error } = await invokeWithFreshSession('transcribe', { body: formData });
 
                     if (error || !data?.text) {
@@ -9132,7 +9155,7 @@ ${rawNotes}`;
     async function stopMedRecording() {
         if (!medRecorder || medRecorder.state === 'inactive') return;
         medRecorder.onstop = async () => {
-            const blob = new Blob(medAudioChunks, { type: 'audio/webm' });
+            const blob = createRecordedBlob(medAudioChunks, medRecorder);
             medRecorder.stream.getTracks().forEach(t => t.stop());
             document.getElementById('med-mic-btn').style.display = 'inline-flex';
             document.getElementById('med-mic-stop-btn').style.display = 'none';
@@ -9146,7 +9169,7 @@ ${rawNotes}`;
             try {
                 // Step 1: Transcribe audio
                 const formData = new FormData();
-                formData.append('audio', blob, 'recording.webm');
+                appendAudioToFormData(formData, blob);
                 const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
                 if (transcribeError) throw new Error(transcribeError.message || 'Transcription failed');
                 const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;
@@ -9231,7 +9254,7 @@ ${rawNotes}`;
 
         bulkMedRecorder.onstop = async () => {
             const durationSec = (Date.now() - bulkMedStartTime) / 1000;
-            const blob = new Blob(bulkMedAudioChunks, { type: 'audio/webm' });
+            const blob = createRecordedBlob(bulkMedAudioChunks, bulkMedRecorder);
             bulkMedRecorder.stream.getTracks().forEach(t => t.stop());
 
             // Always save to pending first (safety net — audio is never lost)
@@ -9257,7 +9280,7 @@ ${rawNotes}`;
             try {
                 // Step 1: Transcribe
                 const formData = new FormData();
-                formData.append('audio', blob, 'recording.webm');
+                appendAudioToFormData(formData, blob);
                 const { data: transcribeData, error: transcribeError } = await invokeWithFreshSession('transcribe', { body: formData });
                 if (transcribeError) throw new Error('Transcription failed. Please try again.');
                 const transcript = typeof transcribeData === 'string' ? transcribeData : transcribeData.text;

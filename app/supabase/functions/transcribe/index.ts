@@ -36,8 +36,12 @@ serve(async (req) => {
       });
     }
 
+    const uploadName = typeof audioFile === "object" && "name" in audioFile && audioFile.name
+      ? audioFile.name
+      : "recording.webm";
+
     const whisperForm = new FormData();
-    whisperForm.append("file", audioFile, "recording.webm");
+    whisperForm.append("file", audioFile, uploadName);
     whisperForm.append("model", "whisper-1");
     whisperForm.append("language", "en");
 
