@@ -3821,27 +3821,35 @@
     }
 
     // Wrapper that ensures a fresh JWT before invoking an edge function.
-    // Always refreshes the token before calling to avoid stale-token errors.
+    // refreshSession() returns {data, error} and never throws, so we must
+    // check the return value — not rely on try/catch.
     async function invokeWithFreshSession(fnName, options) {
-        // Always force a fresh token before every edge function call
-        try {
-            await sb.auth.refreshSession();
-        } catch {
-            // If refresh fails, check if we still have a usable session
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) { showAuth(); throw new Error('Session expired. Please log in again.'); }
+        // Always refresh before calling — check the return value, not exceptions
+        const { data: refreshData, error: refreshErr } = await sb.auth.refreshSession();
+        if (!refreshErr && refreshData.session) {
+            // Explicitly update the functions client token to avoid race conditions
+            // with the async onAuthStateChange listener
+            sb.functions.setAuth(refreshData.session.access_token);
+        } else {
+            // Refresh failed — fall back to whatever session we have
+            const { data: { session: fallback } } = await sb.auth.getSession();
+            if (!fallback) { showAuth(); throw new Error('Session expired. Please log in again.'); }
+            sb.functions.setAuth(fallback.access_token);
         }
 
         const result = await sb.functions.invoke(fnName, options);
 
-        // On 401/JWT error, retry once after a second forced refresh
+        // On 401/JWT error, force one more refresh and retry
         if (result.error) {
             const status = result.error?.context?.status;
             const msg = (result.error.message || '').toLowerCase();
             if (status === 401 || msg.includes('jwt') || msg.includes('token')) {
-                try {
-                    await getFreshSession();
-                } catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
+                const { data: retryData, error: retryErr } = await sb.auth.refreshSession();
+                if (retryErr || !retryData.session) {
+                    showAuth();
+                    throw new Error('Session expired. Please log in again.');
+                }
+                sb.functions.setAuth(retryData.session.access_token);
                 return sb.functions.invoke(fnName, options);
             }
         }
