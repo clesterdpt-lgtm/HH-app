@@ -2618,6 +2618,12 @@
                         </button>
                     </div>
                     <div id="ollama-config" style="display:none;margin-top:16px;flex-direction:column;gap:10px;">
+                        <div id="ollama-mixed-content-warning" style="display:none;padding:10px 12px;background:var(--orange-light,#fef3c7);border-radius:8px;font-size:13px;color:#92400e;line-height:1.5;">
+                            <strong>Browser security notice:</strong> This page is served over HTTPS, so your browser will block requests to a plain HTTP Ollama URL. To fix this:<br>
+                            <strong>Chrome:</strong> Click the lock icon in the address bar → Site settings → Insecure content → Allow.<br>
+                            <strong>Safari:</strong> Use Chrome instead — Safari doesn't allow this override.<br>
+                            Or set your Ollama URL to an HTTPS endpoint if you have one.
+                        </div>
                         <div style="display:flex;gap:8px;align-items:center;">
                             <label style="font-size:13px;color:var(--gray-600);white-space:nowrap;min-width:90px;">Ollama URL</label>
                             <input type="text" id="ollama-url-input" placeholder="http://localhost:11434"
@@ -3864,17 +3870,39 @@
         return invokeWithFreshSession(fnName, { body });
     }
 
+    // Returns true when the page is on HTTPS but the Ollama URL is plain HTTP —
+    // browsers will block the fetch as mixed content before it ever reaches Ollama.
+    function ollamaIsMixedContent() {
+        const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+        return window.location.protocol === 'https:' && ollamaUrl.startsWith('http:');
+    }
+
+    function updateOllamaMixedContentWarning() {
+        const warning = document.getElementById('ollama-mixed-content-warning');
+        if (warning) warning.style.display = ollamaIsMixedContent() ? 'block' : 'none';
+    }
+
     // Base Ollama API call using OpenAI-compatible endpoint
     async function ollamaChat(messages, { maxTokens = 1500, json = false } = {}) {
         const baseUrl = (localStorage.getItem('ollamaUrl') || 'http://localhost:11434').replace(/\/$/, '');
         const model = localStorage.getItem('ollamaModel') || 'gemma4';
         const payload = { model, messages, max_tokens: maxTokens };
         if (json) payload.response_format = { type: 'json_object' };
-        const res = await fetch(`${baseUrl}/v1/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        let res;
+        try {
+            res = await fetch(`${baseUrl}/v1/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (fetchErr) {
+            // "Failed to fetch" on an HTTPS page with an HTTP Ollama URL means the
+            // browser blocked it as mixed content before a connection was even attempted.
+            if (ollamaIsMixedContent()) {
+                throw new Error('Browser blocked the request (mixed content). In Chrome: click the lock icon → Site settings → Insecure content → Allow, then reload.');
+            }
+            throw new Error('Could not reach Ollama. Make sure it is running and OLLAMA_ORIGINS is set. ' + fetchErr.message);
+        }
         if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
             throw new Error(`Ollama error ${res.status}: ${errText}`);
@@ -4052,6 +4080,7 @@ ${rawNotes}`;
         const model = document.getElementById('ollama-model-input')?.value.trim();
         if (url) localStorage.setItem('ollamaUrl', url);
         if (model) localStorage.setItem('ollamaModel', model);
+        updateOllamaMixedContentWarning();
     }
 
     function loadOllamaSettings() {
@@ -4067,6 +4096,7 @@ ${rawNotes}`;
         if (modelInput) modelInput.value = localStorage.getItem('ollamaModel') || '';
         const badge = document.getElementById('ollama-badge');
         if (badge) badge.style.display = provider === 'ollama' ? 'flex' : 'none';
+        updateOllamaMixedContentWarning();
     }
 
     async function testOllamaConnection() {
