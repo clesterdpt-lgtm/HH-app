@@ -397,7 +397,7 @@ entrypoint = "./functions/transcribe/index.ts"
 
 [functions.generate-note]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/generate-note/deno.json"
 entrypoint = "./functions/generate-note/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
@@ -406,17 +406,17 @@ entrypoint = "./functions/generate-note/index.ts"
 
 [functions.assist-note]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/assist-note/deno.json"
 entrypoint = "./functions/assist-note/index.ts"
 
 [functions.generate-goals]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/generate-goals/deno.json"
 entrypoint = "./functions/generate-goals/index.ts"
 
 [functions.parse-medication]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/parse-medication/index.ts"
