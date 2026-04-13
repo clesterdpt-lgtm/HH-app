@@ -3821,36 +3821,26 @@
     }
 
     // Wrapper that ensures a fresh JWT before invoking an edge function.
-    // Uses sb.functions.setAuth() to update the token on the functions client
-    // directly — avoids modifying options, which breaks FormData requests.
+    // Always refreshes the token before calling to avoid stale-token errors.
     async function invokeWithFreshSession(fnName, options) {
-        // Get the current session and refresh proactively if near expiry
-        const { data: { session: current } } = await sb.auth.getSession();
-        if (current) {
-            const now = Math.floor(Date.now() / 1000);
-            if (current.expires_at - now < 300) {
-                const { data } = await sb.auth.refreshSession();
-                if (data.session) sb.functions.setAuth(data.session.access_token);
-            } else {
-                sb.functions.setAuth(current.access_token);
-            }
-        } else {
-            try {
-                const fresh = await getFreshSession();
-                sb.functions.setAuth(fresh.access_token);
-            } catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
+        // Always force a fresh token before every edge function call
+        try {
+            await sb.auth.refreshSession();
+        } catch {
+            // If refresh fails, check if we still have a usable session
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { showAuth(); throw new Error('Session expired. Please log in again.'); }
         }
 
         const result = await sb.functions.invoke(fnName, options);
 
-        // On 401/JWT error, force a full refresh, update the token, and retry once
+        // On 401/JWT error, retry once after a second forced refresh
         if (result.error) {
             const status = result.error?.context?.status;
             const msg = (result.error.message || '').toLowerCase();
             if (status === 401 || msg.includes('jwt') || msg.includes('token')) {
                 try {
-                    const fresh = await getFreshSession();
-                    sb.functions.setAuth(fresh.access_token);
+                    await getFreshSession();
                 } catch { showAuth(); throw new Error('Session expired. Please log in again.'); }
                 return sb.functions.invoke(fnName, options);
             }
