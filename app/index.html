@@ -10062,7 +10062,6 @@ ${rawNotes}`;
                 item.innerHTML = `
                     <div class="med-history-item-header">
                         <div class="med-history-item-left" onclick="toggleMedHistory(${entry.id})" style="cursor:pointer;">
-                            <span class="med-history-title">${escapeHtml(entry.title)}</span>
                             ${renderLabelBadges(entry.labels, 'history-label-badge')}
                         </div>
                         <div class="med-history-item-right">
@@ -11052,7 +11051,6 @@ ${rawNotes}`;
                 item.innerHTML = `
                     <div class="hep-history-item-header">
                         <div class="hep-history-item-left" onclick="toggleHepHistory(${entry.id})" style="cursor:pointer;">
-                            <span class="hep-history-title">${entry.title}</span>
                             ${labels}
                         </div>
                         <div class="hep-history-item-right">
@@ -12631,7 +12629,6 @@ ${rawNotes}`;
                 item.innerHTML = `
                     <div class="edu-list-history-header">
                         <div class="edu-list-history-left" onclick="toggleEduListHistory(${entry.id})">
-                            <span class="edu-list-history-title">${entry.title}</span>
                             ${labels}
                         </div>
                         <div class="edu-list-history-right">
