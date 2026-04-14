@@ -651,8 +651,8 @@
         .edu-list-current-empty-icon { font-size: 40px; margin-bottom: 12px; }
         .edu-list-history-item { border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); margin-bottom: 10px; overflow: hidden; }
         .edu-list-history-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; gap: 10px; }
-        .edu-list-history-left { display: flex; flex-direction: column; gap: 4px; flex: 1; cursor: pointer; min-width: 0; align-items: flex-start; }
-        .edu-list-history-title { font-weight: 600; font-size: 14px; color: var(--navy); }
+        .edu-list-history-left { display: flex; flex-direction: row; align-items: center; gap: 10px; flex: 1; cursor: pointer; min-width: 0; flex-wrap: wrap; }
+        .edu-list-history-title { font-weight: 600; font-size: 14px; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         .edu-list-history-count { font-size: 12px; color: var(--gray-400); }
         .edu-list-history-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .edu-list-history-time { font-size: 12px; color: var(--gray-400); }
@@ -667,8 +667,8 @@
         .edu-list-history-module-name { font-weight: 600; font-size: 13px; color: var(--navy); }
         .edu-list-history-module-cat { font-size: 11px; color: var(--teal); }
         .edu-list-kebab-wrap { position: relative; }
-        .edu-list-kebab-btn { background: none; border: 1px solid var(--gray-200); color: var(--gray-500); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 16px; transition: background 0.15s; }
-        .edu-list-kebab-btn:hover { background: var(--gray-100); }
+        .edu-list-kebab-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; color: var(--gray-400); border-radius: 6px; line-height: 1; letter-spacing: 1px; }
+        .edu-list-kebab-btn:hover { background: var(--gray-100); color: var(--navy); }
         .edu-list-kebab-menu { position: fixed; background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 9999; min-width: 170px; overflow: hidden; display: none; }
         .edu-list-kebab-menu.open { display: block; }
         .edu-list-kebab-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--gray-700); text-align: left; transition: background 0.1s; font-family: 'DM Sans', sans-serif; }
@@ -10060,7 +10060,6 @@ ${rawNotes}`;
                     <div class="med-history-item-header">
                         <div class="med-history-item-left" onclick="toggleMedHistory(${entry.id})" style="cursor:pointer;">
                             <span class="med-history-title">${escapeHtml(entry.title)}</span>
-                            <span class="med-history-count">${medCount} med${medCount !== 1 ? 's' : ''}</span>
                             ${renderLabelBadges(entry.labels, 'history-label-badge')}
                         </div>
                         <div class="med-history-item-right">
@@ -11020,15 +11019,37 @@ ${rawNotes}`;
         // Refresh label filter dropdown
         refreshHepHistoryLabelFilter();
 
-        listEl.innerHTML = filtered.map(entry => {
-            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
-            return `
-                <div class="hep-history-item">
+        // Group by day
+        const groups = {};
+        filtered.forEach(entry => {
+            const dateKey = new Date(entry.saved_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(entry);
+        });
+
+        listEl.innerHTML = '';
+        Object.entries(groups).forEach(([dateLabel, entries]) => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'day-group';
+            const count = entries.length;
+            groupEl.innerHTML = `
+                <div class="day-group-header">
+                    <div>
+                        <div class="day-group-title">${dateLabel}</div>
+                        <div class="day-group-count">${count} ${count === 1 ? 'program' : 'programs'}</div>
+                    </div>
+                </div>`;
+
+            entries.forEach(entry => {
+                const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
+                const item = document.createElement('div');
+                item.className = 'hep-history-item';
+                item.id = `hep-hist-${entry.id}`;
+                item.innerHTML = `
                     <div class="hep-history-item-header">
                         <div class="hep-history-item-left" onclick="toggleHepHistory(${entry.id})" style="cursor:pointer;">
                             <span class="hep-history-title">${entry.title}</span>
-                            <span class="hep-history-count">${entry.exercises.length} exercise${entry.exercises.length !== 1 ? 's' : ''}</span>
                             ${labels}
                         </div>
                         <div class="hep-history-item-right">
@@ -11071,10 +11092,11 @@ ${rawNotes}`;
                                 <button class="btn btn-primary btn-sm" onclick="saveHepHistoryLabels(${entry.id})">Save Labels</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                    </div>`;
+                groupEl.appendChild(item);
+            });
+            listEl.appendChild(groupEl);
+        });
     }
 
     function toggleHepHistory(id) {
@@ -12576,15 +12598,37 @@ ${rawNotes}`;
 
         refreshEduListHistoryLabelFilter();
 
-        listEl.innerHTML = filtered.map(entry => {
-            const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
-            return `
-                <div class="edu-list-history-item">
+        // Group by day
+        const groups = {};
+        filtered.forEach(entry => {
+            const dateKey = new Date(entry.saved_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(entry);
+        });
+
+        listEl.innerHTML = '';
+        Object.entries(groups).forEach(([dateLabel, entries]) => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'day-group';
+            const count = entries.length;
+            groupEl.innerHTML = `
+                <div class="day-group-header">
+                    <div>
+                        <div class="day-group-title">${dateLabel}</div>
+                        <div class="day-group-count">${count} ${count === 1 ? 'packet' : 'packets'}</div>
+                    </div>
+                </div>`;
+
+            entries.forEach(entry => {
+                const time = new Date(entry.saved_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const labels = entry.labels && entry.labels.length > 0 ? renderLabelBadges(entry.labels, 'history-label-badge') : '';
+                const item = document.createElement('div');
+                item.className = 'edu-list-history-item';
+                item.id = `edu-list-hist-${entry.id}`;
+                item.innerHTML = `
                     <div class="edu-list-history-header">
                         <div class="edu-list-history-left" onclick="toggleEduListHistory(${entry.id})">
                             <span class="edu-list-history-title">${entry.title}</span>
-                            <span class="edu-list-history-count">${(entry.modules || []).length} module${(entry.modules || []).length !== 1 ? 's' : ''}</span>
                             ${labels}
                         </div>
                         <div class="edu-list-history-right">
@@ -12625,10 +12669,11 @@ ${rawNotes}`;
                                 <button class="btn btn-primary btn-sm" onclick="saveEduListHistoryLabels(${entry.id})">Save Labels</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                    </div>`;
+                groupEl.appendChild(item);
+            });
+            listEl.appendChild(groupEl);
+        });
     }
 
     function applyEduListHistoryFilters() {
