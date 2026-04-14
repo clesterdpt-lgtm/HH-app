@@ -44,7 +44,7 @@
 
         body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--gray-800); min-height: 100vh; }
 
-        header { background: var(--navy); padding: 0 16px 0 12px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+        header { background: var(--navy); padding: 0 16px 0 12px; display: flex; align-items: center; justify-content: space-between; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); position: sticky; top: 0; z-index: 200; }
         .header-left { display: flex; align-items: center; gap: 4px; }
         .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon { width: 34px; height: 34px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -423,7 +423,7 @@
         .med-review-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
         /* ── Med Sub-Tabs ────────────────── */
-        .module-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); }
+        .module-sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); position: sticky; top: 64px; z-index: 100; background: var(--cream); }
         .module-sub-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray-400); background: transparent; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
         .module-sub-tab:hover { color: var(--gray-600); }
         .module-sub-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
@@ -720,6 +720,9 @@
             .nav-tabs { padding: 0; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
             .nav-tabs::-webkit-scrollbar { display: none; }
             .nav-tab { flex: 1; text-align: center; padding: 14px 6px 12px; font-size: 13px; white-space: nowrap; }
+
+            /* Sticky sub-tabs on mobile */
+            .module-sub-tabs { top: 56px; }
 
             /* Main content */
             main { padding: 20px 14px 60px; }
