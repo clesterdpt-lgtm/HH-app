@@ -708,9 +708,10 @@
             header { padding: 0 14px; height: 56px; }
             .logo-text { font-size: 19px; }
             .logo-tag { display: none; }
-            .header-right { gap: 8px; }
+            .header-right { gap: 6px; }
             .header-badge { display: none; }
-            .offline-badge { font-size: 11px; padding: 4px 10px; }
+            .offline-badge { font-size: 10px; padding: 3px 8px; letter-spacing: 0.5px; }
+            .ollama-badge { font-size: 10px; padding: 3px 8px; letter-spacing: 0.5px; }
             .profile-dropdown { width: 220px; }
 
             /* Nav tabs */
@@ -3584,23 +3585,64 @@
     const { createClient } = supabase;
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null;
-    let encryptionKey = null; // AES-GCM CryptoKey, held in memory only
+    let encryptionKey = null; // AES-GCM CryptoKey for the active unlock session
     let encryptionSkipped = false; // true when user chose "Continue without decryption"
 
     // ── Encryption Auto-Lock ────────────────────────────
     let autoLockMinutes = parseInt(localStorage.getItem('autoLockMinutes') || '60', 10); // default 1 hour
     let autoLockTimer = null;
+    const ENCRYPTION_SESSION_META_KEY = 'carenote-encryption-session-meta';
+    const ENCRYPTION_ACTIVITY_PERSIST_INTERVAL_MS = 1000;
+    let lastEncryptionActivityAt = 0;
+    let lastEncryptionActivityPersistedAt = 0;
 
-    function resetAutoLockTimer() {
+    function readEncryptionSessionMeta() {
+        try {
+            const raw = localStorage.getItem(ENCRYPTION_SESSION_META_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function writeEncryptionSessionMeta(force = false, timestamp = Date.now()) {
+        if (!encryptionKey || !currentUser) return;
+        lastEncryptionActivityAt = timestamp;
+        if (!force && timestamp - lastEncryptionActivityPersistedAt < ENCRYPTION_ACTIVITY_PERSIST_INTERVAL_MS) return;
+        lastEncryptionActivityPersistedAt = timestamp;
+        try {
+            const existing = readEncryptionSessionMeta() || {};
+            localStorage.setItem(ENCRYPTION_SESSION_META_KEY, JSON.stringify({
+                userId: currentUser.id,
+                lastActivityAt: timestamp,
+                key: existing.key || null
+            }));
+        } catch {}
+    }
+
+    function scheduleAutoLockFromLastActivity() {
         if (autoLockTimer) clearTimeout(autoLockTimer);
+        autoLockTimer = null;
         if (!encryptionKey || autoLockMinutes <= 0) return;
-        autoLockTimer = setTimeout(autoLockEncryption, autoLockMinutes * 60 * 1000);
+        const lastActivityAt = lastEncryptionActivityAt || Date.now();
+        const remainingMs = (autoLockMinutes * 60 * 1000) - Math.max(0, Date.now() - lastActivityAt);
+        if (remainingMs <= 0) {
+            autoLockEncryption();
+            return;
+        }
+        autoLockTimer = setTimeout(autoLockEncryption, remainingMs);
+    }
+
+    function resetAutoLockTimer(forcePersist = false) {
+        if (encryptionKey && currentUser) writeEncryptionSessionMeta(forcePersist);
+        scheduleAutoLockFromLastActivity();
     }
 
     async function autoLockEncryption() {
         if (!encryptionKey || !currentUser) return;
+        const userId = currentUser.id;
         encryptionKey = null;
-        autoLockTimer = null;
+        await clearEncryptionSession(userId);
         // Fetch salt to show unlock screen
         const { data: prefs } = await sb.from('user_preferences')
             .select('encryption_salt').eq('user_id', currentUser.id).single();
@@ -3612,12 +3654,16 @@
     function setAutoLockMinutes(val) {
         autoLockMinutes = parseInt(val, 10);
         localStorage.setItem('autoLockMinutes', autoLockMinutes);
-        resetAutoLockTimer();
+        resetAutoLockTimer(true);
     }
 
     // Reset timer on user activity
     ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
-        document.addEventListener(evt, resetAutoLockTimer, { passive: true });
+        document.addEventListener(evt, () => resetAutoLockTimer(), { passive: true });
+    });
+    window.addEventListener('beforeunload', () => writeEncryptionSessionMeta(true));
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') writeEncryptionSessionMeta(true);
     });
 
     // ── Encryption Helpers (Web Crypto API) ──────────────
@@ -3640,7 +3686,7 @@
             { name: 'PBKDF2', salt: new Uint8Array(base64ToArrayBuf(saltBase64)), iterations: 100000, hash: 'SHA-256' },
             keyMaterial,
             { name: 'AES-GCM', length: 256 },
-            false,
+            true,
             ['encrypt', 'decrypt']
         );
     }
@@ -4219,11 +4265,14 @@ ${rawNotes}`;
         const { data: { session } } = await sb.auth.getSession();
         if (session) {
             currentUser = session.user;
+            setFunctionsAuth(session);
             // Check if user has encryption set up — if so, need password to derive key
             const { data: prefs } = await sb.from('user_preferences')
                 .select('encryption_salt').eq('user_id', currentUser.id).single();
             if (prefs?.encryption_salt) {
-                showEncryptionUnlock(session.user.email, prefs.encryption_salt);
+                const restored = await tryRestoreEncryptionSession(currentUser);
+                if (restored) showApp(session.user.email);
+                else showEncryptionUnlock(session.user.email, prefs.encryption_salt);
             } else {
                 showApp(session.user.email);
             }
@@ -4320,7 +4369,8 @@ ${rawNotes}`;
                 encryptionKey = await deriveEncryptionKey(password, salt);
                 await sb.from('user_preferences').upsert({ user_id: currentUser.id, encryption_salt: salt });
             }
-            resetAutoLockTimer();
+            await persistEncryptionSession(currentUser.id, encryptionKey);
+            resetAutoLockTimer(true);
             showApp(data.user.email);
         }
     }
@@ -4337,20 +4387,23 @@ ${rawNotes}`;
     }
 
     async function signOut() {
+        const userId = currentUser?.id;
         await sb.auth.signOut();
         currentUser = null;
         encryptionKey = null;
         encryptionSkipped = false;
-        if (autoLockTimer) { clearTimeout(autoLockTimer); autoLockTimer = null; }
+        await clearEncryptionSession(userId);
         showAuth();
     }
 
     // Handle auth state changes: sign-out, token refresh, and session recovery
     sb.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+            const userId = currentUser?.id;
             currentUser = null;
             encryptionKey = null;
             encryptionSkipped = false;
+            clearEncryptionSession(userId);
             showAuth();
         } else if (event === 'TOKEN_REFRESHED' && session) {
             currentUser = session.user;
@@ -4381,7 +4434,8 @@ ${rawNotes}`;
             // Verify the key works by attempting a test — if wrong password, decryption will fail later
             // but PBKDF2 derivation always succeeds, so we proceed optimistically
             pendingUnlockSalt = null;
-            resetAutoLockTimer();
+            await persistEncryptionSession(currentUser.id, encryptionKey);
+            resetAutoLockTimer(true);
             showApp(currentUser.email);
         } catch (e) {
             errEl.innerText = 'Failed to derive encryption key.'; errEl.style.display = 'block';
@@ -4736,7 +4790,7 @@ ${rawNotes}`;
     // ── IndexedDB for persistent recordings ────────────────
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('carenote', 10);
+            const req = indexedDB.open('carenote', 11);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains('pendingRecordings')) {
@@ -4774,10 +4828,134 @@ ${rawNotes}`;
                 if (!db.objectStoreNames.contains('eduModuleOverrides')) {
                     db.createObjectStore('eduModuleOverrides', { keyPath: 'id' });
                 }
+                if (!db.objectStoreNames.contains('encryptionSessions')) {
+                    db.createObjectStore('encryptionSessions', { keyPath: 'id' });
+                }
             };
             req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
         });
+    }
+
+    async function persistEncryptionSession(userId, key) {
+        if (!userId || !key) return false;
+        try {
+            const exportedKey = await crypto.subtle.exportKey('raw', key);
+            const keyBase64 = arrayBufToBase64(exportedKey);
+            localStorage.setItem(ENCRYPTION_SESSION_META_KEY, JSON.stringify({
+                userId,
+                lastActivityAt: Date.now(),
+                key: keyBase64
+            }));
+            lastEncryptionActivityAt = Date.now();
+            lastEncryptionActivityPersistedAt = lastEncryptionActivityAt;
+            const db = await openDB();
+            return await new Promise((resolve) => {
+                const tx = db.transaction('encryptionSessions', 'readwrite');
+                tx.objectStore('encryptionSessions').put({
+                    id: userId,
+                    key: keyBase64
+                });
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = tx.onabort = () => resolve(false);
+            });
+        } catch (e) {
+            console.log('Encryption session save error:', e);
+            return false;
+        }
+    }
+
+    async function loadPersistedEncryptionSession(userId) {
+        if (!userId) return null;
+        try {
+            const meta = readEncryptionSessionMeta();
+            if (meta?.userId === userId && meta.key) {
+                try {
+                    return await crypto.subtle.importKey(
+                        'raw',
+                        base64ToArrayBuf(meta.key),
+                        { name: 'AES-GCM', length: 256 },
+                        false,
+                        ['encrypt', 'decrypt']
+                    );
+                } catch (err) {
+                    console.log('Local encryption session restore error:', err);
+                }
+            }
+            const db = await openDB();
+            return await new Promise((resolve) => {
+                const tx = db.transaction('encryptionSessions', 'readonly');
+                const req = tx.objectStore('encryptionSessions').get(userId);
+                req.onsuccess = async () => {
+                    const record = req.result;
+                    if (!record?.key) { resolve(null); return; }
+                    try {
+                        const key = await crypto.subtle.importKey(
+                            'raw',
+                            base64ToArrayBuf(record.key),
+                            { name: 'AES-GCM', length: 256 },
+                            false,
+                            ['encrypt', 'decrypt']
+                        );
+                        resolve(key);
+                    } catch (err) {
+                        console.log('Encryption session restore error:', err);
+                        resolve(null);
+                    }
+                };
+                req.onerror = () => resolve(null);
+            });
+        } catch (e) {
+            console.log('Encryption session load error:', e);
+            return null;
+        }
+    }
+
+    async function clearEncryptionSession(userId = currentUser?.id) {
+        if (autoLockTimer) {
+            clearTimeout(autoLockTimer);
+            autoLockTimer = null;
+        }
+        lastEncryptionActivityAt = 0;
+        lastEncryptionActivityPersistedAt = 0;
+        const meta = readEncryptionSessionMeta();
+        if (!userId || !meta || meta.userId === userId) {
+            localStorage.removeItem(ENCRYPTION_SESSION_META_KEY);
+        }
+        if (!userId) return;
+        try {
+            const db = await openDB();
+            await new Promise((resolve) => {
+                const tx = db.transaction('encryptionSessions', 'readwrite');
+                tx.objectStore('encryptionSessions').delete(userId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = tx.onabort = () => resolve();
+            });
+        } catch (e) {
+            console.log('Encryption session clear error:', e);
+        }
+    }
+
+    async function tryRestoreEncryptionSession(user) {
+        const meta = readEncryptionSessionMeta();
+        if (!user || !meta || meta.userId !== user.id) {
+            await clearEncryptionSession(user?.id);
+            return false;
+        }
+        lastEncryptionActivityAt = Number(meta.lastActivityAt) || Date.now();
+        lastEncryptionActivityPersistedAt = lastEncryptionActivityAt;
+        if (autoLockMinutes > 0 && (Date.now() - lastEncryptionActivityAt) >= autoLockMinutes * 60 * 1000) {
+            await clearEncryptionSession(user.id);
+            return false;
+        }
+        const restoredKey = await loadPersistedEncryptionSession(user.id);
+        if (!restoredKey) {
+            await clearEncryptionSession(user.id);
+            return false;
+        }
+        encryptionKey = restoredKey;
+        scheduleAutoLockFromLastActivity();
+        return true;
     }
 
     async function saveRecordingToDB(rec) {
