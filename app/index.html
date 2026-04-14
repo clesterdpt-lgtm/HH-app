@@ -711,7 +711,8 @@
             .header-right { gap: 6px; }
             .header-badge { display: none; }
             .offline-badge { font-size: 10px; padding: 3px 8px; letter-spacing: 0.5px; }
-            .ollama-badge { font-size: 10px; padding: 3px 8px; letter-spacing: 0.5px; }
+            .ollama-badge { overflow: hidden; text-indent: -9999px; padding: 0; letter-spacing: 0; border-radius: 50%; width: 28px; height: 28px; position: relative; }
+            .ollama-badge::before { content: '🦙'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-indent: 0; font-size: 14px; }
             .profile-dropdown { width: 220px; }
 
             /* Nav tabs */
@@ -3592,12 +3593,25 @@
     let autoLockMinutes = parseInt(localStorage.getItem('autoLockMinutes') || '60', 10); // default 1 hour
     let autoLockTimer = null;
     const ENCRYPTION_SESSION_META_KEY = 'carenote-encryption-session-meta';
+    const ENCRYPTION_SESSION_USER_KEY = 'carenote-encryption-session-user';
+    const ENCRYPTION_SESSION_LAST_ACTIVITY_KEY = 'carenote-encryption-session-last-activity';
+    const ENCRYPTION_SESSION_KEY_KEY = 'carenote-encryption-session-key';
     const ENCRYPTION_ACTIVITY_PERSIST_INTERVAL_MS = 1000;
     let lastEncryptionActivityAt = 0;
     let lastEncryptionActivityPersistedAt = 0;
 
     function readEncryptionSessionMeta() {
         try {
+            const userId = localStorage.getItem(ENCRYPTION_SESSION_USER_KEY);
+            const lastActivityAt = localStorage.getItem(ENCRYPTION_SESSION_LAST_ACTIVITY_KEY);
+            const key = localStorage.getItem(ENCRYPTION_SESSION_KEY_KEY);
+            if (userId || lastActivityAt || key) {
+                return {
+                    userId: userId || null,
+                    lastActivityAt: lastActivityAt ? Number(lastActivityAt) : null,
+                    key: key || null
+                };
+            }
             const raw = localStorage.getItem(ENCRYPTION_SESSION_META_KEY);
             return raw ? JSON.parse(raw) : null;
         } catch {
@@ -3612,6 +3626,9 @@
         lastEncryptionActivityPersistedAt = timestamp;
         try {
             const existing = readEncryptionSessionMeta() || {};
+            localStorage.setItem(ENCRYPTION_SESSION_USER_KEY, currentUser.id);
+            localStorage.setItem(ENCRYPTION_SESSION_LAST_ACTIVITY_KEY, String(timestamp));
+            if (existing.key) localStorage.setItem(ENCRYPTION_SESSION_KEY_KEY, existing.key);
             localStorage.setItem(ENCRYPTION_SESSION_META_KEY, JSON.stringify({
                 userId: currentUser.id,
                 lastActivityAt: timestamp,
@@ -4842,12 +4859,16 @@ ${rawNotes}`;
         try {
             const exportedKey = await crypto.subtle.exportKey('raw', key);
             const keyBase64 = arrayBufToBase64(exportedKey);
+            const now = Date.now();
+            localStorage.setItem(ENCRYPTION_SESSION_USER_KEY, userId);
+            localStorage.setItem(ENCRYPTION_SESSION_LAST_ACTIVITY_KEY, String(now));
+            localStorage.setItem(ENCRYPTION_SESSION_KEY_KEY, keyBase64);
             localStorage.setItem(ENCRYPTION_SESSION_META_KEY, JSON.stringify({
                 userId,
-                lastActivityAt: Date.now(),
+                lastActivityAt: now,
                 key: keyBase64
             }));
-            lastEncryptionActivityAt = Date.now();
+            lastEncryptionActivityAt = now;
             lastEncryptionActivityPersistedAt = lastEncryptionActivityAt;
             const db = await openDB();
             return await new Promise((resolve) => {
@@ -4920,6 +4941,9 @@ ${rawNotes}`;
         lastEncryptionActivityPersistedAt = 0;
         const meta = readEncryptionSessionMeta();
         if (!userId || !meta || meta.userId === userId) {
+            localStorage.removeItem(ENCRYPTION_SESSION_USER_KEY);
+            localStorage.removeItem(ENCRYPTION_SESSION_LAST_ACTIVITY_KEY);
+            localStorage.removeItem(ENCRYPTION_SESSION_KEY_KEY);
             localStorage.removeItem(ENCRYPTION_SESSION_META_KEY);
         }
         if (!userId) return;
