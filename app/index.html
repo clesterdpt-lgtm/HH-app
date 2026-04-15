@@ -13179,18 +13179,41 @@ ${rawNotes}`;
         const todayLabel = new Date().toLocaleDateString('en-US', dateOpts);
         const todayISO = new Date().toISOString().slice(0, 10);
 
-        const [notesRes, medsRes, hepRes, eduRes, allMileage] = await Promise.all([
-            sb.from('notes').select('id,created_at,note_type,labels,generated_note').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
-            sb.from('med_history').select('id,title,medications,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false }),
-            sb.from('hep_history').select('id,title,exercises,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false }),
-            sb.from('edu_list_history').select('id,title,modules,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false }),
-            vtGetAllMileageLogs()
-        ]);
+        // Use in-memory caches when available (already decrypted); otherwise fetch and decrypt
+        let allNotes = historyNotes && historyNotes.length ? historyNotes : null;
+        if (!allNotes) {
+            const { data } = await sb.from('notes').select('id,created_at,note_type,labels,generated_note').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            allNotes = data || [];
+            for (const n of allNotes) { n.generated_note = await decryptField(n.generated_note); }
+        }
 
-        const todayNotes = (notesRes.data || []).filter(n => new Date(n.created_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
-        const todayMeds = (medsRes.data || []).filter(m => new Date(m.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
-        const todayHep = (hepRes.data || []).filter(h => new Date(h.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
-        const todayEdu = (eduRes.data || []).filter(e => new Date(e.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
+        let allMeds = medHistoryData && medHistoryData.length ? medHistoryData : null;
+        if (!allMeds) {
+            const { data } = await sb.from('med_history').select('id,title,medications,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false });
+            allMeds = data || [];
+            for (const m of allMeds) { m.medications = await decryptJsonField(m.medications); }
+        }
+
+        let allHep = hepHistoryData && hepHistoryData.length ? hepHistoryData : null;
+        if (!allHep) {
+            const { data } = await sb.from('hep_history').select('id,title,exercises,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false });
+            allHep = data || [];
+            for (const h of allHep) { h.exercises = await decryptJsonField(h.exercises); }
+        }
+
+        let allEdu = eduListHistoryData && eduListHistoryData.length ? eduListHistoryData : null;
+        if (!allEdu) {
+            const { data } = await sb.from('edu_list_history').select('id,title,modules,saved_at,labels').eq('user_id', currentUser.id).order('saved_at', { ascending: false });
+            allEdu = data || [];
+            for (const e of allEdu) { e.modules = await decryptJsonField(e.modules); }
+        }
+
+        const allMileage = await vtGetAllMileageLogs();
+
+        const todayNotes = allNotes.filter(n => new Date(n.created_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
+        const todayMeds = allMeds.filter(m => new Date(m.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
+        const todayHep = allHep.filter(h => new Date(h.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
+        const todayEdu = allEdu.filter(e => new Date(e.saved_at).toLocaleDateString('en-US', dateOpts) === todayLabel);
         const todayMileage = (allMileage || []).filter(m => m.date === todayISO);
 
         return { todayLabel, notes: todayNotes, meds: todayMeds, hep: todayHep, education: todayEdu, mileage: todayMileage };
