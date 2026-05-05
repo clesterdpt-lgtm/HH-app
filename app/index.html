@@ -10468,45 +10468,44 @@ ${rawNotes}`;
 
     const BUILTIN_EXERCISES = [
         // Upper Body
-        { id: 'b_wall_slide', name: 'Wall Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'wall_slide', instructions: 'Stand facing a wall with arms raised. Slide hands up the wall as far as comfortable, keeping elbows straight. Slowly slide back down. Repeat.', is_builtin: true },
-        { id: 'b_table_slide', name: 'Table Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'table_slide', instructions: 'Sit at a table with forearm resting on a towel on the table surface. Slowly slide the towel forward, extending your arm. Slide back. Repeat.', is_builtin: true },
-        { id: 'b_supine_shoulder', name: 'Supine Shoulder Flexion AAROM', category: 'upper_body', svg_key: 'supine_shoulder_flexion', instructions: 'Lie on your back holding a cane or dowel with both hands. Use the unaffected arm to assist raising both arms overhead. Lower slowly. Repeat.', is_builtin: true },
-        { id: 'b_bicep_curls', name: 'Bicep Curls (Band or Weight)', category: 'upper_body', svg_key: 'bicep_curls', instructions: 'Hold a resistance band or light weight with palm facing up. Bend elbow to curl hand toward shoulder, keeping elbow at your side. Lower slowly. Repeat.', is_builtin: true },
-        { id: 'b_band_pull_apart', name: 'Band Pull Apart', category: 'upper_body', svg_key: 'band_pull_apart', instructions: 'Hold a resistance band in front of you at shoulder height with arms straight. Pull the band apart by squeezing shoulder blades together. Return slowly. Repeat.', is_builtin: true },
-        { id: 'b_band_triceps', name: 'Band Triceps Extension', category: 'upper_body', svg_key: 'band_triceps', instructions: 'Hold one end of a resistance band overhead and the other behind your back. Straighten the top arm upward against the band resistance. Lower slowly. Repeat. Switch arms.', is_builtin: true },
-        { id: 'b_ball_grip', name: 'Ball/Towel Grip', category: 'upper_body', svg_key: 'ball_grip', instructions: 'Hold a stress ball or rolled towel in your hand. Squeeze firmly and hold for 5 seconds. Release slowly. Repeat with each hand.', is_builtin: true },
+        { id: 'b_wall_slide', name: 'Wall Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'wall_slide', photo_url: 'exercises/wall slide.png', instructions: 'Stand facing a wall with arms raised. Slide hands up the wall as far as comfortable, keeping elbows straight. Slowly slide back down. Repeat.', is_builtin: true },
+        { id: 'b_table_slide', name: 'Table Slide (Shoulder Flexion)', category: 'upper_body', svg_key: 'table_slide', photo_url: 'exercises/towel slide.png', instructions: 'Sit at a table with forearm resting on a towel on the table surface. Slowly slide the towel forward, extending your arm. Slide back. Repeat.', is_builtin: true },
+        { id: 'b_supine_shoulder', name: 'Supine Shoulder Flexion AAROM', category: 'upper_body', svg_key: 'supine_shoulder_flexion', photo_url: 'exercises/supine shoulder flex.png', instructions: 'Lie on your back holding a cane or dowel with both hands. Use the unaffected arm to assist raising both arms overhead. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_bicep_curls', name: 'Bicep Curls (Band or Weight)', category: 'upper_body', svg_key: 'bicep_curls', photo_url: 'exercises/bicep.png', instructions: 'Hold a resistance band or light weight with palm facing up. Bend elbow to curl hand toward shoulder, keeping elbow at your side. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_band_pull_apart', name: 'Band Pull Apart', category: 'upper_body', svg_key: 'band_pull_apart', photo_url: 'exercises/pull apart.png', instructions: 'Hold a resistance band in front of you at shoulder height with arms straight. Pull the band apart by squeezing shoulder blades together. Return slowly. Repeat.', is_builtin: true },
+        { id: 'b_band_triceps', name: 'Band Triceps Extension', category: 'upper_body', svg_key: 'band_triceps', photo_url: 'exercises/tricep.png', instructions: 'Hold one end of a resistance band overhead and the other behind your back. Straighten the top arm upward against the band resistance. Lower slowly. Repeat. Switch arms.', is_builtin: true },
+        { id: 'b_ball_grip', name: 'Ball/Towel Grip', category: 'upper_body', svg_key: 'ball_grip', photo_url: 'exercises/grip.png', instructions: 'Hold a stress ball or rolled towel in your hand. Squeeze firmly and hold for 5 seconds. Release slowly. Repeat with each hand.', is_builtin: true },
         // Lower Body
-        { id: 'b_seated_knee_ext', name: 'Seated Knee Extensions', category: 'lower_body', svg_key: 'seated_knee_ext', instructions: 'Sit in a sturdy chair with feet flat on the floor. Straighten one knee, lifting your foot until the leg is extended. Hold briefly, then lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_seated_hip_flexion', name: 'Seated Hip Flexion', category: 'lower_body', svg_key: 'seated_hip_flexion', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lift one knee toward your chest, keeping your back straight. Lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_ankle_pumps', name: 'Ankle Pumps', category: 'lower_body', svg_key: 'ankle_pumps', instructions: 'Sit or lie down with legs extended. Point toes away from you, then pull toes toward you. Alternate pumping motion. Repeat.', is_builtin: true },
-        { id: 'b_standing_hip_flexion', name: 'Standing Hip Flexion', category: 'lower_body', svg_key: 'standing_hip_flexion', instructions: 'Stand holding onto a stable surface for balance. Lift one knee up toward your chest. Lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_heel_raises', name: 'Standing Heel Raises', category: 'lower_body', svg_key: 'heel_raises', instructions: 'Stand holding onto a counter or sturdy chair for balance. Rise up on your toes, lifting heels off the ground. Lower slowly. Repeat.', is_builtin: true },
-        { id: 'b_toe_raises', name: 'Standing Toe Raises', category: 'lower_body', svg_key: 'toe_raises', instructions: 'Stand holding onto a counter or sturdy chair for balance. Lift your toes off the ground, rocking back onto your heels. Lower slowly. Repeat.', is_builtin: true },
-        { id: 'b_hamstring_curls', name: 'Standing Hamstring Curls', category: 'lower_body', svg_key: 'hamstring_curls', instructions: 'Stand holding onto a stable surface. Bend one knee, bringing heel toward buttocks. Lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_hip_abduction', name: 'Standing Hip Abduction', category: 'lower_body', svg_key: 'hip_abduction', instructions: 'Stand holding onto a stable surface. Lift one leg out to the side, keeping knee straight and toes pointing forward. Lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_hip_extension', name: 'Standing Hip Extension', category: 'lower_body', svg_key: 'hip_extension', instructions: 'Stand holding onto a stable surface. Extend one leg straight behind you, keeping knee straight. Squeeze glutes at the top. Lower slowly. Repeat. Switch legs.', is_builtin: true },
-        { id: 'b_mini_squat', name: 'Standing Mini Squat', category: 'lower_body', svg_key: 'mini_squat', instructions: 'Stand with feet shoulder-width apart, holding onto a counter for support. Bend knees slightly as if sitting back, keeping weight on heels. Return to standing. Repeat.', is_builtin: true },
-        { id: 'b_sit_to_stand', name: 'Sit to Stand', category: 'lower_body', svg_key: 'sit_to_stand', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lean forward slightly and stand up, using arms only if needed. Slowly sit back down with control. Repeat.', is_builtin: true },
-        { id: 'b_quad_sets', name: 'Quad Sets', category: 'lower_body', svg_key: 'quad_sets', instructions: 'Sit or lie with leg extended. Tighten the muscle on top of your thigh by pushing the back of your knee down into the surface. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
-        { id: 'b_heel_slide', name: 'Heel Slide', category: 'lower_body', svg_key: 'heel_slide', instructions: 'Lie on your back with legs extended. Slowly bend one knee, sliding your heel along the surface toward your buttocks. Slide back to starting position. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_seated_knee_ext', name: 'Seated Knee Extensions', category: 'lower_body', svg_key: 'seated_knee_ext', photo_url: 'exercises/LAQ.png', instructions: 'Sit in a sturdy chair with feet flat on the floor. Straighten one knee, lifting your foot until the leg is extended. Hold briefly, then lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_seated_hip_flexion', name: 'Seated Hip Flexion', category: 'lower_body', svg_key: 'seated_hip_flexion', photo_url: 'exercises/sit march.png', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lift one knee toward your chest, keeping your back straight. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_ankle_pumps', name: 'Ankle Pumps', category: 'lower_body', svg_key: 'ankle_pumps', photo_url: 'exercises/ankle pump.png', instructions: 'Sit or lie down with legs extended. Point toes away from you, then pull toes toward you. Alternate pumping motion. Repeat.', is_builtin: true },
+        { id: 'b_standing_hip_flexion', name: 'Standing Hip Flexion', category: 'lower_body', svg_key: 'standing_hip_flexion', photo_url: 'exercises/stand march.png', instructions: 'Stand holding onto a stable surface for balance. Lift one knee up toward your chest. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_heel_raises', name: 'Standing Heel Raises', category: 'lower_body', svg_key: 'heel_raises', photo_url: 'exercises/heel rise.png', instructions: 'Stand holding onto a counter or sturdy chair for balance. Rise up on your toes, lifting heels off the ground. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_hamstring_curls', name: 'Standing Hamstring Curls', category: 'lower_body', svg_key: 'hamstring_curls', photo_url: 'exercises/HS curl.png', instructions: 'Stand holding onto a stable surface. Bend one knee, bringing heel toward buttocks. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_hip_abduction', name: 'Standing Hip Abduction', category: 'lower_body', svg_key: 'hip_abduction', photo_url: 'exercises/hip abd.png', instructions: 'Stand holding onto a stable surface. Lift one leg out to the side, keeping knee straight and toes pointing forward. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_hip_extension', name: 'Standing Hip Extension', category: 'lower_body', svg_key: 'hip_extension', photo_url: 'exercises/hip ext.png', instructions: 'Stand holding onto a stable surface. Extend one leg straight behind you, keeping knee straight. Squeeze glutes at the top. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_mini_squat', name: 'Standing Mini Squat', category: 'lower_body', svg_key: 'mini_squat', photo_url: 'exercises/mini squat.png', instructions: 'Stand with feet shoulder-width apart, holding onto a counter for support. Bend knees slightly as if sitting back, keeping weight on heels. Return to standing. Repeat.', is_builtin: true },
+        { id: 'b_sit_to_stand', name: 'Sit to Stand', category: 'lower_body', svg_key: 'sit_to_stand', photo_url: 'exercises/sit to stand.png', instructions: 'Sit in a sturdy chair with feet flat on the floor. Lean forward slightly and stand up, using arms only if needed. Slowly sit back down with control. Repeat.', is_builtin: true },
+        { id: 'b_quad_sets', name: 'Quad Sets', category: 'lower_body', svg_key: 'quad_sets', photo_url: 'exercises/quad set.png', instructions: 'Sit or lie with leg extended. Tighten the muscle on top of your thigh by pushing the back of your knee down into the surface. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
+        { id: 'b_heel_slide', name: 'Heel Slide', category: 'lower_body', svg_key: 'heel_slide', photo_url: 'exercises/heel slide.png', instructions: 'Lie on your back with legs extended. Slowly bend one knee, sliding your heel along the surface toward your buttocks. Slide back to starting position. Repeat. Switch legs.', is_builtin: true },
         // Core
-        { id: 'b_pelvic_tilts', name: 'Pelvic Tilts', category: 'core', svg_key: 'pelvic_tilts', instructions: 'Lie on your back with knees bent, feet flat on the floor. Flatten your lower back against the floor by tightening your abdominal muscles. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
-        { id: 'b_bridges', name: 'Bridges', category: 'core', svg_key: 'bridges', instructions: 'Lie on your back with knees bent, feet flat on the floor. Lift your hips off the floor by squeezing your buttocks. Hold briefly at the top. Lower slowly. Repeat.', is_builtin: true },
-        { id: 'b_trunk_rotation', name: 'Seated Trunk Rotation', category: 'core', svg_key: 'trunk_rotation', instructions: 'Sit in a sturdy chair with feet flat on the floor. Cross arms over chest. Slowly rotate your upper body to one side. Return to center. Rotate to the other side. Repeat.', is_builtin: true },
-        { id: 'b_knee_to_chest', name: 'Knee to Chest', category: 'core', svg_key: 'knee_to_chest', instructions: 'Lie on your back with knees bent. Bring one knee toward your chest, grasping behind the thigh. Hold for 15-30 seconds. Lower slowly. Repeat. Switch legs.', is_builtin: true },
+        { id: 'b_pelvic_tilts', name: 'Pelvic Tilts', category: 'core', svg_key: 'pelvic_tilts', photo_url: 'exercises/pelvic tilts.png', instructions: 'Lie on your back with knees bent, feet flat on the floor. Flatten your lower back against the floor by tightening your abdominal muscles. Hold for 5 seconds. Relax. Repeat.', is_builtin: true },
+        { id: 'b_bridges', name: 'Bridges', category: 'core', svg_key: 'bridges', photo_url: 'exercises/Bridge.png', instructions: 'Lie on your back with knees bent, feet flat on the floor. Lift your hips off the floor by squeezing your buttocks. Hold briefly at the top. Lower slowly. Repeat.', is_builtin: true },
+        { id: 'b_trunk_rotation', name: 'Seated Trunk Rotation', category: 'core', svg_key: 'trunk_rotation', photo_url: 'exercises/seated trunk rotation.png', instructions: 'Sit in a sturdy chair with feet flat on the floor. Cross arms over chest. Slowly rotate your upper body to one side. Return to center. Rotate to the other side. Repeat.', is_builtin: true },
+        { id: 'b_knee_to_chest', name: 'Knee to Chest', category: 'core', svg_key: 'knee_to_chest', photo_url: 'exercises/knee to chest.png', instructions: 'Lie on your back with knees bent. Bring one knee toward your chest, grasping behind the thigh. Hold for 15-30 seconds. Lower slowly. Repeat. Switch legs.', is_builtin: true },
         // Balance
-        { id: 'b_single_leg', name: 'Single Leg Stance', category: 'balance', svg_key: 'single_leg_stance', instructions: 'Stand near a counter or sturdy surface. Lift one foot off the ground slightly. Hold for 10-30 seconds. Switch legs. Use support as needed for safety.', is_builtin: true },
-        { id: 'b_tandem', name: 'Tandem Stance', category: 'balance', svg_key: 'tandem_stance', instructions: 'Stand with one foot directly in front of the other, heel to toe. Hold for 10-30 seconds. Switch which foot is in front. Use support as needed.', is_builtin: true },
-        { id: 'b_heel_toe_walk', name: 'Heel-to-Toe Walking', category: 'balance', svg_key: 'heel_to_toe', instructions: 'Walk in a straight line, placing the heel of one foot directly in front of the toes of the other foot. Take 10-20 steps. Walk near a wall for safety.', is_builtin: true },
-        { id: 'b_weight_shift', name: 'Weight Shifting', category: 'balance', svg_key: 'weight_shifting', instructions: 'Stand with feet shoulder-width apart. Slowly shift your weight to one side, then the other. Keep movements controlled. Repeat. Hold onto support if needed.', is_builtin: true },
+        { id: 'b_single_leg', name: 'Single Leg Stance', category: 'balance', svg_key: 'single_leg_stance', photo_url: 'exercises/single leg stance.png', instructions: 'Stand near a counter or sturdy surface. Lift one foot off the ground slightly. Hold for 10-30 seconds. Switch legs. Use support as needed for safety.', is_builtin: true },
+        { id: 'b_tandem', name: 'Tandem Stance', category: 'balance', svg_key: 'tandem_stance', photo_url: 'exercises/Tandem stance.png', instructions: 'Stand with one foot directly in front of the other, heel to toe. Hold for 10-30 seconds. Switch which foot is in front. Use support as needed.', is_builtin: true },
+        { id: 'b_heel_toe_walk', name: 'Heel-to-Toe Walking', category: 'balance', svg_key: 'heel_to_toe', photo_url: 'exercises/Heel toe walk.png', instructions: 'Walk in a straight line, placing the heel of one foot directly in front of the toes of the other foot. Take 10-20 steps. Walk near a wall for safety.', is_builtin: true },
+        { id: 'b_weight_shift', name: 'Weight Shifting', category: 'balance', svg_key: 'weight_shifting', photo_url: 'exercises/weight shift.png', instructions: 'Stand with feet shoulder-width apart. Slowly shift your weight to one side, then the other. Keep movements controlled. Repeat. Hold onto support if needed.', is_builtin: true },
         // Stretching
-        { id: 'b_hamstring_stretch', name: 'Hamstring Stretch', category: 'stretching', svg_key: 'hamstring_stretch', instructions: 'Sit on the edge of a chair. Extend one leg out with heel on the floor, toes up. Lean forward from your hips until you feel a stretch behind your knee/thigh. Hold 15-30 seconds. Switch legs.', is_builtin: true },
-        { id: 'b_calf_stretch', name: 'Calf Stretch', category: 'stretching', svg_key: 'calf_stretch', instructions: 'Stand facing a wall with hands on the wall. Step one foot back, keeping heel on the floor and knee straight. Lean into the wall until you feel a stretch in the calf. Hold 15-30 seconds. Switch legs.', is_builtin: true },
-        { id: 'b_shoulder_pendulums', name: 'Shoulder Pendulums', category: 'stretching', svg_key: 'shoulder_pendulums', instructions: 'Bend forward at the waist, supporting yourself with one hand on a table. Let the affected arm hang freely. Gently swing the arm in small circles, forward/back, and side to side. Repeat.', is_builtin: true },
-        { id: 'b_neck_stretches', name: 'Neck Stretches', category: 'stretching', svg_key: 'neck_stretches', instructions: 'Sit or stand with good posture. Slowly tilt your head to one side, bringing ear toward shoulder. Hold for 15-30 seconds. Return to center. Repeat on the other side.', is_builtin: true },
+        { id: 'b_hamstring_stretch', name: 'Hamstring Stretch', category: 'stretching', svg_key: 'hamstring_stretch', photo_url: 'exercises/HS stretch.png', instructions: 'Sit on the edge of a chair. Extend one leg out with heel on the floor, toes up. Lean forward from your hips until you feel a stretch behind your knee/thigh. Hold 15-30 seconds. Switch legs.', is_builtin: true },
+        { id: 'b_calf_stretch', name: 'Calf Stretch', category: 'stretching', svg_key: 'calf_stretch', photo_url: 'exercises/Calf stretch.png', instructions: 'Stand facing a wall with hands on the wall. Step one foot back, keeping heel on the floor and knee straight. Lean into the wall until you feel a stretch in the calf. Hold 15-30 seconds. Switch legs.', is_builtin: true },
+        { id: 'b_shoulder_pendulums', name: 'Shoulder Pendulums', category: 'stretching', svg_key: 'shoulder_pendulums', photo_url: 'exercises/pendulums.png', instructions: 'Bend forward at the waist, supporting yourself with one hand on a table. Let the affected arm hang freely. Gently swing the arm in small circles, forward/back, and side to side. Repeat.', is_builtin: true },
+        { id: 'b_neck_stretches', name: 'Neck Stretches', category: 'stretching', svg_key: 'neck_stretches', photo_url: 'exercises/neck stretch.png', instructions: 'Sit or stand with good posture. Slowly tilt your head to one side, bringing ear toward shoulder. Hold for 15-30 seconds. Return to center. Repeat on the other side.', is_builtin: true },
         // Breathing
-        { id: 'b_diaphragmatic', name: 'Diaphragmatic Breathing', category: 'breathing', svg_key: 'diaphragmatic_breathing', instructions: 'Lie on your back or sit comfortably. Place one hand on your chest, the other on your belly. Breathe in slowly through your nose, feeling your belly rise. Exhale slowly through pursed lips. The chest should move minimally. Repeat.', is_builtin: true },
-        { id: 'b_pursed_lip', name: 'Pursed Lip Breathing', category: 'breathing', svg_key: 'pursed_lip', instructions: 'Breathe in slowly through your nose for 2 counts. Pucker your lips as if whistling. Breathe out slowly through pursed lips for 4 counts. Repeat.', is_builtin: true },
+        { id: 'b_diaphragmatic', name: 'Diaphragmatic Breathing', category: 'breathing', svg_key: 'diaphragmatic_breathing', photo_url: 'exercises/Diaphragm breathing.png', instructions: 'Lie on your back or sit comfortably. Place one hand on your chest, the other on your belly. Breathe in slowly through your nose, feeling your belly rise. Exhale slowly through pursed lips. The chest should move minimally. Repeat.', is_builtin: true },
+        { id: 'b_pursed_lip', name: 'Pursed Lip Breathing', category: 'breathing', svg_key: 'pursed_lip', photo_url: 'exercises/pursed lip.png', instructions: 'Breathe in slowly through your nose for 2 counts. Pucker your lips as if whistling. Breathe out slowly through pursed lips for 4 counts. Repeat.', is_builtin: true },
     ];
 
     // HEP state
@@ -10980,7 +10979,7 @@ ${rawNotes}`;
         const entry = {
             user_id: currentUser.id,
             title: title,
-            exercises: hepCurrentExercises.map(e => ({ name: e.name, category: e.category, svg_key: e.svg_key, instructions: e.instructions, sets: e.sets, reps: e.reps, hold_seconds: e.hold_seconds, frequency: e.frequency })),
+            exercises: hepCurrentExercises.map(e => ({ name: e.name, category: e.category, svg_key: e.svg_key, photo_url: e.photo_url || null, instructions: e.instructions, sets: e.sets, reps: e.reps, hold_seconds: e.hold_seconds, frequency: e.frequency })),
             labels: labels,
             saved_at: now.toISOString(),
         };
@@ -11093,7 +11092,7 @@ ${rawNotes}`;
                     <div class="hep-history-item-body" id="hep-body-${entry.id}">
                         ${entry.exercises.map(ex => `
                             <div class="hep-history-exercise">
-                                <div class="hep-history-exercise-svg">${getExerciseSvg(ex.svg_key)}</div>
+                                <div class="hep-history-exercise-svg">${ex.photo_url ? `<img src="${ex.photo_url}" alt="${ex.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : getExerciseSvg(ex.svg_key)}</div>
                                 <div class="hep-history-exercise-info">
                                     <div class="hep-history-exercise-name">${ex.name}</div>
                                     <div class="hep-history-exercise-details">${ex.sets} set${ex.sets !== 1 ? 's' : ''} × ${ex.reps} rep${ex.reps !== 1 ? 's' : ''}${ex.hold_seconds > 0 ? ' (hold ' + ex.hold_seconds + 's)' : ''} · ${ex.frequency}</div>
@@ -11201,6 +11200,7 @@ ${rawNotes}`;
             name: e.name,
             category: e.category,
             svg_key: e.svg_key,
+            photo_url: e.photo_url || null,
             instructions: e.instructions,
             sets: e.sets || 1,
             reps: e.reps || 10,
@@ -11247,11 +11247,28 @@ ${rawNotes}`;
         const margin = 15;
         const maxWidth = pageWidth - margin * 2;
 
-        // Pre-convert all SVGs to data URLs
+        // Pre-convert all SVGs / photos to data URLs
         const svgImages = {};
+        async function imgUrlToDataUrl(url) {
+            const resp = await fetch(url);
+            const blob = await resp.blob();
+            return await new Promise((resolve, reject) => {
+                const fr = new FileReader();
+                fr.onload = () => resolve(fr.result);
+                fr.onerror = reject;
+                fr.readAsDataURL(blob);
+            });
+        }
         for (const ex of exList) {
-            if (!svgImages[ex.svg_key]) {
-                svgImages[ex.svg_key] = await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+            const key = ex.photo_url || ex.svg_key;
+            if (!svgImages[key]) {
+                try {
+                    svgImages[key] = ex.photo_url
+                        ? await imgUrlToDataUrl(ex.photo_url)
+                        : await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+                } catch (e) {
+                    svgImages[key] = await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+                }
             }
         }
 
@@ -11317,7 +11334,7 @@ ${rawNotes}`;
                 doc.roundedRect(xBase, y, colWidth, neededHeight, 2, 2);
 
                 // SVG image
-                const imgData = svgImages[ex.svg_key];
+                const imgData = svgImages[ex.photo_url || ex.svg_key];
                 if (imgData) {
                     try { doc.addImage(imgData, 'PNG', xBase + 2, y + 2, imgSize, imgSize); } catch(e) {}
                 }
@@ -11359,7 +11376,7 @@ ${rawNotes}`;
                 checkPageBreak(neededHeight + 6);
 
                 // SVG image
-                const imgData = svgImages[ex.svg_key];
+                const imgData = svgImages[ex.photo_url || ex.svg_key];
                 if (imgData) {
                     try { doc.addImage(imgData, 'PNG', margin, y, imgSize, imgSize); } catch(e) {}
                 }
