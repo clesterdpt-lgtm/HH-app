@@ -11233,7 +11233,7 @@ ${rawNotes}`;
     }
 
     // ── HEP Export: PDF ──────────────────────────────
-    async function downloadHepPdf(layout, exercises, title) {
+    async function downloadHepPdf(layout, exercises, title, opts) {
         const exList = exercises || hepCurrentExercises;
         if (exList.length === 0) { alert('No exercises to export.'); return; }
 
@@ -11247,29 +11247,43 @@ ${rawNotes}`;
         const margin = 15;
         const maxWidth = pageWidth - margin * 2;
 
-        // Pre-convert all SVGs / photos to data URLs
+        // Pre-convert all SVGs / photos to data URLs (with natural dimensions)
         const svgImages = {};
-        async function imgUrlToDataUrl(url) {
+        async function imgUrlToMeta(url) {
             const resp = await fetch(url);
             const blob = await resp.blob();
-            return await new Promise((resolve, reject) => {
+            const dataUrl = await new Promise((resolve, reject) => {
                 const fr = new FileReader();
                 fr.onload = () => resolve(fr.result);
                 fr.onerror = reject;
                 fr.readAsDataURL(blob);
             });
+            const dims = await new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+                img.onerror = () => resolve({ w: 1, h: 1 });
+                img.src = dataUrl;
+            });
+            return { dataUrl, w: dims.w, h: dims.h };
         }
         for (const ex of exList) {
             const key = ex.photo_url || ex.svg_key;
             if (!svgImages[key]) {
                 try {
                     svgImages[key] = ex.photo_url
-                        ? await imgUrlToDataUrl(ex.photo_url)
-                        : await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+                        ? await imgUrlToMeta(ex.photo_url)
+                        : { dataUrl: await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200), w: 200, h: 200 };
                 } catch (e) {
-                    svgImages[key] = await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200);
+                    svgImages[key] = { dataUrl: await svgToDataUrl(getExerciseSvg(ex.svg_key), 200, 200), w: 200, h: 200 };
                 }
             }
+        }
+        function fitInBox(meta, box) {
+            const ratio = meta.w / meta.h;
+            let dw = box, dh = box;
+            if (ratio > 1) dh = box / ratio;
+            else if (ratio < 1) dw = box * ratio;
+            return { dw, dh };
         }
 
         let y = margin;
@@ -11336,7 +11350,10 @@ ${rawNotes}`;
                 // SVG image
                 const imgData = svgImages[ex.photo_url || ex.svg_key];
                 if (imgData) {
-                    try { doc.addImage(imgData, 'PNG', xBase + 2, y + 2, imgSize, imgSize); } catch(e) {}
+                    const { dw, dh } = fitInBox(imgData, imgSize);
+                    const ix = xBase + 2 + (imgSize - dw) / 2;
+                    const iy = y + 2 + (imgSize - dh) / 2;
+                    try { doc.addImage(imgData.dataUrl, 'PNG', ix, iy, dw, dh); } catch(e) {}
                 }
 
                 // Text
@@ -11378,7 +11395,10 @@ ${rawNotes}`;
                 // SVG image
                 const imgData = svgImages[ex.photo_url || ex.svg_key];
                 if (imgData) {
-                    try { doc.addImage(imgData, 'PNG', margin, y, imgSize, imgSize); } catch(e) {}
+                    const { dw, dh } = fitInBox(imgData, imgSize);
+                    const ix = margin + (imgSize - dw) / 2;
+                    const iy = y + (imgSize - dh) / 2;
+                    try { doc.addImage(imgData.dataUrl, 'PNG', ix, iy, dw, dh); } catch(e) {}
                 }
 
                 const textX = margin + imgSize + 4;
@@ -11413,13 +11433,44 @@ ${rawNotes}`;
         }
 
         addPageNumber();
-        doc.save(pdfTitle.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+        const filename = pdfTitle.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+        if (opts && opts.returnDoc) return { doc, filename };
+        doc.save(filename);
     }
 
     async function exportHepHistoryPdf(id, layout) {
         const entry = hepHistoryData.find(e => e.id === id);
         if (!entry) return;
         await downloadHepPdf(layout, entry.exercises, entry.title);
+    }
+
+    async function shareOrDownloadHepPdf(layout, exercises, title) {
+        const result = await downloadHepPdf(layout, exercises, title, { returnDoc: true });
+        if (!result) return;
+        const { doc, filename } = result;
+        const blob = doc.output('blob');
+        const file = new File([blob], filename, { type: 'application/pdf' });
+        const subject = (title || 'Home Exercise Program') + ' - ' + new Date().toLocaleDateString();
+        const text = formatHepText(exercises || hepCurrentExercises, title);
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file], title: subject, text });
+                return;
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+            }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        const body = text + '\n\n(PDF with exercise images saved to your downloads — please attach it to this email.)';
+        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailto, '_blank');
     }
 
     // ── HEP Export: Email ──────────────────────────────
@@ -11437,21 +11488,15 @@ ${rawNotes}`;
         return text;
     }
 
-    function emailHep() {
+    async function emailHep() {
         if (hepCurrentExercises.length === 0) return;
-        const text = formatHepText(hepCurrentExercises);
-        const subject = 'Home Exercise Program - ' + new Date().toLocaleDateString();
-        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-        window.open(mailto, '_blank');
+        await shareOrDownloadHepPdf('list', hepCurrentExercises, null);
     }
 
-    function emailHepHistory(id) {
+    async function emailHepHistory(id) {
         const entry = hepHistoryData.find(e => e.id === id);
         if (!entry) return;
-        const text = formatHepText(entry.exercises, entry.title);
-        const subject = entry.title + ' - Home Exercise Program';
-        const mailto = `mailto:${defaultEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-        window.open(mailto, '_blank');
+        await shareOrDownloadHepPdf('list', entry.exercises, entry.title);
     }
 
     // ── HEP EMR Documentation ──────────────────────────
