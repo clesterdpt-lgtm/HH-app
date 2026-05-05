@@ -43,13 +43,7 @@ serve(async (req) => {
       });
     }
 
-    const formData = await req.formData();
-    const audioFile = formData.get("audio");
-
-    console.log("Audio file received:", audioFile ? "yes" : "no");
-
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-
     if (!OPENAI_API_KEY) {
       console.log("ERROR: No OpenAI API key found");
       return new Response(JSON.stringify({ error: "OpenAI API key not configured" }), {
@@ -58,29 +52,27 @@ serve(async (req) => {
       });
     }
 
-    if (!audioFile) {
-      console.log("ERROR: No audio file received");
-      return new Response(JSON.stringify({ error: "No audio file received" }), {
+    const contentType = req.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data")) {
+      return new Response(JSON.stringify({ error: "Expected multipart/form-data body" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    const uploadName = typeof audioFile === "object" && "name" in audioFile && audioFile.name
-      ? audioFile.name
-      : "recording.webm";
+    console.log("Forwarding stream to OpenAI Whisper...");
 
-    const whisperForm = new FormData();
-    whisperForm.append("file", audioFile, uploadName);
-    whisperForm.append("model", "whisper-1");
-    whisperForm.append("language", "en");
-
-    console.log("Sending to OpenAI Whisper...");
-
+    // Stream the multipart body straight to OpenAI — no buffering, no rebuild.
+    // Client sends file + model + language as separate parts; we just preserve them.
     const whisperResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${OPENAI_API_KEY}` },
-      body: whisperForm
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": contentType,
+      },
+      body: req.body,
+      // @ts-expect-error duplex required for streaming request bodies in Deno
+      duplex: "half",
     });
 
     const result = await whisperResponse.json();
