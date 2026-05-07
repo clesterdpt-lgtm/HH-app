@@ -259,6 +259,18 @@
         .spinner { width: 20px; height: 20px; border: 2px solid var(--gray-200); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .note-textarea-wrap { position: relative; margin-top: 6px; }
+        .note-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.94); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); border-radius: 12px; display: none; align-items: center; justify-content: center; z-index: 10; }
+        .note-overlay.active { display: flex; }
+        .note-overlay-content { width: 80%; max-width: 360px; text-align: center; padding: 16px; }
+        .note-overlay-title { font-weight: 600; font-size: 16px; color: var(--gray-700); }
+        .note-overlay-sub { font-size: 13px; color: var(--gray-500); margin-top: 6px; min-height: 18px; }
+        .note-overlay-bar { margin-top: 14px; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; position: relative; }
+        .note-overlay-bar-fill { height: 100%; background: var(--teal); width: 0%; border-radius: 4px; transition: width 0.4s ease; }
+        .note-overlay-bar.indeterminate .note-overlay-bar-fill { width: 35%; animation: bar-slide 1.4s ease-in-out infinite; }
+        @keyframes bar-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(330%); } }
+        .note-overlay-percent { font-size: 12px; color: var(--gray-500); margin-top: 8px; font-variant-numeric: tabular-nums; min-height: 16px; }
+
         .offline-banner { background: var(--orange-light); border: 1px solid rgba(217,119,6,0.3); border-radius: 12px; padding: 14px 20px; margin-bottom: 24px; display: none; align-items: center; gap: 12px; }
         .offline-banner-text { font-size: 14px; color: var(--orange); font-weight: 500; flex: 1; }
 
@@ -2390,7 +2402,17 @@
                         <span class="draft-status" id="draft-status"></span>
                         <button class="assist-undo-btn" id="assist-undo" onclick="undoAssistUpdate()">↩ Undo Assist</button>
                     </div>
-                    <textarea style="margin-top:6px;" id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
+                    <div class="note-textarea-wrap">
+                        <textarea id="note-input" placeholder="Type your visit notes here, or use the Record button above. Avoid including patient names or identifiers."></textarea>
+                        <div class="note-overlay" id="note-overlay">
+                            <div class="note-overlay-content">
+                                <div class="note-overlay-title" id="note-overlay-title">Working...</div>
+                                <div class="note-overlay-sub" id="note-overlay-sub"></div>
+                                <div class="note-overlay-bar" id="note-overlay-bar"><div class="note-overlay-bar-fill" id="note-overlay-bar-fill"></div></div>
+                                <div class="note-overlay-percent" id="note-overlay-percent"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="phrase-suggestions" id="phrase-suggestions"></div>
                     <div class="note-options-row">
                         <div class="format-row" id="format-row" style="margin:0;">
@@ -5533,6 +5555,12 @@ ${rawNotes}`;
         btn.disabled = true;
         btn.innerText = 'Transcribing...';
         statusEl.style.display = 'flex';
+        const segCount = Array.isArray(rec.chunks) ? rec.chunks.length : 1;
+        showNoteOverlay({
+            title: 'Transcribing recording',
+            sub: segCount > 1 ? `Preparing ${segCount} chunks…` : 'Sending audio to Whisper…',
+            percent: 0
+        });
 
         try {
             // Transcribe with chunking support for large files
@@ -5564,13 +5592,45 @@ ${rawNotes}`;
             document.getElementById('note-input').value = text;
             document.getElementById('note-type').value = noteType;
             document.getElementById('note-input').scrollIntoView({ behavior: 'smooth' });
+            hideNoteOverlay();
 
         } catch (err) {
             statusEl.style.display = 'none';
             btn.disabled = false;
             btn.innerText = rec.transcribed ? 'Re-transcribe →' : 'Transcribe →';
+            hideNoteOverlay();
             alert('Transcription failed: ' + err.message + '\n\nYour recording is still saved — you can retry anytime.');
         }
+    }
+
+    // ── Note Overlay (loading UI on top of textarea) ──────
+    function showNoteOverlay({ title, sub, percent, indeterminate } = {}) {
+        const overlay = document.getElementById('note-overlay');
+        if (!overlay) return;
+        overlay.classList.add('active');
+        if (title !== undefined) document.getElementById('note-overlay-title').innerText = title;
+        document.getElementById('note-overlay-sub').innerText = sub || '';
+        const bar = document.getElementById('note-overlay-bar');
+        const fill = document.getElementById('note-overlay-bar-fill');
+        const pct = document.getElementById('note-overlay-percent');
+        if (indeterminate) {
+            bar.classList.add('indeterminate');
+            fill.style.width = '35%';
+            pct.innerText = '';
+        } else if (typeof percent === 'number') {
+            bar.classList.remove('indeterminate');
+            const clamped = Math.max(0, Math.min(100, percent));
+            fill.style.width = clamped + '%';
+            pct.innerText = Math.round(clamped) + '%';
+        } else {
+            bar.classList.remove('indeterminate');
+            fill.style.width = '0%';
+            pct.innerText = '';
+        }
+    }
+    function hideNoteOverlay() {
+        const overlay = document.getElementById('note-overlay');
+        if (overlay) overlay.classList.remove('active');
     }
 
     // ── Chunked Transcription Helper ─────────────────────
@@ -5633,17 +5693,18 @@ ${rawNotes}`;
                 if (oversize) {
                     throw new Error('A recording segment is still too large to transcribe. Try a shorter session.');
                 }
-                const loadingText = document.getElementById('loading-text');
                 const transcripts = [];
                 for (let i = 0; i < segments.length; i++) {
-                    if (loadingText) loadingText.innerText = `Transcribing chunk ${i + 1} of ${segments.length}...`;
+                    showNoteOverlay({ title: 'Transcribing recording', sub: `Chunk ${i + 1} of ${segments.length}`, percent: (i / segments.length) * 100 });
                     transcripts.push(await transcribeSingleBlob(segments[i], `recording-part${i + 1}`));
+                    showNoteOverlay({ title: 'Transcribing recording', sub: `Chunk ${i + 1} of ${segments.length} done`, percent: ((i + 1) / segments.length) * 100 });
                 }
                 return transcripts.join(' ');
             }
 
             // Single-blob path (works while under Whisper's 25 MB ceiling).
             if (blob && blob.size <= WHISPER_MAX_SIZE) {
+                showNoteOverlay({ title: 'Transcribing recording', sub: 'Sending audio to Whisper...', indeterminate: true });
                 return transcribeSingleBlob(blob);
             }
 
@@ -5921,15 +5982,17 @@ ${rawNotes}`;
             }
 
             // Online — attempt transcription with chunking support
-            document.getElementById('loading').style.display = 'flex';
-            document.getElementById('loading-text').innerText = blob.size > WHISPER_MAX_SIZE
-                ? `Transcribing large recording (${(blob.size / 1024 / 1024).toFixed(1)} MB)...`
-                : 'Transcribing with Whisper...';
+            const segCount = Array.isArray(segments) ? segments.length : 1;
+            showNoteOverlay({
+                title: 'Transcribing recording',
+                sub: segCount > 1 ? `Preparing ${segCount} chunks…` : 'Sending audio to Whisper…',
+                percent: 0
+            });
 
             try {
                 const text = await transcribeBlob(blob, segments, mimeType, true);
 
-                document.getElementById('loading').style.display = 'none';
+                hideNoteOverlay();
 
                 const existing = document.getElementById('note-input').value.trim();
                 document.getElementById('note-input').value = existing ? existing + ' ' + text : text;
@@ -5942,13 +6005,10 @@ ${rawNotes}`;
                 if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
 
             } catch (err) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('loading-text').innerText = 'Generating your clinical note...';
+                hideNoteOverlay();
                 if (document.getElementById('view-pending').style.display !== 'none') renderPendingList();
                 alert('Transcription failed: ' + err.message + '\n\nYour recording has been saved to Pending Recordings — you can retry from there.');
             }
-
-            document.getElementById('loading-text').innerText = 'Generating your clinical note...';
     }
 
     // ── Label Input Component ─────────────────────────────
@@ -6795,7 +6855,7 @@ ${rawNotes}`;
             return;
         }
 
-        document.getElementById('loading').style.display = 'flex';
+        showNoteOverlay({ title: 'Generating clinical note', sub: 'Sending to AI…', indeterminate: true });
         document.getElementById('result-card').style.display = 'none';
         document.getElementById('goals-card').style.display = 'none';
         document.getElementById('generate-goals-btn').style.display = 'none';
@@ -6821,7 +6881,7 @@ ${rawNotes}`;
             const generatedNote = data.text;
             const noteTypeTitled = noteType.replace(/\b\w/g, l => l.toUpperCase());
 
-            document.getElementById('loading').style.display = 'none';
+            hideNoteOverlay();
             document.getElementById('result-card').style.display = 'block';
             document.getElementById('result-badge').innerText = noteTypeTitled;
             const formatBadge = document.getElementById('result-format-badge');
@@ -6886,7 +6946,7 @@ ${rawNotes}`;
             document.getElementById('generate-goals-btn').style.display = 'inline-flex';
 
         } catch (err) {
-            document.getElementById('loading').style.display = 'none';
+            hideNoteOverlay();
             alert('Note generation error: ' + (err.message || 'Unknown error') + '\n\nPlease check your connection and try again.');
         }
     }
